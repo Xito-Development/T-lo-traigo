@@ -74,7 +74,7 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         SectionTitle("Ayuda")
         var about by remember { mutableStateOf(false) }
         var askDelete by remember { mutableStateOf(false) }
-        if (about) AboutDialog { about = false }
+        if (about) AboutDialog({ about = false }, vm)
         if (askDelete) DeleteAccountDialog(vm) { askDelete = false }
         BigButton("Llamar al teléfono de ayuda", { ctx.dial(BuildConfig.SUPPORT_PHONE) }, tonal = true, icon = Icons.Filled.Call)
         Spacer(Modifier.height(10.dp))

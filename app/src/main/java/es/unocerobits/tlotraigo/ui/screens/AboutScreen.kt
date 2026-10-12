@@ -43,7 +43,7 @@ private val thirdParty = listOf(
 /** Créditos, contacto, licencia y avisos legales. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutDialog(onDismiss: () -> Unit) {
+fun AboutDialog(onDismiss: () -> Unit, vm: es.unocerobits.tlotraigo.AppViewModel? = null) {
     val ctx = LocalContext.current
     fun open(uri: String) = runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     Dialog(onDismiss, DialogProperties(usePlatformDefaultWidth = false)) {
@@ -60,6 +60,13 @@ fun AboutDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(8.dp))
                     Text("La compra del súper en la puerta de casa, para los pueblos de León.", textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyLarge)
+                    if (vm != null && es.unocerobits.tlotraigo.data.Updater.enabled) {
+                        val msg by vm.updateMsg.collectAsState()
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedButton({ vm.checkUpdate(manual = true) }) { Icon(Icons.Filled.SystemUpdate, null); Spacer(Modifier.width(8.dp)); Text("Buscar actualizaciones") }
+                        msg?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center) }
+                        DisposableEffect(Unit) { onDispose { vm.clearUpdateMsg() } }
+                    }
 
                     SectionTitle("Créditos", Modifier.fillMaxWidth())
                     Text("Desarrollado por", style = MaterialTheme.typography.labelLarge, modifier = Modifier.fillMaxWidth())

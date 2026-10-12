@@ -70,10 +70,13 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease bundleRelease
+          # APK "github" (con actualizador) para las Releases y AAB "play" (sin actualizador) para Google Play
+          ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/TLoTraigo-${VERSION_NAME}.apk"
-          cp app/build/outputs/bundle/release/app-release.aab "dist/TLoTraigo-${VERSION_NAME}.aab"
+          cp app/build/outputs/apk/github/release/app-github-release.apk "dist/TLoTraigo-${VERSION_NAME}.apk"
+          # Nombre fijo: la web y la app descargan siempre .../releases/latest/download/TLoTraigo.apk
+          cp app/build/outputs/apk/github/release/app-github-release.apk "dist/TLoTraigo.apk"
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab "dist/TLoTraigo-${VERSION_NAME}.aab"
 
       - uses: actions/upload-artifact@v4
         with:

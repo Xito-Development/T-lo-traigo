@@ -34,6 +34,8 @@ Modo fácil, 4 tamaños de letra, lectura en voz alta, 7 paletas, modo claro/osc
 GitHub Actions compila y publica la Release con APK y AAB en unos 8 minutos: <https://github.com/Xito-Development/T-lo-traigo/releases/latest>.
 Opciones: `publicar.bat -Tipo menor` (0.4 → 0.5), `-Tipo mayor` (→ 1.0.0) o `-SoloSubir` (sin versión nueva). En macOS/Linux: `scripts/publicar.sh`.
 
+Actualizar desde Claude sin copiar a mano: doble clic **una vez** en **`instalar-vigilante.bat`**. Desde entonces, cada `tlotraigo*.zip`, `web-t-lo-traigo*.zip` o `CLAUDE.md` que descargues se aplica solo a la carpeta del proyecto (tus cambios sin guardar se apartan antes con `git stash`).
+
 Google Play (opcional): `configurar-firma.bat -PlayJson C:\ruta\cuenta-servicio.json` y cada versión se sube sola a pruebas internas.
 
 ## Puesta en marcha del backend

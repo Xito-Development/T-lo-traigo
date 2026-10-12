@@ -33,6 +33,7 @@ android {
         buildConfigField("String", "SUPPORT_PHONE", "\"+34600000000\"")
         buildConfigField("String", "CONTACT_EMAIL", "\"info@unocerobits.com\"")
         buildConfigField("String", "WEB_URL", "\"https://unocerobits.com/t-lo-traigo\"")
+        buildConfigField("String", "RELEASES_API", "\"https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/latest\"")
         buildConfigField("String", "PRIVACY_URL", "\"https://unocerobits.com/t-lo-traigo/privacidad.html\"")
     }
 
@@ -44,6 +45,20 @@ android {
                 keyAlias = env("KEY_ALIAS")
                 keyPassword = env("KEY_PASSWORD")
             }
+        }
+    }
+
+    // github: APK de las Releases, con actualizador integrado.
+    // play: AAB para Google Play (Play no permite que la app se actualice a sí misma).
+    flavorDimensions += "distribucion"
+    productFlavors {
+        create("github") {
+            dimension = "distribucion"
+            buildConfigField("Boolean", "SELF_UPDATE", "true")
+        }
+        create("play") {
+            dimension = "distribucion"
+            buildConfigField("Boolean", "SELF_UPDATE", "false")
         }
     }
 

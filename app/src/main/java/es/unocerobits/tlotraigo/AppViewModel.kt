@@ -29,6 +29,24 @@ class AppViewModel : ViewModel() {
     private val _towns = MutableStateFlow<List<Town>>(emptyList())
     val towns: StateFlow<List<Town>> = _towns
 
+    // --- Actualizaciones (solo versión GitHub)
+    private val _update = MutableStateFlow<UpdateInfo?>(null)
+    val update: StateFlow<UpdateInfo?> = _update
+    private val _updateMsg = MutableStateFlow<String?>(null)
+    val updateMsg: StateFlow<String?> = _updateMsg
+    private var updateChecked = false
+
+    /** Comprueba si hay una versión nueva. Automático una vez por arranque; manual desde «Acerca de». */
+    fun checkUpdate(manual: Boolean = false) = viewModelScope.launch {
+        if (!Updater.enabled || (updateChecked && !manual)) return@launch
+        updateChecked = true
+        val u = Updater.check()
+        _update.value = u
+        if (manual) _updateMsg.value = if (u == null) "Ya tienes la última versión (${es.unocerobits.tlotraigo.BuildConfig.VERSION_NAME})." else null
+    }
+    fun dismissUpdate() { _update.value = null }
+    fun clearUpdateMsg() { _updateMsg.value = null }
+
     private val _driverView = MutableStateFlow(false)
     val driverView: StateFlow<Boolean> = _driverView
 

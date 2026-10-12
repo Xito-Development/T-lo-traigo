@@ -4,285 +4,393 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>T lo traigo: la compra del súper en la puerta de casa</title>
-<meta name="description" content="App para que las personas mayores de los pueblos de León (o sus familias) pidan la compra del supermercado y un vecino repartidor se la lleve a casa.">
-<meta name="theme-color" content="#2E6B57">
+<meta name="description" content="App para que las personas mayores de los pueblos de la Vega del Esla (León) o sus familias pidan la compra del supermercado y un vecino repartidor se la lleve a casa.">
+<meta name="theme-color" content="#263238">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta property="og:title" content="T lo traigo">
-<meta property="og:description" content="La compra del súper, en la puerta de casa. Para los pueblos de León.">
+<meta property="og:description" content="La compra del súper, en la puerta de casa. Empezamos en Villaquejida y pueblos de alrededor.">
 <meta property="og:image" content="https://unocerobits.com/t-lo-traigo/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Raleway:wght@200;300;500&display=swap" rel="stylesheet">
 <style>
 :root{
+  /* App: pino + mostaza + Atkinson · UNOCEROBITS: pizarra + turquesa + Raleway fina */
+  --pizarra:#263238; --pizarra-hondo:#1B2428; --turquesa:#00FFDE;
   --pino:#2E6B57; --pino-hondo:#1F4D3F; --mostaza:#F2B544; --mostaza-hondo:#DE9A2A; --hoja:#7BC9A4;
-  --niebla:#F3F7F4; --pizarra:#1C2624; --gris:#4D5B57; --linea:#D5E0DA; --blanco:#FFFFFF;
-  --r-s:12px; --r-m:20px; --r-l:36px;
-  --ease:cubic-bezier(.22,.8,.24,1);
-  --f-display:"Bricolage Grotesque", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --niebla:#F3F7F4; --texto:#1C2624; --gris:#4F5D59; --linea:#D5E0DA;
+  --r:14px; --ease:cubic-bezier(.22,.8,.24,1); --spring:cubic-bezier(.34,1.56,.64,1);
   --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-thin:"Raleway", system-ui, sans-serif;
 }
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{font-family:var(--f-body);font-size:1.125rem;line-height:1.6;color:var(--pizarra);background:var(--niebla)}
+body{font-family:var(--f-body);font-size:1.125rem;line-height:1.6;color:var(--texto);background:var(--niebla);overflow-x:hidden}
 img,svg{max-width:100%;display:block}
 a{color:var(--pino)}
 :focus-visible{outline:3px solid var(--mostaza-hondo);outline-offset:3px;border-radius:6px}
-.wrap{width:min(1120px,100% - 2.5rem);margin-inline:auto}
-h1,h2,h3{font-family:var(--f-display);line-height:1.05;letter-spacing:-.02em;color:var(--pino-hondo)}
-h2{font-size:clamp(2rem,4.5vw,3.1rem);margin-bottom:.6em}
-h3{font-size:1.35rem;letter-spacing:-.01em}
-p{max-width:62ch}
-.btn{display:inline-flex;align-items:center;gap:.6rem;font:700 1.1rem var(--f-body);text-decoration:none;
-  padding:1rem 1.5rem;border-radius:999px;border:2px solid transparent;transition:transform .25s var(--ease),background .25s,box-shadow .25s}
-.btn-main{background:var(--pino);color:#fff;box-shadow:0 8px 24px -10px rgba(31,77,63,.55)}
-.btn-main:hover{transform:translateY(-2px);background:var(--pino-hondo)}
-.btn-alt{border-color:var(--pino);color:var(--pino);background:transparent}
-.btn-alt:hover{background:rgba(46,107,87,.08)}
+.wrap{width:min(1160px,100% - 2.5rem);margin-inline:auto}
+p{max-width:60ch}
+[data-k]{white-space:pre-line}
+h2{font:700 clamp(2rem,4.6vw,3.2rem)/1.08 var(--f-body);letter-spacing:-.02em;color:var(--pino-hondo);margin-bottom:.55em}
+.dark h2{color:#fff}
+h3{font:700 1.3rem/1.25 var(--f-body)}
 
-/* Cabecera */
-header{padding:1.2rem 0;position:sticky;top:0;z-index:10;background:rgba(243,247,244,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem}
-.logo{display:flex;align-items:center;gap:.7rem;text-decoration:none;font:800 1.35rem var(--f-display);color:var(--pino-hondo)}
-.logo img{width:44px;height:44px;border-radius:12px}
-nav a{margin-left:1.4rem;text-decoration:none;color:var(--gris);font-weight:700}
-nav a:hover{color:var(--pino)}
-@media (max-width:760px){nav a:not(.btn){display:none}}
+#progress{position:fixed;top:0;left:0;height:4px;width:100%;transform-origin:0 50%;transform:scaleX(0);z-index:30;
+  background:linear-gradient(90deg,var(--hoja),var(--mostaza),var(--turquesa))}
+
+.btn{display:inline-flex;align-items:center;gap:.6rem;font:700 1.08rem var(--f-body);text-decoration:none;padding:1rem 1.5rem;border-radius:var(--r);
+  border:2px solid transparent;transition:transform .3s var(--spring),box-shadow .3s,background .25s,color .25s;cursor:pointer}
+.btn:hover{transform:translateY(-3px)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn-main{background:var(--mostaza);color:var(--pizarra-hondo);box-shadow:0 10px 24px -12px rgba(222,154,42,.9)}
+.btn-main:hover{box-shadow:0 14px 30px -12px rgba(222,154,42,1)}
+.btn-line{border-color:rgba(255,255,255,.6);color:#fff}
+.btn-line:hover{border-color:var(--turquesa);color:var(--turquesa)}
+.btn-ink{border-color:var(--pino);color:var(--pino)}
+.btn-ink:hover{background:var(--pino);color:#fff}
+.btn small{font-weight:400;opacity:.8}
+
+header{position:fixed;inset:0 0 auto 0;z-index:20;padding:.9rem 0;transition:background .35s,box-shadow .35s}
+header.solid{background:rgba(27,36,40,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 8px 30px -18px #000}
+.bar{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:.7rem;text-decoration:none;color:#fff;font:300 1.3rem var(--f-thin);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.logo img{width:42px;height:42px;border-radius:12px}
+nav a{margin-left:1.5rem;text-decoration:none;color:rgba(255,255,255,.85);font-weight:700;font-size:1rem}
+nav a:hover{color:var(--mostaza)}
+@media (max-width:820px){nav a:not(.btn){display:none}.logo{font-size:1.05rem}}
 
 /* Portada */
-.hero{padding:3rem 0 4rem;display:grid;grid-template-columns:1.05fr 1fr;gap:2.5rem;align-items:center}
-.hero h1{font-size:clamp(2.6rem,6.4vw,5rem);font-weight:800}
-.hero p{font-size:1.3rem;color:var(--gris);margin:1.3rem 0 2rem}
+.hero{min-height:100svh;display:grid;grid-template-columns:44% 56%;background:var(--pizarra-hondo);color:#fff}
+.hero-left{background:var(--pizarra);display:flex;flex-direction:column;justify-content:center;padding:7rem clamp(1.5rem,5vw,5rem) 4rem;position:relative;z-index:1}
+.title{font:200 clamp(4rem,9.5vw,8.4rem)/.92 var(--f-thin);text-transform:uppercase}
+.title .row{display:block;white-space:nowrap}
+.title .t1{color:var(--turquesa)} .title .t2{color:#fff}
+.title .ch{display:inline-block;opacity:0;transform:translateY(.5em) rotate(6deg);filter:blur(6px);animation:ch .9s var(--ease) forwards}
+@keyframes ch{to{opacity:1;transform:none;filter:none}}
+.hero-left .lead{font-size:1.25rem;color:#D2DCD8;margin:1.8rem 0 2.2rem}
 .cta{display:flex;flex-wrap:wrap;gap:.8rem}
-.scene{position:relative;border-radius:var(--r-l);background:linear-gradient(180deg,#E3EFE8 0%,#CFE5D9 100%);aspect-ratio:1/1;overflow:hidden}
-.scene svg{width:100%;height:100%}
-.replay{position:absolute;right:1rem;bottom:1rem;font:700 .95rem var(--f-body);background:rgba(255,255,255,.85);border:0;border-radius:999px;padding:.55rem 1rem;color:var(--pino-hondo);cursor:pointer}
+.hero .in{opacity:0;transform:translateY(22px);animation:up .9s var(--ease) forwards}
+.hero .in.d1{animation-delay:.9s}.hero .in.d2{animation-delay:1.05s}
+@keyframes up{to{opacity:1;transform:none}}
+.hero-right{position:relative;overflow:hidden}
+#plexus{position:absolute;inset:0;width:100%;height:100%}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1.2px);background-size:5px 5px;pointer-events:none}
+.scene{position:absolute;inset:12% 7% 8% 7%}
+.scene svg{width:100%;height:100%;overflow:visible}
+.layer{will-change:transform}
+.claim{position:absolute;left:7%;top:14%;font:200 clamp(1.4rem,2.6vw,2.2rem)/1.1 var(--f-thin);text-transform:uppercase;letter-spacing:.06em}
+.claim small{display:block;font-size:.5em;letter-spacing:.3em;color:#9FB0B6;margin-bottom:.4rem}
+.claim span{color:var(--mostaza)}
+.replay{position:absolute;right:1.2rem;bottom:1.2rem;font:700 .9rem var(--f-body);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);color:#fff;padding:.5rem .9rem;border-radius:999px;cursor:pointer}
+.replay:hover{border-color:var(--mostaza);color:var(--mostaza)}
 #road{stroke-dasharray:1;stroke-dashoffset:1}
-.go #road{animation:draw 2.6s var(--ease) .4s forwards}
-#bag{offset-path:path("M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150");offset-rotate:0deg;offset-distance:0%;opacity:0}
-.go #bag{animation:ride 2.8s var(--ease) .6s forwards}
-#house-glow{opacity:0;transform-origin:440px 132px}
-.go #house-glow{animation:glow 1.4s var(--ease) 3.2s forwards}
+.go #road{animation:draw 2.6s var(--ease) .9s forwards}
+#bag{offset-path:path("M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150");offset-rotate:0deg;opacity:0}
+.go #bag{animation:ride 2.8s var(--ease) 1.1s forwards}
+#bagBob{animation:bob .5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+#glow{opacity:0;transform-origin:440px 132px}
+.go #glow{animation:glow 1.4s var(--ease) 3.7s forwards}
+.go #houseHop{animation:hop .6s var(--spring) 3.8s both;transform-box:fill-box;transform-origin:bottom}
 @keyframes draw{to{stroke-dashoffset:0}}
 @keyframes ride{0%{offset-distance:0%;opacity:0}8%{opacity:1}100%{offset-distance:100%;opacity:1}}
-@keyframes glow{0%{opacity:0;transform:scale(.4)}60%{opacity:.55;transform:scale(1.15)}100%{opacity:.4;transform:scale(1)}}
-@media (max-width:860px){.hero{grid-template-columns:1fr}.scene{max-width:520px}}
+@keyframes bob{to{transform:translateY(-3px) rotate(-3deg)}}
+@keyframes glow{0%{opacity:0;transform:scale(.4)}60%{opacity:.55;transform:scale(1.15)}100%{opacity:.3;transform:scale(1)}}
+@keyframes hop{0%{transform:scale(1)}40%{transform:scale(1.12,.9)}70%{transform:scale(.95,1.08) translateY(-6px)}100%{transform:none}}
+@media (max-width:900px){.hero{grid-template-columns:1fr}.hero-left{padding-top:6.5rem}.hero-right{min-height:440px}.claim{display:none}}
 
-/* Cómo funciona: es una secuencia real */
-.how{padding:4.5rem 0;background:var(--blanco);border-radius:var(--r-l) var(--r-l) 0 0}
-.steps{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;counter-reset:paso}
-.steps li{counter-increment:paso;position:relative;padding-top:4.2rem}
-.steps li::before{content:counter(paso);position:absolute;top:0;left:0;width:3.2rem;height:3.2rem;border-radius:50%;
-  display:grid;place-items:center;font:800 1.5rem var(--f-display);background:var(--mostaza);color:var(--pino-hondo)}
-.steps li:not(:last-child)::after{content:"";position:absolute;top:1.6rem;left:3.8rem;right:-1.4rem;border-top:3px dotted var(--linea)}
+/* Revelado al desplazarse */
+.rv{opacity:0;transform:translateY(40px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.rv.l{transform:translateX(-50px)} .rv.r{transform:translateX(50px)} .rv.z{transform:scale(.85) rotate(-3deg)}
+.rv.on{opacity:1;transform:none}
+h2.rv{transform:none;clip-path:inset(0 100% 0 0);transition:clip-path 1.1s var(--ease),opacity .4s}
+h2.rv.on{clip-path:inset(0 0 0 0)}
+.st > *{opacity:0;transform:translateY(26px) scale(.96);transition:opacity .6s var(--ease),transform .7s var(--spring)}
+.st.on > *{opacity:1;transform:none}
+
+section{position:relative;scroll-margin-top:72px}
+.light{background:#fff;padding:6.5rem 0}
+.mist{background:var(--niebla);padding:6.5rem 0}
+.dark{background:var(--pizarra);color:#D5DFDB;padding:6.5rem 0}
+.dark p{color:#B9C7C2}
+
+/* Pasos */
+.steps{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:2.4rem;position:relative;margin-top:3rem}
+.track{position:absolute;top:1.75rem;left:1.75rem;right:calc((100% - 4.8rem)/3 - 1.75rem);height:4px;border-radius:4px;background:var(--linea)}
+.track i{position:absolute;inset:0;border-radius:4px;background:linear-gradient(90deg,var(--pino),var(--hoja));transform-origin:0 50%;transform:scaleX(var(--p,0))}
+.steps li{position:relative;padding-top:5rem}
+.num{position:absolute;top:0;left:0;width:3.5rem;height:3.5rem;border-radius:50%;display:grid;place-items:center;font:700 1.5rem var(--f-body);
+  background:#fff;border:3px solid var(--linea);color:var(--gris);transition:background .5s,border-color .5s,color .5s,transform .5s var(--spring)}
+.steps li.lit .num{background:var(--mostaza);border-color:var(--mostaza);color:var(--pizarra-hondo);transform:scale(1.12)}
 .steps p{color:var(--gris);margin-top:.5rem}
-@media (max-width:760px){.steps{grid-template-columns:1fr}.steps li::after{display:none}}
+@media (max-width:820px){.steps{grid-template-columns:1fr}.track{display:none}}
 
 /* Mayores */
-.older{padding:4.5rem 0;background:var(--blanco)}
-.older-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:3rem;align-items:start}
+.older-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:3.5rem;align-items:center}
+.big-a{font:700 clamp(8rem,18vw,14rem)/.85 var(--f-body);color:var(--mostaza);letter-spacing:-.04em}
+.big-a small{display:block;font:400 1.15rem/1.5 var(--f-body);color:#C9D4D0;margin-top:1.2rem;max-width:24ch;letter-spacing:0}
 .feats{list-style:none;padding:0;display:grid;gap:1.4rem}
-.feats li{display:grid;grid-template-columns:3.2rem 1fr;gap:1rem;align-items:start}
-.feats svg{width:3.2rem;height:3.2rem;padding:.7rem;border-radius:16px;background:#E3EFE8;color:var(--pino)}
-.feats p{color:var(--gris)}
-.big-a{font:800 clamp(7rem,16vw,12rem)/.9 var(--f-body);color:var(--pino);letter-spacing:-.04em}
-.big-a small{display:block;font:700 1.1rem var(--f-body);color:var(--gris);letter-spacing:0;margin-top:1rem;max-width:26ch}
-@media (max-width:860px){.older-grid{grid-template-columns:1fr}}
+.feats li{display:grid;grid-template-columns:3.2rem 1fr;gap:1rem;align-items:start;padding:1rem;border-radius:var(--r);transition:background .3s}
+.feats li:hover{background:rgba(255,255,255,.04)}
+.feats svg{width:3.2rem;height:3.2rem;padding:.7rem;border-radius:14px;background:rgba(123,201,164,.14);color:var(--hoja)}
+.feats h3{color:#fff;font-size:1.2rem}
+@media (max-width:900px){.older-grid{grid-template-columns:1fr}}
 
-/* Precios: ticket */
-.prices{padding:4.5rem 0;background:var(--pino-hondo);color:#E8F2EC}
-.prices h2{color:#fff}
-.prices-grid{display:grid;grid-template-columns:1fr 380px;gap:3rem;align-items:center}
-.prices p{color:#CFE2D8}
-.ticket{background:#FFFDF8;color:var(--pizarra);border-radius:var(--r-s);padding:1.6rem 1.6rem 2.2rem;position:relative;
-  box-shadow:0 30px 60px -30px rgba(0,0,0,.6);font-size:1rem}
-.ticket::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;
-  background:radial-gradient(circle at 10px 100%,var(--pino-hondo) 7px,transparent 7.5px) 0 0/20px 10px repeat-x}
-.ticket h3{font-size:1.15rem;margin-bottom:.8rem;color:var(--pino-hondo)}
-.line{display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-bottom:1px dashed #E3E3DD;opacity:0;transform:translateX(-8px);transition:opacity .45s var(--ease),transform .45s var(--ease)}
+/* Precios */
+.prices-grid{display:grid;grid-template-columns:1fr 390px;gap:3.5rem;align-items:center}
+.ticket{background:#fff;border-radius:var(--r);padding:1.6rem 1.6rem 2.2rem;position:relative;box-shadow:0 30px 60px -32px rgba(31,77,63,.5);font-size:1rem;border-top:5px solid var(--mostaza);transition:transform .6s var(--ease)}
+.ticket:hover{transform:rotate(-1deg) translateY(-4px)}
+.ticket::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:radial-gradient(circle at 10px 100%,var(--niebla) 7px,transparent 7.5px) 0 0/20px 10px repeat-x}
+.ticket h3{font-size:1.1rem;margin-bottom:.8rem;color:var(--pino-hondo)}
+.line{display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-bottom:1px dashed var(--linea);opacity:0;transform:translateX(-12px);transition:opacity .45s var(--ease),transform .45s var(--ease)}
 .line small{color:var(--gris)}
-.line.total{border:0;font-weight:700;font-size:1.25rem;color:var(--pino-hondo);padding-top:.8rem}
+.line.total{border:0;font-weight:700;font-size:1.35rem;color:var(--pino-hondo);padding-top:.8rem}
 .ticket.on .line{opacity:1;transform:none}
 .ticket .note{font-size:.85rem;color:var(--gris);margin-top:.6rem}
-@media (max-width:860px){.prices-grid{grid-template-columns:1fr}.ticket{max-width:420px}}
+@media (max-width:900px){.prices-grid{grid-template-columns:1fr}.ticket{max-width:430px}}
 
-/* Repartir */
-.drive{padding:4.5rem 0}
-.drive-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:3rem;align-items:center}
-.drive ul{padding-left:1.2rem;color:var(--gris);display:grid;gap:.4rem;margin:1rem 0 1.6rem}
-.towns{display:flex;flex-wrap:wrap;gap:.5rem}
-.towns span{background:#fff;border:2px solid var(--linea);border-radius:999px;padding:.35rem .9rem;font-weight:700;color:var(--pino-hondo)}
-@media (max-width:860px){.drive-grid{grid-template-columns:1fr}}
+/* Pueblos */
+.towns-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.map{background:var(--pizarra);border-radius:var(--r);overflow:hidden}
+.map svg{width:100%;height:auto}
+.pin{opacity:0;transform:translateY(-26px);transition:opacity .4s var(--ease),transform .7s var(--spring)}
+.map.on .pin{opacity:1;transform:none}
+#esla{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 2.4s var(--ease)}
+.map.on #esla{stroke-dashoffset:0}
+.ring{transform-box:fill-box;transform-origin:center;animation:ring 2.4s ease-out infinite}
+@keyframes ring{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}
+.chips span{background:#fff;border:2px solid var(--linea);border-radius:999px;padding:.35rem .95rem;font-weight:700;color:var(--pino-hondo)}
+.chips span.hub{background:var(--pino);border-color:var(--pino);color:#fff}
+@media (max-width:900px){.towns-grid{grid-template-columns:1fr}}
 
-/* Descarga */
-.get{padding:4rem 0 5rem;text-align:center}
-.get h2{margin-inline:auto}
-.get p{margin:0 auto 1.8rem;color:var(--gris)}
+.drive ul{padding-left:1.2rem;display:grid;gap:.4rem;margin:1rem 0 1.8rem}
+.get{text-align:center}
+.get h2,.get p{margin-inline:auto}
+.get p{margin-bottom:2rem}
 .get .cta{justify-content:center}
-.stores{margin-top:1.4rem;font-size:.95rem;color:var(--gris)}
+#dlInfo{display:block;margin-top:.9rem;font-size:.95rem;color:var(--gris)}
 
-footer{background:var(--pizarra);color:#C9D3CF;padding:3rem 0 calc(2rem + env(safe-area-inset-bottom))}
-.foot{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2rem}
-footer h3{color:#fff;font-size:1.05rem;margin-bottom:.6rem}
+footer{background:var(--pizarra-hondo);color:#B9C7C2;padding:3.5rem 0 calc(2rem + env(safe-area-inset-bottom))}
+.foot{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:2rem}
+footer h3{color:#fff;font-size:1.05rem;margin-bottom:.7rem}
 footer a{color:#fff}
-footer p{font-size:1rem}
 .makers{display:flex;gap:1.6rem;margin-top:.8rem}
 .makers a{display:flex;flex-direction:column;align-items:center;gap:.5rem;text-decoration:none;font-weight:700;font-size:.95rem;color:#fff}
-.makers img,.makers .xito{width:72px;height:72px;border-radius:50%;transition:transform .3s var(--ease)}
-.makers .xito{display:grid;place-items:center;background:#263238;box-shadow:inset 0 0 0 1px #3A4A47}
+.makers img,.makers .xito{width:72px;height:72px;border-radius:50%;transition:transform .4s var(--spring),box-shadow .35s}
+.makers .xito{display:grid;place-items:center;background:var(--pizarra);box-shadow:inset 0 0 0 1px #3A4A50}
 .makers .xito img{width:78%;height:78%;border-radius:0}
-.makers a:hover img,.makers a:hover .xito{transform:translateY(-3px)}
-.legal{max-width:none;margin-top:2.4rem;padding-top:1.4rem;border-top:1px solid #33403C;font-size:.9rem}
-@media (max-width:760px){.foot{grid-template-columns:1fr}}
+.makers a:hover img,.makers a:hover .xito{transform:translateY(-4px) rotate(-4deg);box-shadow:0 0 22px rgba(0,255,222,.35)}
+.legal{max-width:none;margin-top:2.4rem;padding-top:1.4rem;border-top:1px solid #33434A;font-size:.9rem}
+@media (max-width:820px){.foot{grid-template-columns:1fr}}
+
+/* Modo edición (oculto: 15 toques rápidos en el logo) */
+@keyframes shake{0%,100%{transform:none}10%{transform:translate(-6px,2px) rotate(-6deg)}20%{transform:translate(7px,-2px) rotate(7deg)}30%{transform:translate(-8px,1px) rotate(-8deg)}
+  40%{transform:translate(8px,-1px) rotate(8deg)}50%{transform:translate(-6px,2px) rotate(-5deg)}60%{transform:translate(5px,0) rotate(4deg)}70%{transform:translate(-3px,0) rotate(-2deg)}80%{transform:translate(2px,0) rotate(1deg)}}
+@keyframes pageShake{0%,100%{transform:none}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+.shake{animation:shake .7s ease-in-out}
+.page-shake{animation:pageShake .35s ease-in-out}
+.modal{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(15,22,25,.6);backdrop-filter:blur(6px);padding:1rem}
+.modal.open{display:grid;animation:fade .3s var(--ease)}
+@keyframes fade{from{opacity:0}}
+.modal form{background:#fff;border-radius:20px;padding:1.8rem;width:min(420px,100%);display:grid;gap:.8rem;animation:pop .45s var(--spring)}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.modal h3{color:var(--pino-hondo);font-size:1.4rem}
+.modal input{font:inherit;padding:.8rem 1rem;border:2px solid var(--linea);border-radius:12px}
+.modal input:focus{border-color:var(--pino);outline:none}
+.modal .err{color:#B3261E;font-size:.95rem;min-height:1.2em}
+.modal .row{display:flex;gap:.6rem;justify-content:flex-end}
+#editBar{position:fixed;left:50%;bottom:1rem;transform:translate(-50%,150%);z-index:40;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;justify-content:center;
+  background:var(--pizarra-hondo);color:#fff;padding:.6rem .7rem .6rem 1.1rem;border-radius:18px;box-shadow:0 20px 40px -12px #000;transition:transform .5s var(--spring)}
+body.editing #editBar{transform:translate(-50%,0)}
+#editBar .btn{padding:.6rem 1rem;font-size:.95rem}
+#editBar span{font-weight:700;margin-right:.4rem}
+body.editing [data-k]{outline:2px dashed rgba(242,181,68,.85);outline-offset:4px;border-radius:4px;cursor:text}
+body.editing [data-k]:focus{outline:2px solid var(--mostaza);background:rgba(242,181,68,.08)}
+body.editing [data-k].dirty{outline-color:var(--turquesa)}
 
 @media (prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important}
-  #road{stroke-dashoffset:0} #bag{offset-distance:100%;opacity:1} #house-glow{opacity:.4}
-  .line{opacity:1;transform:none}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv,.st>*,.line,.pin,.hero .in,.title .ch{opacity:1!important;transform:none!important;filter:none!important;clip-path:none!important}
+  #road,#esla{stroke-dashoffset:0} #bag{offset-distance:100%;opacity:1} #glow{opacity:.3}
 }
 </style>
 </head>
 <body>
-<header>
+<div id="progress"></div>
+<header id="top">
   <div class="wrap bar">
-    <a class="logo" href="#"><img src="icon.svg" alt="">T lo traigo</a>
+    <a class="logo" href="#" id="logo" aria-label="T lo traigo, inicio"><img src="icon.svg" alt="">T lo traigo</a>
     <nav>
       <a href="#como">Cómo funciona</a>
       <a href="#mayores">Para mayores</a>
       <a href="#precios">Precios</a>
-      <a href="#repartir">Repartir</a>
-      <a class="btn btn-main" href="#descargar" style="padding:.6rem 1.1rem;margin-left:1.4rem">Descargar</a>
+      <a href="#pueblos">Pueblos</a>
+      <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk" style="padding:.55rem 1.1rem;margin-left:1.5rem">Descargar</a>
     </nav>
   </div>
 </header>
 
-<main>
-  <section class="wrap hero">
-    <div>
-      <h1>La compra del súper, en la puerta de casa.</h1>
-      <p>Para los pueblos de León. Tú eliges los productos con precios del supermercado y un vecino repartidor te los lleva. Si lo prefieres, lo pide tu hijo o tu hija desde su móvil.</p>
-      <div class="cta">
-        <a class="btn btn-main" href="#descargar">Descargar la app</a>
-        <a class="btn btn-alt" href="#como">Ver cómo funciona</a>
+<main id="main">
+  <section class="hero">
+    <div class="hero-left">
+      <h1 class="title" aria-label="T lo traigo"><span class="row t1" data-split>T lo</span><span class="row t2" data-split>traigo</span></h1>
+      <p class="lead in d1" data-k="hero.lead">La compra del súper, en la puerta de casa. Tú eliges con los precios del supermercado y un vecino repartidor te la lleva. También puede pedirla tu hijo o tu hija desde su móvil.</p>
+      <div class="cta in d2">
+        <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">Descargar la app</a>
+        <a class="btn btn-line" href="#como">Ver cómo funciona</a>
       </div>
     </div>
-    <div class="scene" id="scene" aria-label="Ilustración: una bolsa de la compra viaja por la carretera de montaña desde el supermercado hasta una casa del pueblo" role="img">
-      <svg viewBox="0 0 520 520" aria-hidden="true">
-        <path d="M0 330 L70 250 L120 290 L190 190 L260 270 L330 170 L400 240 L460 160 L520 220 V520 H0Z" fill="#B9D8C8"/>
-        <path d="M330 170 L350 190 L338 196 L320 182Z M190 190 L208 212 L196 216 L178 206Z" fill="#fff" opacity=".85"/>
-        <path d="M0 410 C120 360 220 420 320 380 S470 330 520 350 V520 H0Z" fill="#9CCAB3"/>
-        <path id="road" pathLength="1" d="M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150" fill="none" stroke="#F2B544" stroke-width="10" stroke-linecap="round" stroke-dasharray="1"/>
-        <!-- Súper -->
-        <g transform="translate(30 372)">
-          <rect x="0" y="0" width="84" height="58" rx="8" fill="#FFFDF8"/>
-          <rect x="-4" y="-10" width="92" height="16" rx="6" fill="#2E6B57"/>
-          <rect x="30" y="24" width="22" height="34" rx="3" fill="#2E6B57"/>
-          <text x="42" y="2" text-anchor="middle" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" font-size="11" fill="#fff">SÚPER</text>
-        </g>
-        <!-- Casa del pueblo -->
-        <g transform="translate(410 100)">
-          <circle id="house-glow" cx="30" cy="32" r="46" fill="#F2B544" opacity=".35"/>
-          <path d="M0 34 L30 8 L60 34Z" fill="#8C3B2E"/>
-          <rect x="6" y="32" width="48" height="36" fill="#FFFDF8"/>
-          <rect x="24" y="44" width="12" height="24" rx="2" fill="#2E6B57"/>
-          <rect x="10" y="40" width="10" height="10" fill="#7BC9A4"/>
-        </g>
-        <!-- Bolsa que viaja -->
-        <g id="bag">
-          <g transform="translate(-27 -36) scale(.5)">
-            <path d="M41 51 C41 39 57 39 57 51" stroke="#C98422" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-            <path d="M38 52 C38 41 54 41 54 52" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
-            <path d="M66 50 C64 42 66 37 71 34 C73 39 72 45 66 50Z" fill="#5BB08A"/>
-            <path d="M31 50 H81 V78 Q81 84 75 84 H37 Q31 84 31 78Z" fill="#F2B544"/>
-            <path d="M31 50 H81 V55 H31Z" fill="#DE9A2A"/>
-            <path d="M56 58 L69 68 H65.5 V80 H46.5 V68 H43Z" fill="#FFF8EC"/>
+    <div class="hero-right" id="heroRight">
+      <canvas id="plexus" aria-hidden="true"></canvas>
+      <div class="dots"></div>
+      <div class="claim" aria-hidden="true"><small data-k="hero.zona">Vega del Esla · León</small><span data-k="hero.claim1" style="color:#fff">Del súper</span><br><span data-k="hero.claim2">a tu casa</span></div>
+      <div class="scene" id="scene" role="img" aria-label="Una bolsa de la compra viaja por la carretera desde el supermercado hasta una casa del pueblo">
+        <svg viewBox="0 0 520 520" aria-hidden="true">
+          <g class="layer" data-depth=".06"><path d="M0 340 C 90 300 170 330 250 305 S 420 270 520 295 V520 H0Z" fill="#2F3D44"/></g>
+          <g class="layer" data-depth=".1" fill="#3E5A55">
+            <ellipse cx="170" cy="282" rx="9" ry="30"/><ellipse cx="188" cy="290" rx="7" ry="24"/><ellipse cx="350" cy="258" rx="9" ry="30"/>
+            <ellipse cx="368" cy="266" rx="7" ry="22"/><ellipse cx="480" cy="262" rx="8" ry="26"/>
           </g>
-        </g>
-      </svg>
+          <g class="layer" data-depth=".16">
+            <path d="M0 410 C120 360 220 420 320 380 S470 330 520 350 V520 H0Z" fill="#37474F"/>
+            <path id="road" pathLength="1" d="M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150" fill="none" stroke="#F2B544" stroke-width="6" stroke-linecap="round" stroke-dasharray="1" style="filter:drop-shadow(0 0 6px rgba(242,181,68,.7))"/>
+            <g transform="translate(30 372)">
+              <rect x="0" y="0" width="84" height="58" rx="6" fill="#ECEFF1"/>
+              <rect x="-4" y="-10" width="92" height="16" rx="5" fill="#2E6B57"/>
+              <rect x="30" y="24" width="22" height="34" rx="3" fill="#263238"/>
+              <text x="42" y="2" text-anchor="middle" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" font-size="11" fill="#fff">SÚPER</text>
+            </g>
+            <g transform="translate(410 100)">
+              <circle id="glow" cx="30" cy="32" r="46" fill="#F2B544"/>
+              <g id="houseHop">
+                <path d="M0 34 L30 8 L60 34Z" fill="#B0563F"/>
+                <rect x="6" y="32" width="48" height="36" fill="#ECEFF1"/>
+                <rect x="24" y="44" width="12" height="24" rx="2" fill="#2E6B57"/>
+                <rect x="10" y="40" width="10" height="10" fill="#7BC9A4"/>
+              </g>
+            </g>
+            <g id="bag"><g id="bagBob"><g transform="translate(-27 -36) scale(.5)">
+              <path d="M38 52 C38 41 54 41 54 52" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path d="M66 50 C64 42 66 37 71 34 C73 39 72 45 66 50Z" fill="#5BB08A"/>
+              <path d="M68 50 C70 43 75 40 81 40 C80 46 75 50 68 50Z" fill="#7BC9A4"/>
+              <path d="M31 50 H81 V78 Q81 84 75 84 H37 Q31 84 31 78Z" fill="#F2B544"/>
+              <path d="M31 50 H81 V55 H31Z" fill="#DE9A2A"/>
+              <path d="M56 58 L69 68 H65.5 V80 H46.5 V68 H43Z" fill="#FFF8EC"/>
+            </g></g></g>
+          </g>
+        </svg>
+      </div>
       <button class="replay" id="replay" type="button">Ver otra vez</button>
     </div>
   </section>
 
-  <section class="how" id="como">
+  <section class="light" id="como">
     <div class="wrap">
-      <h2>Así de sencillo</h2>
-      <ol class="steps">
-        <li><h3>Eliges tu compra</h3><p>Pan, leche, fruta, limpieza… con los precios del supermercado. La lista se guarda aunque cierres la app.</p></li>
-        <li><h3>Un vecino la hace</h3><p>Un repartidor de tu zona acepta el pedido, compra en el súper y marca cada producto.</p></li>
-        <li><h3>Te la trae a casa</h3><p>Hoy mismo o el día que elijas, por la mañana o por la tarde. Pagas en efectivo, con Bizum o con tarjeta.</p></li>
+      <h2 class="rv" data-k="como.titulo">Así de sencillo</h2>
+      <ol class="steps" id="steps">
+        <div class="track" aria-hidden="true"><i></i></div>
+        <li class="rv"><span class="num">1</span><h3 data-k="como.p1.t">Eliges tu compra</h3><p data-k="como.p1.d">Pan, leche, fruta, limpieza… con los precios del supermercado. La lista se guarda aunque cierres la app.</p></li>
+        <li class="rv"><span class="num">2</span><h3 data-k="como.p2.t">Un vecino la hace</h3><p data-k="como.p2.d">Un repartidor de tu zona acepta el pedido, compra en el súper y marca cada producto.</p></li>
+        <li class="rv"><span class="num">3</span><h3 data-k="como.p3.t">Te la trae a casa</h3><p data-k="como.p3.d">Hoy mismo o el día que elijas, por la mañana o por la tarde. Pagas en efectivo, con Bizum o con tarjeta.</p></li>
       </ol>
     </div>
   </section>
 
-  <section class="older" id="mayores">
+  <section class="dark" id="mayores">
     <div class="wrap older-grid">
-      <div class="big-a">Aa<small>Letra grande, botones grandes y nada de prisas.</small></div>
+      <div class="big-a rv z">Aa<small data-k="mayores.aa">Letra grande, botones grandes y nada de prisas.</small></div>
       <div>
-        <h2>Pensada para nuestros mayores</h2>
-        <ul class="feats">
+        <h2 class="rv" data-k="mayores.titulo">Pensada para nuestros mayores</h2>
+        <ul class="feats st">
           <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05A4.47 4.47 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06A9 9 0 0 0 14 3.23z"/></svg>
-            <div><h3>Te lee los productos</h3><p>Un botón de altavoz lee en voz alta el nombre y el precio.</p></div></li>
+            <div><h3 data-k="mayores.f1.t">Te lee los productos</h3><p data-k="mayores.f1.d">Un botón de altavoz lee en voz alta el nombre y el precio.</p></div></li>
           <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zm1-17.93c3.94.49 7 3.86 7 7.93s-3.06 7.44-7 7.93V4.07z"/></svg>
-            <div><h3>Colores a tu gusto</h3><p>Siete paletas suaves, modo oscuro y un modo de alto contraste para ver mejor.</p></div></li>
+            <div><h3 data-k="mayores.f2.t">Colores a tu gusto</h3><p data-k="mayores.f2.d">Siete paletas suaves, modo oscuro y modo de alto contraste para ver mejor.</p></div></li>
           <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-            <div><h3>Tu familia te ayuda</h3><p>Con un código de seis cifras, tu hijo o tu hija puede hacerte el pedido desde donde esté.</p></div></li>
+            <div><h3 data-k="mayores.f3.t">Tu familia te ayuda</h3><p data-k="mayores.f3.d">Con un código de seis cifras, tu hijo o tu hija puede hacerte el pedido desde donde esté.</p></div></li>
           <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-            <div><h3>Repetir la compra de siempre</h3><p>Con un toque vuelves a pedir lo mismo que la última vez.</p></div></li>
+            <div><h3 data-k="mayores.f4.t">Repetir la compra de siempre</h3><p data-k="mayores.f4.d">Con un toque vuelves a pedir lo mismo que la última vez.</p></div></li>
         </ul>
       </div>
     </div>
   </section>
 
-  <section class="prices" id="precios">
+  <section class="mist" id="precios">
     <div class="wrap prices-grid">
-      <div>
-        <h2>Precios claros, sin sorpresas</h2>
-        <p>Pagas lo mismo que en el supermercado más un servicio para el repartidor. Antes de pedir ves el desglose completo: productos con su IVA, el servicio según la cantidad, el envío según la distancia a tu pueblo y, si lo quieres para hoy, un pequeño suplemento.</p>
+      <div class="rv l">
+        <h2 data-k="precios.titulo">Precios claros, sin sorpresas</h2>
+        <p data-k="precios.texto">Pagas lo mismo que en el supermercado más un servicio para el repartidor. Antes de pedir ves el desglose completo: productos con su IVA, el servicio según la cantidad, el envío según la distancia a tu pueblo y, si lo quieres para hoy, un pequeño suplemento.</p>
       </div>
       <div class="ticket" id="ticket" aria-label="Ejemplo de ticket">
-        <h3>Ejemplo: Boñar, entrega hoy</h3>
-        <div class="line"><span>12 productos del súper<br><small>IVA incluido</small></span><span>26,28 €</span></div>
-        <div class="line"><span>Servicio del repartidor (10 %)</span><span>2,63 €</span></div>
-        <div class="line"><span>Por cantidad (2 uds. más de 10)</span><span>0,20 €</span></div>
-        <div class="line"><span>Envío a Boñar</span><span>1,50 €</span></div>
-        <div class="line"><span>Distancia (45 km)</span><span>1,80 €</span></div>
-        <div class="line"><span>Entrega en el día</span><span>1,50 €</span></div>
-        <div class="line total"><span>Total</span><span>33,91 €</span></div>
-        <p class="note">Importes de ejemplo. Las tarifas pueden variar según el pueblo.</p>
+        <h3 data-k="ticket.titulo">Ejemplo: Valderas, entrega hoy</h3>
+        <div class="line"><span><span data-k="ticket.l1">12 productos del súper</span><br><small>IVA incluido</small></span><span data-k="ticket.v1">26,28 €</span></div>
+        <div class="line"><span data-k="ticket.l2">Servicio del repartidor (10 %)</span><span data-k="ticket.v2">2,63 €</span></div>
+        <div class="line"><span data-k="ticket.l3">Por cantidad (2 uds. más de 10)</span><span data-k="ticket.v3">0,20 €</span></div>
+        <div class="line"><span data-k="ticket.l4">Envío</span><span data-k="ticket.v4">1,50 €</span></div>
+        <div class="line"><span data-k="ticket.l5">Distancia (13 km)</span><span data-k="ticket.v5">0,52 €</span></div>
+        <div class="line"><span data-k="ticket.l6">Entrega en el día</span><span data-k="ticket.v6">1,50 €</span></div>
+        <div class="line total"><span>Total</span><span data-k="ticket.total" id="total">32,63 €</span></div>
+        <p class="note" data-k="ticket.nota">Importes de ejemplo. Las tarifas pueden variar según el pueblo.</p>
       </div>
     </div>
   </section>
 
-  <section class="drive wrap" id="repartir">
-    <div class="drive-grid">
-      <div>
-        <h2>¿Quieres repartir en tu zona?</h2>
-        <p>Regístrate como repartidor y envía tu candidatura desde la app. Cuando la autoricemos, verás los pedidos de tus pueblos y decidirás cuáles aceptas.</p>
-        <ul>
-          <li>Tú eliges cuándo estás disponible y qué formas de pago aceptas.</li>
-          <li>Lista de la compra con casillas para no olvidar nada.</li>
-          <li>Ganancias del mes claras, con las valoraciones de tus vecinos.</li>
+  <section class="light" id="pueblos">
+    <div class="wrap towns-grid">
+      <div class="map rv r" id="map">
+        <svg viewBox="0 0 480 400" role="img" aria-label="Mapa orientativo de Villaquejida y los pueblos de alrededor">
+          <defs><pattern id="pd" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="rgba(255,255,255,.07)"/></pattern></defs>
+          <rect width="480" height="400" fill="url(#pd)"/>
+          <path id="esla" pathLength="1" d="M300 0 C 290 80, 330 140, 300 200 S 250 320, 280 400" fill="none" stroke="#4FC3F7" stroke-width="5" opacity=".55" stroke-linecap="round"/>
+          <text x="312" y="40" font-family="Atkinson Hyperlegible" font-size="13" fill="#4FC3F7" opacity=".85">Río Esla</text>
+          <g font-family="Atkinson Hyperlegible, sans-serif" font-size="14" fill="#fff">
+            <g class="pin" style="transition-delay:.15s"><circle class="ring" cx="240" cy="200" r="22" fill="none" stroke="#F2B544" stroke-width="2"/><circle cx="240" cy="200" r="10" fill="#F2B544"/><text x="240" y="236" text-anchor="middle" font-weight="700" fill="#F2B544">Villaquejida</text></g>
+            <g class="pin" style="transition-delay:.3s"><circle cx="232" cy="110" r="6" fill="#7BC9A4"/><text x="244" y="114">Villamandos</text></g>
+            <g class="pin" style="transition-delay:.4s"><circle cx="300" cy="92" r="6" fill="#7BC9A4"/><text x="312" y="96">Villaornate y Castro</text></g>
+            <g class="pin" style="transition-delay:.5s"><circle cx="390" cy="185" r="6" fill="#7BC9A4"/><text x="372" y="168" text-anchor="middle">Campazas</text></g>
+            <g class="pin" style="transition-delay:.6s"><circle cx="420" cy="320" r="6" fill="#7BC9A4"/><text x="408" y="345" text-anchor="middle">Valderas</text></g>
+            <g class="pin" style="transition-delay:.7s"><circle cx="320" cy="262" r="6" fill="#7BC9A4"/><text x="334" y="266">Villafer</text></g>
+            <g class="pin" style="transition-delay:.8s"><circle cx="225" cy="285" r="6" fill="#7BC9A4"/><text x="213" y="289" text-anchor="end">Cimanes de la Vega</text></g>
+            <g class="pin" style="transition-delay:.9s"><circle cx="80" cy="120" r="6" fill="#7BC9A4"/><text x="80" y="104" text-anchor="middle">La Antigua</text></g>
+          </g>
+          <text x="16" y="388" font-family="Atkinson Hyperlegible" font-size="11" fill="#90A4AE">Mapa orientativo, no a escala</text>
+        </svg>
+      </div>
+      <div class="rv l">
+        <h2 data-k="pueblos.titulo">Empezamos en la Vega del Esla</h2>
+        <p data-k="pueblos.texto">Arrancamos en Villaquejida y los pueblos de alrededor. Iremos sumando más pueblos de León a medida que se apunten vecinos repartidores.</p>
+        <div class="chips st" data-k="pueblos.lista" data-list>Villaquejida, Villafer, Cimanes de la Vega, Villamandos, Villaornate y Castro, Campazas, Valderas, La Antigua</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dark drive" id="repartir">
+    <div class="wrap">
+      <h2 class="rv" data-k="repartir.titulo">¿Quieres repartir en tu zona?</h2>
+      <div class="rv">
+        <p data-k="repartir.texto">Regístrate como repartidor y envía tu candidatura desde la app. Cuando la autoricemos, verás los pedidos de tus pueblos y decidirás cuáles aceptas.</p>
+        <ul class="st">
+          <li data-k="repartir.b1">Tú eliges cuándo estás disponible y qué formas de pago aceptas.</li>
+          <li data-k="repartir.b2">Lista de la compra con casillas para no olvidar nada.</li>
+          <li data-k="repartir.b3">Ganancias del mes claras, con las valoraciones de tus vecinos.</li>
         </ul>
-        <a class="btn btn-alt" href="#descargar">Quiero ser repartidor</a>
-      </div>
-      <div>
-        <h3 style="margin-bottom:1rem">Empezamos por estos pueblos</h3>
-        <div class="towns">
-          <span>Boñar</span><span>Cistierna</span><span>Riaño</span><span>Sabero</span><span>Vegacervera</span>
-          <span>Villablino</span><span>Sahagún</span><span>Valencia de Don Juan</span><span>Vegas del Condado</span><span>Puebla de Lillo</span>
-        </div>
+        <a class="btn btn-line" href="#descargar">Quiero ser repartidor</a>
       </div>
     </div>
   </section>
 
-  <section class="get wrap" id="descargar">
-    <h2>Descárgala gratis</h2>
-    <p>Funciona en móviles Android desde la versión 5.0. Pronto también en Google Play.</p>
-    <div class="cta">
-      <a class="btn btn-main" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest">Descargar para Android (APK)</a>
-      <a class="btn btn-alt" href="mailto:info@unocerobits.com?subject=T%20lo%20traigo">Escríbenos</a>
+  <section class="mist get" id="descargar">
+    <div class="wrap">
+      <h2 class="rv" data-k="descargar.titulo">Descárgala gratis</h2>
+      <p class="rv" data-k="descargar.texto">Funciona en móviles Android desde la versión 5.0. Pronto también en Google Play. La versión para iPhone está en estudio.</p>
+      <div class="cta rv">
+        <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">Descargar para Android (APK)</a>
+        <a class="btn btn-ink" href="mailto:info@unocerobits.com?subject=T%20lo%20traigo">Escríbenos</a>
+      </div>
+      <span id="dlInfo"></span>
     </div>
-    <p class="stores">Versión para iPhone en estudio.</p>
   </section>
 </main>
 
@@ -290,49 +398,225 @@ footer p{font-size:1rem}
   <div class="wrap">
     <div class="foot">
       <div>
-        <a class="logo" href="#" style="color:#fff"><img src="icon.svg" alt="">T lo traigo</a>
-        <p style="margin-top:.8rem">Desarrollada por</p>
+        <a class="logo" href="#"><img src="icon.svg" alt="">T lo traigo</a>
+        <p style="margin-top:.9rem">Desarrollada por</p>
         <div class="makers">
-          <a href="https://github.com/Xito-Development" aria-label="Xito Development"><span class="xito"><img src="xito-development.png" alt=""></span>Xito Development</a>
-          <a href="https://unocerobits.com" aria-label="UNOCEROBITS"><img src="unocerobits.png" alt="">UNOCEROBITS</a>
+          <a href="https://github.com/Xito-Development"><span class="xito"><img src="xito-development.png" alt=""></span>Xito Development</a>
+          <a href="https://unocerobits.com"><img src="unocerobits.png" alt="">UNOCEROBITS</a>
         </div>
       </div>
-      <div>
-        <h3>Contacto</h3>
-        <p><a href="mailto:info@unocerobits.com">info@unocerobits.com</a><br><a href="https://unocerobits.com">unocerobits.com</a></p>
-      </div>
-      <div>
-        <h3>Legal</h3>
-        <p><a href="privacidad.html">Política de privacidad</a><br><a href="privacidad.html#eliminar">Eliminar mi cuenta</a></p>
-      </div>
+      <div><h3>Contacto</h3><p><a href="mailto:info@unocerobits.com">info@unocerobits.com</a><br><a href="https://unocerobits.com">unocerobits.com</a></p></div>
+      <div><h3>Legal</h3><p><a href="privacidad.html">Política de privacidad</a><br><a href="privacidad.html#eliminar">Eliminar mi cuenta</a></p></div>
     </div>
     <p class="legal">© 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.</p>
   </div>
 </footer>
 
+<!-- Acceso al modo edición -->
+<div class="modal" id="login" role="dialog" aria-modal="true" aria-labelledby="loginT">
+  <form id="loginForm">
+    <h3 id="loginT">Modo edición</h3>
+    <p style="color:#4F5D59;font-size:1rem">Entra con una cuenta de administrador de T lo traigo.</p>
+    <input id="lu" autocomplete="username" placeholder="Usuario o correo" required>
+    <input id="lp" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+    <div class="err" id="lerr"></div>
+    <div class="row"><button type="button" class="btn btn-ink" id="lcancel">Cancelar</button><button class="btn btn-main" id="lok">Entrar</button></div>
+  </form>
+</div>
+<div id="editBar" role="toolbar" aria-label="Edición de la web">
+  <span id="editInfo">Editando</span>
+  <button class="btn btn-main" id="eSave" type="button">Guardar</button>
+  <button class="btn btn-line" id="eUndo" type="button">Deshacer</button>
+  <button class="btn btn-line" id="eExit" type="button">Salir</button>
+</div>
+
 <script>
 (function () {
-  var scene = document.getElementById('scene');
-  var road = document.getElementById('road');
-  function play() {
-    scene.classList.remove('go');
-    void scene.offsetWidth; // reinicia la animación
-    scene.classList.add('go');
+  var SB = 'https://qqqudthqgpojbipsevna.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxcXVkdGhxZ3BvamJpcHNldm5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NDIxODUsImV4cCI6MjEwNzAxODE4NX0.GDqWTmFMgu_DX7oZ3YGcf1HHgT7-FIOJ7n8ctjRUc-w';
+  var REPO = 'Xito-Development/T-lo-traigo';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (s, c) { return (c || document).querySelector(s); }, $$ = function (s, c) { return [].slice.call((c || document).querySelectorAll(s)); };
+
+  /* ---------- Contenido editable (Supabase: tabla site_content) ---------- */
+  function renderList(el, v) {
+    el.textContent = '';
+    v.split(',').map(function (s) { return s.trim(); }).filter(Boolean).forEach(function (t, i) {
+      var s = document.createElement('span'); s.textContent = t; if (i === 0) s.className = 'hub';
+      s.style.transitionDelay = (i * .07) + 's'; el.appendChild(s);
+    });
   }
-  if (!CSS.supports || !CSS.supports('offset-path', 'path("M0 0")')) {
-    document.getElementById('bag').setAttribute('transform', 'translate(440 150)');
-    document.getElementById('bag').style.opacity = 1;
+  function getVal(el) { return el.hasAttribute('data-list') ? (el.dataset.raw || '') : el.innerText.trim(); }
+  function setVal(el, v) { if (el.hasAttribute('data-list')) { el.dataset.raw = v; renderList(el, v); } else el.textContent = v; }
+  $$('[data-list]').forEach(function (el) { setVal(el, el.textContent.trim()); });
+  var original = {}; $$('[data-k]').forEach(function (el) { original[el.dataset.k] = getVal(el); });
+  fetch(SB + '/rest/v1/site_content?select=key,value', { headers: { apikey: KEY } })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (rows) { rows.forEach(function (row) { var el = $('[data-k="' + row.key + '"]'); if (el) { setVal(el, row.value); original[row.key] = row.value; } }); })
+    .catch(function () {});
+
+  /* ---------- Descarga directa del último APK ---------- */
+  fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel) return;
+      var a = (rel.assets || []).filter(function (x) { return x.name === 'TLoTraigo.apk'; })[0] || (rel.assets || []).filter(function (x) { return /\.apk$/.test(x.name); })[0];
+      if (!a) return;
+      $$('a.dl').forEach(function (l) { l.href = a.browser_download_url; l.setAttribute('download', ''); });
+      var mb = (a.size / 1048576).toFixed(1).replace('.', ',');
+      $('#dlInfo').textContent = 'Versión ' + rel.tag_name.replace(/^v/, '') + ' · ' + mb + ' MB · publicada el ' + new Date(rel.published_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    }).catch(function () {});
+
+  /* ---------- Portada ---------- */
+  $$('[data-split]').forEach(function (el, row) {
+    var t = el.textContent; el.textContent = '';
+    t.split('').forEach(function (c, i) {
+      var s = document.createElement('span'); s.className = 'ch'; s.textContent = c === ' ' ? '\u00A0' : c;
+      s.style.animationDelay = (row * .25 + i * .06) + 's'; el.appendChild(s);
+    });
+  });
+  var scene = $('#scene');
+  function play() { scene.classList.remove('go'); void scene.offsetWidth; scene.classList.add('go'); }
+  if (!(window.CSS && CSS.supports && CSS.supports('offset-path', 'path("M0 0")'))) { var bag = $('#bag'); bag.setAttribute('transform', 'translate(440 150)'); bag.style.opacity = 1; }
+  play(); $('#replay').addEventListener('click', play);
+
+  var cv = $('#plexus'), ctx = cv.getContext('2d'), pts = [], W, H, dpr = Math.min(window.devicePixelRatio || 1, 2), mouse = { x: -999, y: -999 }, heroVisible = true;
+  function size() {
+    var r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var n = Math.round(W * H / 15000); pts = [];
+    for (var i = 0; i < n; i++) pts.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3 });
   }
-  play();
-  document.getElementById('replay').addEventListener('click', play);
-  var ticket = document.getElementById('ticket');
-  var lines = ticket.querySelectorAll('.line');
-  lines.forEach(function (l, i) { l.style.transitionDelay = (i * 0.12) + 's'; });
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(function (es, o) {
-      es.forEach(function (e) { if (e.isIntersecting) { ticket.classList.add('on'); o.disconnect(); } });
-    }, { threshold: .4 }).observe(ticket);
-  } else { ticket.classList.add('on'); }
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < pts.length; i++) {
+      var p = pts[i]; p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1;
+      var mdx = p.x - mouse.x, mdy = p.y - mouse.y, md = mdx * mdx + mdy * mdy;
+      if (md < 9000) { p.x += mdx * .015; p.y += mdy * .015; }   // los puntos se apartan del ratón
+      for (var j = i + 1; j < pts.length; j++) {
+        var q = pts[j], dx = p.x - q.x, dy = p.y - q.y, d = dx * dx + dy * dy;
+        if (d < 14000) { ctx.strokeStyle = 'rgba(0,255,222,' + (0.15 * (1 - d / 14000)) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+    }
+    if (!reduce && heroVisible) requestAnimationFrame(frame);
+  }
+  size(); frame(); window.addEventListener('resize', size);
+  $('#heroRight').addEventListener('pointermove', function (e) { var r = cv.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; });
+  $('#heroRight').addEventListener('pointerleave', function () { mouse.x = mouse.y = -999; });
+  new IntersectionObserver(function (e) { var was = heroVisible; heroVisible = e[0].isIntersecting; if (heroVisible && !was && !reduce) frame(); }).observe($('#heroRight'));
+
+  /* ---------- Revelado al desplazarse ---------- */
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('on'); io.unobserve(e.target);
+      if (e.target.id === 'ticket') countUp();
+    });
+  }, { threshold: .2, rootMargin: '0px 0px -8% 0px' });
+  $$('.rv, .st, #ticket, #map').forEach(function (el) { io.observe(el); });
+  $$('.st').forEach(function (s) { [].forEach.call(s.children, function (c, i) { c.style.transitionDelay = (i * .09) + 's'; }); });
+  $$('#ticket .line').forEach(function (l, i) { l.style.transitionDelay = (i * .12) + 's'; });
+  function countUp() {   // el total "rueda" hasta su valor
+    var el = $('#total'), target = parseFloat((el.textContent || '').replace(/[^\d,]/g, '').replace(',', '.'));
+    if (!target || reduce) return; var t0 = null, dur = 1200, final = el.textContent;
+    function step(t) { if (!t0) t0 = t; var k = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = (target * e).toFixed(2).replace('.', ',') + ' €'; if (k < 1) requestAnimationFrame(step); else el.textContent = final; }
+    setTimeout(function () { requestAnimationFrame(step); }, 900);
+  }
+
+  var bar = $('#progress'), header = $('#top'), steps = $('#steps'), fill = steps.querySelector('.track i'), items = $$('li', steps),
+      layers = $$('.layer'), ticking = false;
+  function onScroll() {
+    var y = window.scrollY, max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0) + ')';
+    header.classList.toggle('solid', y > 40);
+    if (!reduce && y < innerHeight * 1.2) layers.forEach(function (l) { l.style.transform = 'translateY(' + (y * parseFloat(l.dataset.depth)) + 'px)'; });
+    var r = steps.getBoundingClientRect(), p = Math.min(Math.max((innerHeight * .75 - r.top) / (r.height * .9), 0), 1);
+    fill.style.setProperty('--p', p);
+    items.forEach(function (li, i) { li.classList.toggle('lit', p >= i / (items.length - 1) - .02); });
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
+
+  /* ---------- Modo edición: 15 toques rápidos en el logo ---------- */
+  var logo = $('#logo'), taps = 0, last = 0, token = null;
+  logo.addEventListener('click', function (e) {
+    e.preventDefault();
+    var now = Date.now(); taps = (now - last < 500) ? taps + 1 : 1; last = now;
+    if (!reduce) logo.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(' + (taps % 2 ? 1 : -1) * Math.min(taps, 12) * .6 + 'deg) scale(.94)' }, { transform: 'rotate(0)' }], { duration: 180 });
+    if (taps >= 15) {
+      taps = 0;
+      logo.classList.remove('shake'); void logo.offsetWidth; logo.classList.add('shake');
+      document.body.classList.add('page-shake'); setTimeout(function () { document.body.classList.remove('page-shake'); }, 400);
+      setTimeout(function () { if (token) startEdit(); else openLogin(); }, 650);
+    } else if (taps === 1) {
+      setTimeout(function () { if (taps === 1 && Date.now() - last >= 480) window.scrollTo({ top: 0, behavior: 'smooth' }); }, 520);
+    }
+  });
+  var modal = $('#login');
+  function openLogin() { modal.classList.add('open'); $('#lerr').textContent = ''; setTimeout(function () { $('#lu').focus(); }, 50); }
+  $('#lcancel').addEventListener('click', function () { modal.classList.remove('open'); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('open'); });
+  $('#loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var u = $('#lu').value.trim(); if (u.indexOf('@') < 0) u = u + '@tlotraigo.app';
+    $('#lok').disabled = true; $('#lerr').textContent = '';
+    fetch(SB + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: u.toLowerCase(), password: $('#lp').value }) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error('Usuario o contraseña incorrectos'); return j; }); })
+      .then(function (j) {
+        return fetch(SB + '/rest/v1/rpc/is_admin', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + j.access_token, 'Content-Type': 'application/json' }, body: '{}' })
+          .then(function (r) { return r.json(); }).then(function (ok) { if (ok !== true) throw new Error('Esta cuenta no es de administrador'); token = j.access_token; });
+      })
+      .then(function () { modal.classList.remove('open'); $('#lp').value = ''; startEdit(); })
+      .catch(function (err) { $('#lerr').textContent = err.message; modal.querySelector('form').classList.add('shake'); setTimeout(function () { modal.querySelector('form').classList.remove('shake'); }, 700); })
+      .then(function () { $('#lok').disabled = false; });
+  });
+  function startEdit() {
+    document.body.classList.add('editing');
+    $$('.rv, .st, #ticket, #map').forEach(function (el) { el.classList.add('on'); });
+    $$('[data-k]').forEach(function (el) {
+      if (el.hasAttribute('data-list')) el.textContent = el.dataset.raw;   // la lista se edita separada por comas
+      el.setAttribute('contenteditable', 'plaintext-only');
+      if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true');
+    });
+    $('#editInfo').textContent = 'Editando: toca cualquier texto con borde';
+  }
+  document.addEventListener('paste', function (e) {   // pegar siempre como texto plano
+    if (!document.body.classList.contains('editing') || !e.target.closest('[data-k]')) return;
+    e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text'));
+  });
+  document.addEventListener('input', function (e) { var el = e.target.closest && e.target.closest('[data-k]'); if (el) el.classList.add('dirty'); });
+  function currentVal(el) { return el.innerText.replace(/\n{3,}/g, '\n\n').trim(); }
+  function stopEdit() {
+    $$('[data-k]').forEach(function (el) {
+      el.removeAttribute('contenteditable'); el.classList.remove('dirty');
+      if (el.hasAttribute('data-list')) setVal(el, el.dataset.raw);
+    });
+    document.body.classList.remove('editing');
+  }
+  $('#eSave').addEventListener('click', function () {
+    var rows = $$('[data-k]').map(function (el) { return { key: el.dataset.k, value: currentVal(el) }; })
+      .filter(function (r) { return r.value && r.value !== original[r.key]; });
+    if (!rows.length) { $('#editInfo').textContent = 'No hay cambios'; return; }
+    $('#editInfo').textContent = 'Guardando…';
+    fetch(SB + '/rest/v1/site_content?on_conflict=key', { method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rows) })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.status === 401 ? 'La sesión ha caducado: vuelve a entrar' : 'No se pudo guardar');
+        rows.forEach(function (row) { original[row.key] = row.value; var el = $('[data-k="' + row.key + '"]'); if (el.hasAttribute('data-list')) el.dataset.raw = row.value; });
+        $$('[data-k].dirty').forEach(function (el) { el.classList.remove('dirty'); });
+        $('#editInfo').textContent = 'Guardado ✓ (' + rows.length + ')';
+      })
+      .catch(function (err) { $('#editInfo').textContent = err.message; if (/caducado/.test(err.message)) token = null; });
+  });
+  $('#eUndo').addEventListener('click', function () {
+    $$('[data-k]').forEach(function (el) { var v = original[el.dataset.k]; if (el.hasAttribute('data-list')) { el.dataset.raw = v; el.textContent = v; } else el.textContent = v; el.classList.remove('dirty'); });
+    $('#editInfo').textContent = 'Cambios deshechos';
+  });
+  $('#eExit').addEventListener('click', stopEdit);
 })();
 </script>
 </body>

@@ -1,4 +1,4 @@
-<#
+﻿<#
   Publica T lo traigo con un solo paso (Windows).
   Uso: doble clic en "publicar.bat" en la raíz del proyecto.
   Opciones: .\scripts\publicar.ps1 [-Tipo parche|menor|mayor] [-Mensaje "qué ha cambiado"] [-SoloSubir]

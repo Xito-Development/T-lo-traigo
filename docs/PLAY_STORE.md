@@ -11,6 +11,7 @@
 | Icono 512×512 y gráfico 1024×500 | ✅ `fastlane/metadata/android/es-ES/images/` |
 | Capturas de pantalla (mín. 2 de móvil) | ⬜ hacerlas desde el móvil |
 | Cuenta de desarrollador (25 USD, verificación de identidad) | ⬜ |
+| Sin autoactualización en Play (variante `play` sin `REQUEST_INSTALL_PACKAGES`) | ✅ |
 | Pagos de bienes físicos (Stripe/Bizum) | ✅ permitido fuera de Google Play Billing |
 
 ## Pasos

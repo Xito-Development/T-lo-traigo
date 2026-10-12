@@ -48,6 +48,9 @@ fun AppNav(vm: AppViewModel) {
         }
         if (nav.currentDestination?.route != dest) nav.navigate(dest) { popUpTo(nav.graph.id) { inclusive = true }; launchSingleTop = true }
     }
+    val update by vm.update.collectAsState()
+    LaunchedEffect(Unit) { vm.checkUpdate() }
+    update?.let { UpdateDialog(it) { vm.dismissUpdate() } }
     val toVerify: (String, String) -> Unit = { email, mode -> nav.navigate("verify/$mode/${Uri.encode(email)}") }
     val spec = tween<IntOffset>(380, easing = EaseOutCubic)
     NavHost(

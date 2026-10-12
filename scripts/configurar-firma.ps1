@@ -1,4 +1,4 @@
-<#
+﻿<#
   Configura UNA SOLA VEZ la firma de la app y los secretos de GitHub (Windows).
   Uso: .\scripts\configurar-firma.ps1 [-PlayJson C:\ruta\cuenta-servicio.json]
   Guarda la clave en %USERPROFILE%\TLoTraigo-firma\ (¡haz copia de seguridad! sin ella no podrás actualizar la app).
