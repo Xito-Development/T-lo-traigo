@@ -2,9 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
-## [0.4.0.1] - 2026-10-12
-### Cambiado
-- Actualizaciones dentro de la app y descarga directa del APK desde la web.
+## [0.4.1] - 2026-10-12
+### Añadido
+- Actualizaciones dentro de la app (versión GitHub) con animación de descarga e instalación.
+- Web: modo edición oculto, descarga directa del último APK y nuevas animaciones.
+- Vigilante de Descargas con carpeta configurable y reemplazo completo del proyecto.
 
 ## [0.4.0] - 2026-10-12
 ### Añadido
@@ -19,7 +21,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). V
 - Zona de lanzamiento: Villaquejida, Villafer, Cimanes de la Vega, Villamandos, Campazas, Villaornate y Castro, Valderas y La Antigua.
 - Ficha de Google Play (fastlane) y subida opcional a Play desde GitHub Actions.
 - Publicación en un paso: `publicar.bat` sube la versión, actualiza el CHANGELOG y hace push; GitHub Actions crea la Release sola.
-- `instalar-vigilante.bat`: los ZIP descargados de Claude se aplican solos al proyecto.
+- `instalar-vigilante.bat`: los ZIP descargados de Claude reemplazan solos la carpeta del proyecto (con copia de seguridad previa); `cambiar-ubicacion.bat` para elegir otra carpeta.
 - `configurar-firma.bat`: crea la clave de firma y guarda los secretos en GitHub en un paso.
 ### Cambiado
 - Dos variantes: `github` (APK de las Releases, con actualizador) y `play` (AAB para Google Play, sin actualizador, como exige Play).

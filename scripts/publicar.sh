@@ -11,11 +11,14 @@ gh auth setup-git
 git remote get-url origin >/dev/null 2>&1 && git remote set-url origin "$REPO" || git remote add origin "$REPO"
 git fetch origin --tags -q || true
 if git ls-remote --heads origin main | grep -q main && ! git rev-parse -q --verify HEAD >/dev/null; then git fetch origin main -q; git reset --soft origin/main; fi
-CUR=$(grep '^VERSION_NAME=' version.properties | cut -d= -f2)
-if git ls-remote --tags origin "refs/tags/v$CUR" | grep -q .; then
-  IFS=. read -r MA MI PA <<< "${CUR%%-*}"
+CUR=$(sed 's/^\xEF\xBB\xBF//' version.properties | grep '^VERSION_NAME=' | cut -d= -f2 | tr -d '[:space:]')
+TOP=$(git ls-remote --tags origin 'refs/tags/v*' | sed -n 's#.*refs/tags/v##p' | grep -v '\^{}' | sort -V | tail -1)
+BASE=$(printf '%s\n%s\n' "$CUR" "$TOP" | grep . | sort -V | tail -1)
+if git ls-remote --tags origin "refs/tags/v$BASE" | grep -q .; then
+  IFS=. read -r MA MI PA <<< "${BASE%%-*}"
   case $TIPO in mayor) NEW="$((MA+1)).0.0";; menor) NEW="$MA.$((MI+1)).0";; *) NEW="$MA.$MI.$((PA+1))";; esac
-else NEW=$CUR; fi
+else NEW=$BASE; fi
+echo "Última publicada: ${TOP:-ninguna} -> nueva: $NEW"
 [ -n "$MSG" ] || read -rp "¿Qué ha cambiado en la versión $NEW? " MSG
 MSG=${MSG:-Mejoras y correcciones.}
 printf 'VERSION_NAME=%s' "$NEW" > version.properties

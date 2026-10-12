@@ -1,79 +1,36 @@
-# CLAUDE.md — Guía operativa para el agente (proyecto Fisiory)
+# T lo traigo — contexto para Claude Code
 
-> Manual de trabajo para Claude Code. **No duplica el brief**: la especificación
-> completa está en `docs/brief_implementacion_fisio.md`. Este fichero dice **cómo**
-> trabajar de forma eficiente; el brief dice **qué** construir.
+App Android (Kotlin + Jetpack Compose) tipo "Uber Eats de supermercado" para personas mayores de pueblos de León
+(zona de lanzamiento: Villaquejida y alrededores). Propiedad: Xito Development y UNOCEROBITS. Licencia propietaria.
 
-## Documentos del proyecto (leer UNA sola vez)
-- `docs/brief_implementacion_fisio.md` — especificación (arquitectura, módulos A–H, §7).
-- `config.yaml` — parámetros de runtime.
-- `reference/SKILL.md` — especificación del **módulo F** (analizador) y límites clínicos.
+## Repositorio y publicación
+- Remoto: https://github.com/Xito-Development/T-lo-traigo (rama `main`).
+- Versión: `version.properties` (`VERSION_NAME=x.y.z`). `publicar.bat` calcula la siguiente a partir del tag más alto publicado.
+- Notas de la próxima versión: escribirlas en `CAMBIOS_PENDIENTES.md` (### Añadido/Cambiado/Corregido + líneas `- `); publicar.bat las pasa al CHANGELOG y vacía el archivo. No editar a mano versiones ya publicadas del CHANGELOG.
+- Publicar: subir la versión, añadir la entrada en `CHANGELOG.md` (Keep a Changelog, en español), actualizar
+  `fastlane/metadata/android/es-ES/changelogs/default.txt` y hacer push a `main`. GitHub Actions crea el tag `vX.Y.Z`
+  y la Release con `TLoTraigo-x.y.z.apk`, `TLoTraigo.apk` (nombre fijo para la web y el actualizador) y el AAB.
+  Atajo en Windows: `publicar.bat`.
+- Firma: secretos `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` (`configurar-firma.bat`).
+  Clave local en `%USERPROFILE%\TLoTraigo-firma\` — nunca subirla al repo. Opcional `PLAY_SERVICE_ACCOUNT_JSON`.
+- `instalar-vigilante.bat`: los ZIP descargados de Claude reemplazan esta carpeta (copia previa en %LOCALAPPDATA%\TLoTraigo\copias; se conserva .git). Cambiar carpeta: `cambiar-ubicacion.bat`.
 
-## Reglas de eficiencia (tokens y recursos) — OBLIGATORIO
-1. **Lectura única:** al iniciar la sesión, lee el brief, `config.yaml` y `reference/SKILL.md`
-   **una vez** y construye un índice mental. **No los releas** salvo que necesites una sección
-   concreta; en ese caso usa `grep`/lectura por rango, nunca el fichero completo.
-2. **No releas ficheros ya en contexto.** Si algo ya se leyó en esta sesión, reutilízalo.
-3. **Lectura dirigida:** usa `grep`/`rg` y lectura por líneas en vez de abrir archivos enteros.
-4. **Trabaja por módulo, no por repo:** carga solo los ficheros del módulo actual. No escanees
-   todo el árbol en cada paso.
-5. **Diffs y respuestas mínimas:** no expliques de más; muestra el cambio y el resultado del test.
-6. **Sin tareas redundantes:** no repitas instalaciones, builds ni búsquedas ya hechas.
-7. **Subagentes solo si ahorran contexto** (p. ej. una exploración aislada que no debe contaminar
-   el contexto principal). Si no ahorran, no los uses.
+## Build
+- JDK 17, Android SDK 36, AGP 8.11.1, Gradle 8.13, Kotlin 2.0.21. `minSdk 21`, `targetSdk 36`.
+- No subir versiones de AndroidX que exijan minSdk > 21 (core 1.15, activity 1.9.3, lifecycle 2.8.7, navigation 2.8.5, Compose BOM 2024.12.01).
+- Variantes: `github` (actualizador integrado, `REQUEST_INSTALL_PACKAGES` y FileProvider en `src/github/`) y `play` (sin actualizador; Play no permite autoactualizarse).
+- `./gradlew assembleGithubDebug` · release: `./gradlew assembleGithubRelease bundlePlayRelease`.
 
-## Skills / plugins — buscar antes de implementar
-- Al empezar, **comprueba las skills/plugins disponibles** (marketplace de Claude Code y skills
-  instaladas) relevantes para: scaffolding de proyecto Python, **pytest**, manejo de audio
-  (faster-whisper / pyannote), empaquetado y linters. **Si existe una skill adecuada, úsala**
-  en vez de reescribir desde cero.
-- **Módulo F:** `reference/SKILL.md` (rehabilitation-analyzer) es su especificación. Si puede
-  instalarse/invocarse como skill, úsala; si no, impleméntala siguiendo ese documento.
-- No inventes skills: si no existe una adecuada, impleméntalo a mano y sigue.
+## Backend (Supabase)
+- Proyecto `qqqudthqgpojbipsevna` (eu-west-3). Cliente propio en `data/Api.kt` (OkHttp → GoTrue/PostgREST/Storage).
+- Precios y tarifas solo en servidor: `_order_quote`, `quote_order`, `create_order`. RLS en todas las tablas.
+- Roles: cliente, repartidor, admin, superadmin (`DNL-Owner` = dnl-owner@tlotraigo.app).
+- Textos de la web en `site_content` (lectura pública, escritura solo admin).
+- Migraciones en `supabase/migrations/` (las posteriores a v0.2 están en remoto: `supabase db pull`).
 
 ## Convenciones
-- **Python 3.11**, `venv` en `.venv/`. Tipado y `pydantic` para esquemas.
-- Estructura de repo según §10 del brief (`src/`, `web/`, `data/`, `tests/`).
-- Secretos por **variable de entorno** (`HF_TOKEN`), nunca en el código ni en git.
-- `data/` y `.venv/` en `.gitignore`.
-
-## Entorno (YA RESUELTO — no reinvestigar)
-- **Python 3.11 obligatorio.** NO usar 3.12+ ni 3.14: PyTorch no tiene wheels para ellas.
-  Crear el venv con `py -3.11 -m venv .venv`.
-- **torch/torchaudio ≥ 2.8 desde el índice CUDA `cu128`** (cu124 solo llega a 2.6 y rompe
-  pyannote 4.x, que exige ≥2.8). Instalarlos **DESPUÉS** de `requirements.txt`, porque PyPI
-  reinstala la build CPU y la pisa.
-- Verificación obligatoria tras instalar: `torch.cuda.is_available()` debe ser `True`.
-- En Windows, ejecutar siempre en **Git Bash** (Claude Code lo requiere).
-
-## Comandos del proyecto
-```bash
-py -3.11 -m venv .venv
-source .venv/Scripts/activate                 # PowerShell: .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-# torch/torchaudio CUDA SIEMPRE al final, desde cu128:
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128
-python -c "import torch; print(torch.__version__, torch.cuda.is_available())"  # → +cu128 True
-pytest -q                       # tests
-python -m src.orchestrator      # ejecutar pipeline (cuando exista)
-```
-
-## Restricciones que NO se negocian
-- **VRAM 8 GB → orquestación SECUENCIAL** (§5): nunca ASR-grande + LLM en GPU a la vez;
-  pyannote en CPU. Modelos limitados a 4B / Whisper distil-turbo.
-- **Límites clínicos** (§8 / SKILL.md): no diagnosticar, prescribir ni pronosticar. Solo extraer.
-- **RGPD:** todo local; `store_audio: false` por defecto; sin datos identificativos.
-
-## Orden de trabajo y "definición de hecho"
-Implementa **A → B → C → D → E → F → G → H** (§7 del brief). Para CADA módulo:
-1. Implementa en `src/`.
-2. Escribe un test mínimo en `tests/`.
-3. Verifica el **criterio de aceptación** del módulo (está en §7).
-4. `pytest -q` en verde.
-5. `git commit` con mensaje claro (`feat(modulo-X): ...`).
-6. **Detente y pide validación** antes del siguiente módulo.
-
-## Estado inicial esperado
-Ya existen: `config.yaml` y `src/extract.py` (módulo E base). Empieza por el **módulo A**
-(captura desde micro integrado) y respeta lo ya hecho en E al llegar a él.
+- Textos en castellano de España, claros y sencillos para personas mayores.
+- Accesibilidad primero: áreas táctiles ≥ 48 dp (56–64 en modo fácil), alto contraste, lectura en voz alta.
+- Colores desde `MaterialTheme.colorScheme` (paletas en `ui/theme/Theme.kt`); iconos desde `AppIcons`.
+- Web en `web/t-lo-traigo/` (→ unocerobits.com/t-lo-traigo/). Elementos con `data-k` son editables desde la propia web
+  (15 toques rápidos en el logo + cuenta admin).

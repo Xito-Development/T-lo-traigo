@@ -34,7 +34,7 @@ Modo fácil, 4 tamaños de letra, lectura en voz alta, 7 paletas, modo claro/osc
 GitHub Actions compila y publica la Release con APK y AAB en unos 8 minutos: <https://github.com/Xito-Development/T-lo-traigo/releases/latest>.
 Opciones: `publicar.bat -Tipo menor` (0.4 → 0.5), `-Tipo mayor` (→ 1.0.0) o `-SoloSubir` (sin versión nueva). En macOS/Linux: `scripts/publicar.sh`.
 
-Actualizar desde Claude sin copiar a mano: doble clic **una vez** en **`instalar-vigilante.bat`**. Desde entonces, cada `tlotraigo*.zip`, `web-t-lo-traigo*.zip` o `CLAUDE.md` que descargues se aplica solo a la carpeta del proyecto (tus cambios sin guardar se apartan antes con `git stash`).
+Actualizar desde Claude sin copiar a mano: doble clic **una vez** en **`instalar-vigilante.bat`** y elige la carpeta del proyecto. Desde entonces, cada `tlotraigo*.zip` que descargues **reemplaza** el proyecto (lo que no esté en el ZIP se elimina; se conservan `.git`, `local.properties` y las cachés de compilación), `web-t-lo-traigo*.zip` reemplaza `web\t-lo-traigo` y `CLAUDE.md` se copia en la raíz. Antes de cada reemplazo se guarda una copia en `%LOCALAPPDATA%\TLoTraigo\copias` (últimas 5). Para cambiar la carpeta: **`cambiar-ubicacion.bat`**.
 
 Google Play (opcional): `configurar-firma.bat -PlayJson C:\ruta\cuenta-servicio.json` y cada versión se sube sola a pruebas internas.
 
