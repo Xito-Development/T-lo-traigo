@@ -1,3 +1,4 @@
 • La versión nueva se calcula a partir de la última publicada en GitHub (no vuelve a 0.4.0 al aplicar un ZIP).
 • El vigilante conserva `version.properties` y `CHANGELOG.md` de tu carpeta.
 • Publicación automática: al descargar el ZIP del proyecto se aplica y se publica solo, con aviso al terminar.
+• Web propia en https://tlotraigo.unocerobits.com (enlaces de la app y de la política de privacidad).

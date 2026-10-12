@@ -32,5 +32,5 @@ App Android (Kotlin + Jetpack Compose) tipo "Uber Eats de supermercado" para per
 - Textos en castellano de España, claros y sencillos para personas mayores.
 - Accesibilidad primero: áreas táctiles ≥ 48 dp (56–64 en modo fácil), alto contraste, lectura en voz alta.
 - Colores desde `MaterialTheme.colorScheme` (paletas en `ui/theme/Theme.kt`); iconos desde `AppIcons`.
-- Web en `web/t-lo-traigo/` (→ unocerobits.com/t-lo-traigo/). Elementos con `data-k` son editables desde la propia web
+- Web en `web/t-lo-traigo/` (→ tlotraigo.unocerobits.com/). Elementos con `data-k` son editables desde la propia web
   (15 toques rápidos en el logo + cuenta admin).
