@@ -1,0 +1,1 @@
+Panel de administración, valoraciones, entregas programadas, nuevos temas y tipos de letra, y nuevo icono.

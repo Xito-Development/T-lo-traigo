@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>T lo traigo: la compra del súper en la puerta de casa</title>
+<meta name="description" content="App para que las personas mayores de los pueblos de León (o sus familias) pidan la compra del supermercado y un vecino repartidor se la lleve a casa.">
+<meta name="theme-color" content="#2E6B57">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta property="og:title" content="T lo traigo">
+<meta property="og:description" content="La compra del súper, en la puerta de casa. Para los pueblos de León.">
+<meta property="og:image" content="https://unocerobits.com/t-lo-traigo/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pino:#2E6B57; --pino-hondo:#1F4D3F; --mostaza:#F2B544; --mostaza-hondo:#DE9A2A; --hoja:#7BC9A4;
+  --niebla:#F3F7F4; --pizarra:#1C2624; --gris:#4D5B57; --linea:#D5E0DA; --blanco:#FFFFFF;
+  --r-s:12px; --r-m:20px; --r-l:36px;
+  --ease:cubic-bezier(.22,.8,.24,1);
+  --f-display:"Bricolage Grotesque", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--f-body);font-size:1.125rem;line-height:1.6;color:var(--pizarra);background:var(--niebla)}
+img,svg{max-width:100%;display:block}
+a{color:var(--pino)}
+:focus-visible{outline:3px solid var(--mostaza-hondo);outline-offset:3px;border-radius:6px}
+.wrap{width:min(1120px,100% - 2.5rem);margin-inline:auto}
+h1,h2,h3{font-family:var(--f-display);line-height:1.05;letter-spacing:-.02em;color:var(--pino-hondo)}
+h2{font-size:clamp(2rem,4.5vw,3.1rem);margin-bottom:.6em}
+h3{font-size:1.35rem;letter-spacing:-.01em}
+p{max-width:62ch}
+.btn{display:inline-flex;align-items:center;gap:.6rem;font:700 1.1rem var(--f-body);text-decoration:none;
+  padding:1rem 1.5rem;border-radius:999px;border:2px solid transparent;transition:transform .25s var(--ease),background .25s,box-shadow .25s}
+.btn-main{background:var(--pino);color:#fff;box-shadow:0 8px 24px -10px rgba(31,77,63,.55)}
+.btn-main:hover{transform:translateY(-2px);background:var(--pino-hondo)}
+.btn-alt{border-color:var(--pino);color:var(--pino);background:transparent}
+.btn-alt:hover{background:rgba(46,107,87,.08)}
+
+/* Cabecera */
+header{padding:1.2rem 0;position:sticky;top:0;z-index:10;background:rgba(243,247,244,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.logo{display:flex;align-items:center;gap:.7rem;text-decoration:none;font:800 1.35rem var(--f-display);color:var(--pino-hondo)}
+.logo img{width:44px;height:44px;border-radius:12px}
+nav a{margin-left:1.4rem;text-decoration:none;color:var(--gris);font-weight:700}
+nav a:hover{color:var(--pino)}
+@media (max-width:760px){nav a:not(.btn){display:none}}
+
+/* Portada */
+.hero{padding:3rem 0 4rem;display:grid;grid-template-columns:1.05fr 1fr;gap:2.5rem;align-items:center}
+.hero h1{font-size:clamp(2.6rem,6.4vw,5rem);font-weight:800}
+.hero p{font-size:1.3rem;color:var(--gris);margin:1.3rem 0 2rem}
+.cta{display:flex;flex-wrap:wrap;gap:.8rem}
+.scene{position:relative;border-radius:var(--r-l);background:linear-gradient(180deg,#E3EFE8 0%,#CFE5D9 100%);aspect-ratio:1/1;overflow:hidden}
+.scene svg{width:100%;height:100%}
+.replay{position:absolute;right:1rem;bottom:1rem;font:700 .95rem var(--f-body);background:rgba(255,255,255,.85);border:0;border-radius:999px;padding:.55rem 1rem;color:var(--pino-hondo);cursor:pointer}
+#road{stroke-dasharray:1;stroke-dashoffset:1}
+.go #road{animation:draw 2.6s var(--ease) .4s forwards}
+#bag{offset-path:path("M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150");offset-rotate:0deg;offset-distance:0%;opacity:0}
+.go #bag{animation:ride 2.8s var(--ease) .6s forwards}
+#house-glow{opacity:0;transform-origin:440px 132px}
+.go #house-glow{animation:glow 1.4s var(--ease) 3.2s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes ride{0%{offset-distance:0%;opacity:0}8%{opacity:1}100%{offset-distance:100%;opacity:1}}
+@keyframes glow{0%{opacity:0;transform:scale(.4)}60%{opacity:.55;transform:scale(1.15)}100%{opacity:.4;transform:scale(1)}}
+@media (max-width:860px){.hero{grid-template-columns:1fr}.scene{max-width:520px}}
+
+/* Cómo funciona: es una secuencia real */
+.how{padding:4.5rem 0;background:var(--blanco);border-radius:var(--r-l) var(--r-l) 0 0}
+.steps{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;counter-reset:paso}
+.steps li{counter-increment:paso;position:relative;padding-top:4.2rem}
+.steps li::before{content:counter(paso);position:absolute;top:0;left:0;width:3.2rem;height:3.2rem;border-radius:50%;
+  display:grid;place-items:center;font:800 1.5rem var(--f-display);background:var(--mostaza);color:var(--pino-hondo)}
+.steps li:not(:last-child)::after{content:"";position:absolute;top:1.6rem;left:3.8rem;right:-1.4rem;border-top:3px dotted var(--linea)}
+.steps p{color:var(--gris);margin-top:.5rem}
+@media (max-width:760px){.steps{grid-template-columns:1fr}.steps li::after{display:none}}
+
+/* Mayores */
+.older{padding:4.5rem 0;background:var(--blanco)}
+.older-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:3rem;align-items:start}
+.feats{list-style:none;padding:0;display:grid;gap:1.4rem}
+.feats li{display:grid;grid-template-columns:3.2rem 1fr;gap:1rem;align-items:start}
+.feats svg{width:3.2rem;height:3.2rem;padding:.7rem;border-radius:16px;background:#E3EFE8;color:var(--pino)}
+.feats p{color:var(--gris)}
+.big-a{font:800 clamp(7rem,16vw,12rem)/.9 var(--f-body);color:var(--pino);letter-spacing:-.04em}
+.big-a small{display:block;font:700 1.1rem var(--f-body);color:var(--gris);letter-spacing:0;margin-top:1rem;max-width:26ch}
+@media (max-width:860px){.older-grid{grid-template-columns:1fr}}
+
+/* Precios: ticket */
+.prices{padding:4.5rem 0;background:var(--pino-hondo);color:#E8F2EC}
+.prices h2{color:#fff}
+.prices-grid{display:grid;grid-template-columns:1fr 380px;gap:3rem;align-items:center}
+.prices p{color:#CFE2D8}
+.ticket{background:#FFFDF8;color:var(--pizarra);border-radius:var(--r-s);padding:1.6rem 1.6rem 2.2rem;position:relative;
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.6);font-size:1rem}
+.ticket::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;
+  background:radial-gradient(circle at 10px 100%,var(--pino-hondo) 7px,transparent 7.5px) 0 0/20px 10px repeat-x}
+.ticket h3{font-size:1.15rem;margin-bottom:.8rem;color:var(--pino-hondo)}
+.line{display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-bottom:1px dashed #E3E3DD;opacity:0;transform:translateX(-8px);transition:opacity .45s var(--ease),transform .45s var(--ease)}
+.line small{color:var(--gris)}
+.line.total{border:0;font-weight:700;font-size:1.25rem;color:var(--pino-hondo);padding-top:.8rem}
+.ticket.on .line{opacity:1;transform:none}
+.ticket .note{font-size:.85rem;color:var(--gris);margin-top:.6rem}
+@media (max-width:860px){.prices-grid{grid-template-columns:1fr}.ticket{max-width:420px}}
+
+/* Repartir */
+.drive{padding:4.5rem 0}
+.drive-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:3rem;align-items:center}
+.drive ul{padding-left:1.2rem;color:var(--gris);display:grid;gap:.4rem;margin:1rem 0 1.6rem}
+.towns{display:flex;flex-wrap:wrap;gap:.5rem}
+.towns span{background:#fff;border:2px solid var(--linea);border-radius:999px;padding:.35rem .9rem;font-weight:700;color:var(--pino-hondo)}
+@media (max-width:860px){.drive-grid{grid-template-columns:1fr}}
+
+/* Descarga */
+.get{padding:4rem 0 5rem;text-align:center}
+.get h2{margin-inline:auto}
+.get p{margin:0 auto 1.8rem;color:var(--gris)}
+.get .cta{justify-content:center}
+.stores{margin-top:1.4rem;font-size:.95rem;color:var(--gris)}
+
+footer{background:var(--pizarra);color:#C9D3CF;padding:3rem 0 calc(2rem + env(safe-area-inset-bottom))}
+.foot{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2rem}
+footer h3{color:#fff;font-size:1.05rem;margin-bottom:.6rem}
+footer a{color:#fff}
+footer p{font-size:1rem}
+.makers{display:flex;gap:1.6rem;margin-top:.8rem}
+.makers a{display:flex;flex-direction:column;align-items:center;gap:.5rem;text-decoration:none;font-weight:700;font-size:.95rem;color:#fff}
+.makers img,.makers .xito{width:72px;height:72px;border-radius:50%;transition:transform .3s var(--ease)}
+.makers .xito{display:grid;place-items:center;background:#263238;box-shadow:inset 0 0 0 1px #3A4A47}
+.makers .xito img{width:78%;height:78%;border-radius:0}
+.makers a:hover img,.makers a:hover .xito{transform:translateY(-3px)}
+.legal{max-width:none;margin-top:2.4rem;padding-top:1.4rem;border-top:1px solid #33403C;font-size:.9rem}
+@media (max-width:760px){.foot{grid-template-columns:1fr}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  #road{stroke-dashoffset:0} #bag{offset-distance:100%;opacity:1} #house-glow{opacity:.4}
+  .line{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#"><img src="icon.svg" alt="">T lo traigo</a>
+    <nav>
+      <a href="#como">Cómo funciona</a>
+      <a href="#mayores">Para mayores</a>
+      <a href="#precios">Precios</a>
+      <a href="#repartir">Repartir</a>
+      <a class="btn btn-main" href="#descargar" style="padding:.6rem 1.1rem;margin-left:1.4rem">Descargar</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <div>
+      <h1>La compra del súper, en la puerta de casa.</h1>
+      <p>Para los pueblos de León. Tú eliges los productos con precios del supermercado y un vecino repartidor te los lleva. Si lo prefieres, lo pide tu hijo o tu hija desde su móvil.</p>
+      <div class="cta">
+        <a class="btn btn-main" href="#descargar">Descargar la app</a>
+        <a class="btn btn-alt" href="#como">Ver cómo funciona</a>
+      </div>
+    </div>
+    <div class="scene" id="scene" aria-label="Ilustración: una bolsa de la compra viaja por la carretera de montaña desde el supermercado hasta una casa del pueblo" role="img">
+      <svg viewBox="0 0 520 520" aria-hidden="true">
+        <path d="M0 330 L70 250 L120 290 L190 190 L260 270 L330 170 L400 240 L460 160 L520 220 V520 H0Z" fill="#B9D8C8"/>
+        <path d="M330 170 L350 190 L338 196 L320 182Z M190 190 L208 212 L196 216 L178 206Z" fill="#fff" opacity=".85"/>
+        <path d="M0 410 C120 360 220 420 320 380 S470 330 520 350 V520 H0Z" fill="#9CCAB3"/>
+        <path id="road" pathLength="1" d="M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150" fill="none" stroke="#F2B544" stroke-width="10" stroke-linecap="round" stroke-dasharray="1"/>
+        <!-- Súper -->
+        <g transform="translate(30 372)">
+          <rect x="0" y="0" width="84" height="58" rx="8" fill="#FFFDF8"/>
+          <rect x="-4" y="-10" width="92" height="16" rx="6" fill="#2E6B57"/>
+          <rect x="30" y="24" width="22" height="34" rx="3" fill="#2E6B57"/>
+          <text x="42" y="2" text-anchor="middle" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" font-size="11" fill="#fff">SÚPER</text>
+        </g>
+        <!-- Casa del pueblo -->
+        <g transform="translate(410 100)">
+          <circle id="house-glow" cx="30" cy="32" r="46" fill="#F2B544" opacity=".35"/>
+          <path d="M0 34 L30 8 L60 34Z" fill="#8C3B2E"/>
+          <rect x="6" y="32" width="48" height="36" fill="#FFFDF8"/>
+          <rect x="24" y="44" width="12" height="24" rx="2" fill="#2E6B57"/>
+          <rect x="10" y="40" width="10" height="10" fill="#7BC9A4"/>
+        </g>
+        <!-- Bolsa que viaja -->
+        <g id="bag">
+          <g transform="translate(-27 -36) scale(.5)">
+            <path d="M41 51 C41 39 57 39 57 51" stroke="#C98422" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <path d="M38 52 C38 41 54 41 54 52" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M66 50 C64 42 66 37 71 34 C73 39 72 45 66 50Z" fill="#5BB08A"/>
+            <path d="M31 50 H81 V78 Q81 84 75 84 H37 Q31 84 31 78Z" fill="#F2B544"/>
+            <path d="M31 50 H81 V55 H31Z" fill="#DE9A2A"/>
+            <path d="M56 58 L69 68 H65.5 V80 H46.5 V68 H43Z" fill="#FFF8EC"/>
+          </g>
+        </g>
+      </svg>
+      <button class="replay" id="replay" type="button">Ver otra vez</button>
+    </div>
+  </section>
+
+  <section class="how" id="como">
+    <div class="wrap">
+      <h2>Así de sencillo</h2>
+      <ol class="steps">
+        <li><h3>Eliges tu compra</h3><p>Pan, leche, fruta, limpieza… con los precios del supermercado. La lista se guarda aunque cierres la app.</p></li>
+        <li><h3>Un vecino la hace</h3><p>Un repartidor de tu zona acepta el pedido, compra en el súper y marca cada producto.</p></li>
+        <li><h3>Te la trae a casa</h3><p>Hoy mismo o el día que elijas, por la mañana o por la tarde. Pagas en efectivo, con Bizum o con tarjeta.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="older" id="mayores">
+    <div class="wrap older-grid">
+      <div class="big-a">Aa<small>Letra grande, botones grandes y nada de prisas.</small></div>
+      <div>
+        <h2>Pensada para nuestros mayores</h2>
+        <ul class="feats">
+          <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05A4.47 4.47 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06A9 9 0 0 0 14 3.23z"/></svg>
+            <div><h3>Te lee los productos</h3><p>Un botón de altavoz lee en voz alta el nombre y el precio.</p></div></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zm1-17.93c3.94.49 7 3.86 7 7.93s-3.06 7.44-7 7.93V4.07z"/></svg>
+            <div><h3>Colores a tu gusto</h3><p>Siete paletas suaves, modo oscuro y un modo de alto contraste para ver mejor.</p></div></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            <div><h3>Tu familia te ayuda</h3><p>Con un código de seis cifras, tu hijo o tu hija puede hacerte el pedido desde donde esté.</p></div></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            <div><h3>Repetir la compra de siempre</h3><p>Con un toque vuelves a pedir lo mismo que la última vez.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="prices" id="precios">
+    <div class="wrap prices-grid">
+      <div>
+        <h2>Precios claros, sin sorpresas</h2>
+        <p>Pagas lo mismo que en el supermercado más un servicio para el repartidor. Antes de pedir ves el desglose completo: productos con su IVA, el servicio según la cantidad, el envío según la distancia a tu pueblo y, si lo quieres para hoy, un pequeño suplemento.</p>
+      </div>
+      <div class="ticket" id="ticket" aria-label="Ejemplo de ticket">
+        <h3>Ejemplo: Boñar, entrega hoy</h3>
+        <div class="line"><span>12 productos del súper<br><small>IVA incluido</small></span><span>26,28 €</span></div>
+        <div class="line"><span>Servicio del repartidor (10 %)</span><span>2,63 €</span></div>
+        <div class="line"><span>Por cantidad (2 uds. más de 10)</span><span>0,20 €</span></div>
+        <div class="line"><span>Envío a Boñar</span><span>1,50 €</span></div>
+        <div class="line"><span>Distancia (45 km)</span><span>1,80 €</span></div>
+        <div class="line"><span>Entrega en el día</span><span>1,50 €</span></div>
+        <div class="line total"><span>Total</span><span>33,91 €</span></div>
+        <p class="note">Importes de ejemplo. Las tarifas pueden variar según el pueblo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="drive wrap" id="repartir">
+    <div class="drive-grid">
+      <div>
+        <h2>¿Quieres repartir en tu zona?</h2>
+        <p>Regístrate como repartidor y envía tu candidatura desde la app. Cuando la autoricemos, verás los pedidos de tus pueblos y decidirás cuáles aceptas.</p>
+        <ul>
+          <li>Tú eliges cuándo estás disponible y qué formas de pago aceptas.</li>
+          <li>Lista de la compra con casillas para no olvidar nada.</li>
+          <li>Ganancias del mes claras, con las valoraciones de tus vecinos.</li>
+        </ul>
+        <a class="btn btn-alt" href="#descargar">Quiero ser repartidor</a>
+      </div>
+      <div>
+        <h3 style="margin-bottom:1rem">Empezamos por estos pueblos</h3>
+        <div class="towns">
+          <span>Boñar</span><span>Cistierna</span><span>Riaño</span><span>Sabero</span><span>Vegacervera</span>
+          <span>Villablino</span><span>Sahagún</span><span>Valencia de Don Juan</span><span>Vegas del Condado</span><span>Puebla de Lillo</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="get wrap" id="descargar">
+    <h2>Descárgala gratis</h2>
+    <p>Funciona en móviles Android desde la versión 5.0. Pronto también en Google Play.</p>
+    <div class="cta">
+      <a class="btn btn-main" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest">Descargar para Android (APK)</a>
+      <a class="btn btn-alt" href="mailto:info@unocerobits.com?subject=T%20lo%20traigo">Escríbenos</a>
+    </div>
+    <p class="stores">Versión para iPhone en estudio.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="#" style="color:#fff"><img src="icon.svg" alt="">T lo traigo</a>
+        <p style="margin-top:.8rem">Desarrollada por</p>
+        <div class="makers">
+          <a href="https://github.com/Xito-Development" aria-label="Xito Development"><span class="xito"><img src="xito-development.png" alt=""></span>Xito Development</a>
+          <a href="https://unocerobits.com" aria-label="UNOCEROBITS"><img src="unocerobits.png" alt="">UNOCEROBITS</a>
+        </div>
+      </div>
+      <div>
+        <h3>Contacto</h3>
+        <p><a href="mailto:info@unocerobits.com">info@unocerobits.com</a><br><a href="https://unocerobits.com">unocerobits.com</a></p>
+      </div>
+      <div>
+        <h3>Legal</h3>
+        <p><a href="privacidad.html">Política de privacidad</a><br><a href="privacidad.html#eliminar">Eliminar mi cuenta</a></p>
+      </div>
+    </div>
+    <p class="legal">© 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var scene = document.getElementById('scene');
+  var road = document.getElementById('road');
+  function play() {
+    scene.classList.remove('go');
+    void scene.offsetWidth; // reinicia la animación
+    scene.classList.add('go');
+  }
+  if (!CSS.supports || !CSS.supports('offset-path', 'path("M0 0")')) {
+    document.getElementById('bag').setAttribute('transform', 'translate(440 150)');
+    document.getElementById('bag').style.opacity = 1;
+  }
+  play();
+  document.getElementById('replay').addEventListener('click', play);
+  var ticket = document.getElementById('ticket');
+  var lines = ticket.querySelectorAll('.line');
+  lines.forEach(function (l, i) { l.style.transitionDelay = (i * 0.12) + 's'; });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es, o) {
+      es.forEach(function (e) { if (e.isIntersecting) { ticket.classList.add('on'); o.disconnect(); } });
+    }, { threshold: .4 }).observe(ticket);
+  } else { ticket.classList.add('on'); }
+})();
+</script>
+</body>
+</html>

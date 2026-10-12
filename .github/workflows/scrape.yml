@@ -1,0 +1,34 @@
+name: Actualizar precios (scraping ético)
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'   # lunes 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Solo mostrar, no escribir en Supabase'
+        type: boolean
+        default: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r scripts/scraper/requirements.txt
+      - name: Fuentes
+        env:
+          SCRAPER_SOURCES: ${{ secrets.SCRAPER_SOURCES }}
+        run: |
+          if [ -z "$SCRAPER_SOURCES" ]; then echo "::notice::Sin SCRAPER_SOURCES configurado. Nada que hacer."; exit 0; fi
+          echo "$SCRAPER_SOURCES" > scripts/scraper/sources.json
+      - name: Ejecutar
+        if: hashFiles('scripts/scraper/sources.json') != ''
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/scraper/scrape.py scripts/scraper/sources.json ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }}

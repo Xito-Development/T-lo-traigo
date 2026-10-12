@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.TLoTraigo" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/brand_bg</item>
+        <item name="android:statusBarColor">@color/brand_green</item>
+    </style>
+    <color name="brand_bg">#F3F7F4</color>
+    <color name="brand_green">#2E6B57</color>
+    <color name="brand_bg_dark">#101715</color>
+</resources>

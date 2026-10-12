@@ -1,0 +1,13 @@
+[
+  {
+    "supermarket_id": 1,
+    "name": "Supermercado ejemplo",
+    "delay_s": 6,
+    "allow_images": false,
+    "default_category_id": 5,
+    "terms_reviewed": false,
+    "urls": [
+      "https://www.ejemplo-super.es/producto/leche-entera-1l"
+    ]
+  }
+]

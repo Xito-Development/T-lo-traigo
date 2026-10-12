@@ -1,21 +1,19 @@
-MIT License
+T lo traigo
+Copyright (c) 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.
 
-Copyright (c) 2026 Xito Development and UNOCEROBITS
+LICENCIA DE SOFTWARE PROPIETARIO
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Este software, su código fuente, diseño, marca, iconos y documentación (el "Software") son propiedad
+exclusiva de UNOCEROBITS y Xito Development (los "Titulares").
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Se permite consultar el código fuente publicado en este repositorio únicamente con fines de
+   revisión, auditoría de seguridad o colaboración autorizada.
+2. Queda prohibido, sin autorización previa y por escrito de los Titulares: copiar, modificar,
+   compilar para su distribución, publicar, sublicenciar, vender o explotar comercialmente el
+   Software, en todo o en parte, así como usar su nombre, marca o icono.
+3. Las contribuciones enviadas a este repositorio se ceden a los Titulares para su uso en el Software.
+4. El Software se proporciona "tal cual", sin garantías de ningún tipo. Los Titulares no serán
+   responsables de ningún daño derivado de su uso fuera de los canales oficiales.
+5. Los componentes de terceros incluidos mantienen sus propias licencias (ver THIRD_PARTY_NOTICES.md).
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Esta licencia se rige por la legislación española. Contacto: info@unocerobits.com · https://unocerobits.com

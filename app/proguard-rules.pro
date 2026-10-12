@@ -1,0 +1,4 @@
+-keepattributes *Annotation*, InnerClasses, Signature
+-keep class es.unocerobits.tlotraigo.data.** { *; }
+-keepclassmembers class es.unocerobits.tlotraigo.** { *** Companion; }
+-dontwarn org.slf4j.**
