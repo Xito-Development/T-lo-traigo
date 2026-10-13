@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -51,6 +52,7 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit) {
     var lastOrder by remember { mutableStateOf<Order?>(null) }
     var repeating by remember { mutableStateOf(false) }
     var reload by remember { mutableIntStateOf(0) }
+    var detail by remember { mutableStateOf<Product?>(null) }
 
     LaunchedEffect(reload) {
         runCatching { categories = Locator.repo.categories(); CategoryIcons.map = categories.associate { it.id to it.icon } }
@@ -83,6 +85,7 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit) {
                 )
             }
         }
+        item { AdBanner(Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) }
         lastOrder?.let { lo ->
             item {
                 Card(
@@ -127,10 +130,11 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit) {
                 Message(Icons.Filled.SearchOff, "No encontramos productos", "Prueba con otra palabra o elige otra sección.", "Ver todo") { query = ""; selected = null }
             }
             else -> items(products!!, key = { it.id }) { p ->
-                ProductRow(p, cartLines[p.id]?.qty ?: 0, senior, Modifier.animateItem(), onAdd = { vm.cart.add(p) }, onRemove = { vm.cart.remove(p) })
+                ProductRow(p, cartLines[p.id]?.qty ?: 0, senior, Modifier.animateItem().clickable { detail = p }, onAdd = { vm.cart.add(p) }, onRemove = { vm.cart.remove(p) })
             }
         }
     }
+    detail?.let { p -> ProductSheet(p, cartLines[p.id]?.qty ?: 0, { vm.cart.add(p) }, { vm.cart.remove(p) }) { detail = null } }
 }
 
 @Composable
@@ -189,3 +193,32 @@ private fun ProductRow(p: Product, qty: Int, senior: Boolean, modifier: Modifier
 
 /** Iconos de categoría en memoria para usarlos como icono por defecto del producto. */
 object CategoryIcons { @Volatile var map: Map<Long, String> = emptyMap() }
+
+/** Ficha del producto: precio con IVA desglosado, alérgenos e ingredientes (Reglamento UE 1169/2011, art. 14). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductSheet(p: Product, qty: Int, onAdd: () -> Unit, onRemove: () -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismiss) {
+        Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ProductThumb(p, 96); Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(p.name, style = MaterialTheme.typography.titleLarge)
+                    p.brand?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (p.ageRestricted) Surface(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape, modifier = Modifier.padding(top = 6.dp)) {
+                        Text("+18", Modifier.padding(horizontal = 10.dp, vertical = 2.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(eur(p.price), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+            Text("IVA incluido (${p.vatRate.toInt()} %): base ${eur(p.basePrice)} + IVA ${eur(p.vatAmount)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Alérgenos", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
+            Text(p.allergens ?: "Consulta el envase o pregunta al repartidor antes de consumirlo.", style = MaterialTheme.typography.bodyLarge)
+            p.ingredients?.let { Text("Ingredientes", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp)); Text(it, style = MaterialTheme.typography.bodyMedium) }
+            Spacer(Modifier.height(20.dp))
+            if (qty > 0) Row(verticalAlignment = Alignment.CenterVertically) { Text("En tu cesta:", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); QtyStepper(qty, onRemove, onAdd) }
+            else BigButton("Añadir a la cesta", onAdd, icon = Icons.Filled.AddShoppingCart)
+        }
+    }
+}

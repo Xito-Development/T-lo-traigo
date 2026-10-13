@@ -201,6 +201,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             Spacer(Modifier.height(10.dp))
             ScheduleBadge(o.scheduledDate, o.scheduledSlot)
             o.driver?.let { d -> o.driverId?.let { DriverCard(d, it) } }
+            if (o.status == "en_camino") TrackingCard(o)
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
             o.items.forEach { i ->
@@ -315,3 +316,39 @@ private fun ReviewSection(o: Order) {
         }
     }
 }
+
+/** Dónde está el repartidor (solo mientras el pedido va en camino). */
+@Composable
+private fun TrackingCard(o: Order) {
+    val ctx = LocalContext.current
+    var loc by remember { mutableStateOf<DriverLocation?>(null) }
+    var dest by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    LaunchedEffect(o.address) {
+        dest = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                @Suppress("DEPRECATION")
+                android.location.Geocoder(ctx, Locale("es", "ES")).getFromLocationName("${o.address}, León, España", 1)?.firstOrNull()?.let { it.latitude to it.longitude }
+            }.getOrNull()
+        }
+    }
+    LaunchedEffect(o.id) { while (true) { loc = runCatching { Locator.repo.driverLocation(o.id) }.getOrNull(); delay(10_000) } }
+    val l = loc ?: return
+    val km = dest?.let { (la, lo) -> FloatArray(1).also { android.location.Location.distanceBetween(l.lat, l.lng, la, lo, it) }[0] / 1000f }
+    Card(Modifier.fillMaxWidth().padding(top = 12.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.NearMe, null, Modifier.size(32.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(km?.let { if (it < 0.3f) "¡Tu repartidor está llegando!" else "Tu repartidor está a ${"%.1f".format(Locale("es", "ES"), it)} km" } ?: "Tu repartidor va de camino",
+                    style = MaterialTheme.typography.titleMedium)
+                Text("Actualizado hace ${hoursSinceSec(l.updatedAt)}", style = MaterialTheme.typography.bodySmall)
+            }
+            TextButton({ ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("geo:${l.lat},${l.lng}?q=${l.lat},${l.lng}(Repartidor)")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }) { Text("Ver mapa") }
+        }
+    }
+}
+private fun hoursSinceSec(iso: String): String = runCatching {
+    val s = java.time.Duration.between(OffsetDateTime.parse(iso).toInstant(), java.time.Instant.now()).seconds
+    if (s < 60) "$s s" else "${s / 60} min"
+}.getOrDefault("un momento")

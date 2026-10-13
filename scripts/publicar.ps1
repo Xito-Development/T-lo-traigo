@@ -60,6 +60,10 @@ if ($hayRemoto -and -not $hayLocal) { git fetch origin main --quiet; git reset -
 # La siguiente versión parte de la MAYOR entre version.properties y los tags ya publicados en GitHub,
 # así nunca choca con una versión existente aunque el proyecto venga de un ZIP más antiguo.
 function V($t) { try { [version](($t -split '-')[0]) } catch { [version]'0.0.0' } }
+if (Test-Path CAMBIOS_PENDIENTES.md) {
+  $m = [regex]::Match((Get-Content CAMBIOS_PENDIENTES.md -Raw -Encoding utf8), '(?im)^\s*tipo:\s*(parche|menor|mayor)')
+  if ($m.Success) { $Tipo = $m.Groups[1].Value.ToLower() }
+}
 $props = Get-Content version.properties -Raw -Encoding utf8
 $actual = ([regex]'VERSION_NAME=(\S+)').Match($props).Groups[1].Value
 $tags = @(git ls-remote --tags origin 'refs/tags/v*' 2>$null | ForEach-Object { ($_ -split 'refs/tags/v')[1] } | Where-Object { $_ -and $_ -notmatch '\^\{\}' })

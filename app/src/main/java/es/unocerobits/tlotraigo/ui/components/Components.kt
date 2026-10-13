@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import es.unocerobits.tlotraigo.data.Town
+import es.unocerobits.tlotraigo.R
 import es.unocerobits.tlotraigo.ui.theme.LocalHighContrast
 import es.unocerobits.tlotraigo.ui.theme.LocalSenior
 import java.text.NumberFormat
@@ -61,6 +62,11 @@ val LocalSpeaker = staticCompositionLocalOf<Speaker?> { null }
 
 fun Context.dial(phone: String) = safeStart(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")))
 fun Context.openMap(address: String) = safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(address))))
+/** Navegación paso a paso hasta la dirección (Google Maps u otra app de mapas). */
+fun Context.navigateTo(address: String) {
+    val nav = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(address)))
+    if (nav.resolveActivity(packageManager) != null) safeStart(nav) else openMap(address)
+}
 fun Context.share(text: String) = safeStart(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
 private fun Context.safeStart(i: Intent) = try { startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: ActivityNotFoundException) {}
 
@@ -221,3 +227,39 @@ fun Modifier.bump(key: Any): Modifier {
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) =
     Text(text, modifier.padding(top = 20.dp, bottom = 8.dp), style = MaterialTheme.typography.titleLarge)
+
+/** Logotipo de texto «T lo traigo» (Baloo 2) con la sonrisa de reparto; se tiñe con los colores del tema. */
+@Composable
+fun Wordmark(modifier: Modifier = Modifier, width: Dp = 220.dp, text: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
+             smile: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color(0xFFF2B544)) {
+    Box(modifier.width(width).aspectRatio(4600f / 1240f)) {
+        Icon(androidx.compose.ui.res.painterResource(R.drawable.wordmark_text), "T lo traigo", Modifier.fillMaxSize(), tint = text)
+        Icon(androidx.compose.ui.res.painterResource(R.drawable.wordmark_swoosh), null, Modifier.fillMaxSize(), tint = smile)
+    }
+}
+
+fun Context.openUrl(url: String) = safeStart(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+
+/** Espacio publicitario identificado como tal (LSSI-CE art. 20). */
+@Composable
+fun AdBanner(modifier: Modifier = Modifier) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    Surface(
+        modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
+            .clickable { ctx.safeStartPublic(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:info@unocerobits.com?subject=Anuncio%20en%20T%20lo%20traigo"))) },
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = .4f)),
+    ) {
+        Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Campaign, null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text("¡TU ANUNCIO AQUÍ!", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                Text("Contacta con info@unocerobits.com", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
+            Text("Publicidad", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = .7f))
+        }
+    }
+}
+fun Context.safeStartPublic(i: Intent) = safeStart(i)

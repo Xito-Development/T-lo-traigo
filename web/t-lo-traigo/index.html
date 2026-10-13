@@ -10,18 +10,23 @@
 <meta property="og:title" content="T lo traigo">
 <meta property="og:description" content="La compra del súper, en la puerta de casa. Empezamos en Villaquejida y pueblos de alrededor.">
 <meta property="og:image" content="https://tlotraigo.unocerobits.com/icon-512.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Raleway:wght@200;300;500&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://tlotraigo.unocerobits.com/">
+<link rel="preload" href="fonts/baloo2-800.woff2" as="font" type="font/woff2" crossorigin>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"MobileApplication","name":"T lo traigo","operatingSystem":"Android 5.0+","applicationCategory":"ShoppingApplication","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"author":[{"@type":"Organization","name":"Xito Development"},{"@type":"Organization","name":"UNOCEROBITS","url":"https://unocerobits.com","email":"info@unocerobits.com"}],"areaServed":"Villaquejida y pueblos de la Vega del Esla, León"}</script>
 <style>
+/* Fuentes alojadas en la propia web: sin conexiones a terceros ni cookies */
+@font-face{font-family:"Atkinson Hyperlegible";src:url(fonts/atkinson-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Atkinson Hyperlegible";src:url(fonts/atkinson-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Baloo 2";src:url(fonts/baloo2-800.woff2) format("woff2");font-weight:800;font-display:swap}
 :root{
+  --f-title:"Baloo 2", "Atkinson Hyperlegible", system-ui, sans-serif;
   /* App: pino + mostaza + Atkinson · UNOCEROBITS: pizarra + turquesa + Raleway fina */
   --pizarra:#263238; --pizarra-hondo:#1B2428; --turquesa:#00FFDE;
   --pino:#2E6B57; --pino-hondo:#1F4D3F; --mostaza:#F2B544; --mostaza-hondo:#DE9A2A; --hoja:#7BC9A4;
   --niebla:#F3F7F4; --texto:#1C2624; --gris:#4F5D59; --linea:#D5E0DA;
   --r:14px; --ease:cubic-bezier(.22,.8,.24,1); --spring:cubic-bezier(.34,1.56,.64,1);
   --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-thin:"Raleway", system-ui, sans-serif;
+  --f-thin:var(--f-title);
 }
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -32,9 +37,9 @@ a{color:var(--pino)}
 .wrap{width:min(1160px,100% - 2.5rem);margin-inline:auto}
 p{max-width:60ch}
 [data-k]{white-space:pre-line}
-h2{font:700 clamp(2rem,4.6vw,3.2rem)/1.08 var(--f-body);letter-spacing:-.02em;color:var(--pino-hondo);margin-bottom:.55em}
+h2{font:800 clamp(2.2rem,5vw,3.5rem)/1.02 var(--f-title);letter-spacing:-.01em;color:var(--pino-hondo);margin-bottom:.55em}
 .dark h2{color:#fff}
-h3{font:700 1.3rem/1.25 var(--f-body)}
+h3{font:800 1.4rem/1.2 var(--f-title)}
 
 #progress{position:fixed;top:0;left:0;height:4px;width:100%;transform-origin:0 50%;transform:scaleX(0);z-index:30;
   background:linear-gradient(90deg,var(--hoja),var(--mostaza),var(--turquesa))}
@@ -51,10 +56,10 @@ h3{font:700 1.3rem/1.25 var(--f-body)}
 .btn-ink:hover{background:var(--pino);color:#fff}
 .btn small{font-weight:400;opacity:.8}
 
-header{position:fixed;inset:0 0 auto 0;z-index:20;padding:.9rem 0;transition:background .35s,box-shadow .35s}
+header{position:fixed;inset:0 0 auto 0;z-index:20;padding:.8rem 0;background:rgba(31,77,63,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .35s,box-shadow .35s}
 header.solid{background:rgba(27,36,40,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 8px 30px -18px #000}
 .bar{display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:.7rem;text-decoration:none;color:#fff;font:300 1.3rem var(--f-thin);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+.logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:#FFF8EC;font:800 1.55rem/1 var(--f-title);white-space:nowrap;
   user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .logo img{width:42px;height:42px;border-radius:12px}
 nav a{margin-left:1.5rem;text-decoration:none;color:rgba(255,255,255,.85);font-weight:700;font-size:1rem}
@@ -62,28 +67,33 @@ nav a:hover{color:var(--mostaza)}
 @media (max-width:820px){nav a:not(.btn){display:none}.logo{font-size:1.05rem}}
 
 /* Portada */
-.hero{min-height:100svh;display:grid;grid-template-columns:44% 56%;background:var(--pizarra-hondo);color:#fff}
-.hero-left{background:var(--pizarra);display:flex;flex-direction:column;justify-content:center;padding:7rem clamp(1.5rem,5vw,5rem) 4rem;position:relative;z-index:1}
-.title{font:200 clamp(4rem,9.5vw,8.4rem)/.92 var(--f-thin);text-transform:uppercase}
+.hero{min-height:100svh;display:grid;grid-template-columns:44% 56%;background:#E3EFE8;color:#fff}
+.hero-left{background:var(--pino);display:flex;flex-direction:column;justify-content:center;padding:7rem clamp(1.5rem,5vw,5rem) 4rem;position:relative;z-index:1}
+.title{width:min(100%,520px)}
+.title svg{width:100%;height:auto;overflow:visible}
+.title .wm{opacity:0;transform:translateY(24px) scale(.94);transform-origin:left center;animation:wm .9s var(--spring) .1s forwards}
+.title .smile{stroke-dasharray:1;stroke-dashoffset:1;animation:smile 1s var(--ease) .7s forwards}
+.title .dot{opacity:0;transform-box:fill-box;transform-origin:center;animation:dot .5s var(--spring) 1.55s forwards}
+@keyframes wm{to{opacity:1;transform:none}} @keyframes smile{to{stroke-dashoffset:0}} @keyframes dot{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
 .title .row{display:block;white-space:nowrap}
 .title .t1{color:var(--turquesa)} .title .t2{color:#fff}
 .title .ch{display:inline-block;opacity:0;transform:translateY(.5em) rotate(6deg);filter:blur(6px);animation:ch .9s var(--ease) forwards}
 @keyframes ch{to{opacity:1;transform:none;filter:none}}
-.hero-left .lead{font-size:1.25rem;color:#D2DCD8;margin:1.8rem 0 2.2rem}
+.hero-left .lead{font-size:1.25rem;color:#E4F1EA;margin:1.8rem 0 2.2rem}
 .cta{display:flex;flex-wrap:wrap;gap:.8rem}
 .hero .in{opacity:0;transform:translateY(22px);animation:up .9s var(--ease) forwards}
-.hero .in.d1{animation-delay:.9s}.hero .in.d2{animation-delay:1.05s}
+.hero .in.d1{animation-delay:.5s}.hero .in.d2{animation-delay:.65s}
 @keyframes up{to{opacity:1;transform:none}}
 .hero-right{position:relative;overflow:hidden}
 #plexus{position:absolute;inset:0;width:100%;height:100%}
-.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1.2px);background-size:5px 5px;pointer-events:none}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(46,107,87,.07) 1px,transparent 1.2px);background-size:5px 5px;pointer-events:none}
 .scene{position:absolute;inset:12% 7% 8% 7%}
 .scene svg{width:100%;height:100%;overflow:visible}
 .layer{will-change:transform}
-.claim{position:absolute;left:7%;top:14%;font:200 clamp(1.4rem,2.6vw,2.2rem)/1.1 var(--f-thin);text-transform:uppercase;letter-spacing:.06em}
-.claim small{display:block;font-size:.5em;letter-spacing:.3em;color:#9FB0B6;margin-bottom:.4rem}
-.claim span{color:var(--mostaza)}
-.replay{position:absolute;right:1.2rem;bottom:1.2rem;font:700 .9rem var(--f-body);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);color:#fff;padding:.5rem .9rem;border-radius:999px;cursor:pointer}
+.claim{position:absolute;left:7%;top:15%;font:800 clamp(1.6rem,3vw,2.6rem)/1.05 var(--f-title);color:var(--pino-hondo)}
+.claim small{display:block;font:700 .95rem var(--f-body);letter-spacing:.04em;color:var(--pino);margin-bottom:.4rem}
+.claim span{color:var(--mostaza-hondo)}
+.replay{position:absolute;right:1.2rem;bottom:1.2rem;font:700 .9rem var(--f-body);background:#fff;border:1px solid var(--linea);color:var(--pino-hondo);padding:.5rem .9rem;border-radius:999px;cursor:pointer}
 .replay:hover{border-color:var(--mostaza);color:var(--mostaza)}
 #road{stroke-dasharray:1;stroke-dashoffset:1}
 .go #road{animation:draw 2.6s var(--ease) .9s forwards}
@@ -112,7 +122,7 @@ h2.rv.on{clip-path:inset(0 0 0 0)}
 section{position:relative;scroll-margin-top:72px}
 .light{background:#fff;padding:6.5rem 0}
 .mist{background:var(--niebla);padding:6.5rem 0}
-.dark{background:var(--pizarra);color:#D5DFDB;padding:6.5rem 0}
+.dark{background:var(--pino-hondo);color:#D5DFDB;padding:6.5rem 0}
 .dark p{color:#B9C7C2}
 
 /* Pasos */
@@ -172,7 +182,7 @@ section{position:relative;scroll-margin-top:72px}
 .get .cta{justify-content:center}
 #dlInfo{display:block;margin-top:.9rem;font-size:.95rem;color:var(--gris)}
 
-footer{background:var(--pizarra-hondo);color:#B9C7C2;padding:3.5rem 0 calc(2rem + env(safe-area-inset-bottom))}
+footer{background:#17382E;color:#B9C7C2;padding:3.5rem 0 calc(2rem + env(safe-area-inset-bottom))}
 .foot{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:2rem}
 footer h3{color:#fff;font-size:1.05rem;margin-bottom:.7rem}
 footer a{color:#fff}
@@ -182,6 +192,12 @@ footer a{color:#fff}
 .makers .xito{display:grid;place-items:center;background:var(--pizarra);box-shadow:inset 0 0 0 1px #3A4A50}
 .makers .xito img{width:78%;height:78%;border-radius:0}
 .makers a:hover img,.makers a:hover .xito{transform:translateY(-4px) rotate(-4deg);box-shadow:0 0 22px rgba(0,255,222,.35)}
+.ad{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1rem;align-items:center;text-decoration:none;padding:1.4rem 1.6rem;border-radius:var(--r);
+  background:repeating-linear-gradient(-45deg,#FFF6E0 0 18px,#FFEFC8 18px 36px);border:2px dashed var(--mostaza-hondo);color:var(--pino-hondo);transition:transform .4s var(--spring)}
+.ad:hover{transform:scale(1.015) rotate(-.4deg)}
+.ad strong{font:800 clamp(1.5rem,3.4vw,2.2rem)/1 var(--f-title);grid-column:1/-1}
+.ad span:last-child{grid-column:1/-1;font-weight:700}
+.ad-tag{grid-column:1/-1;font-size:.8rem;font-weight:700;color:var(--gris);letter-spacing:.04em}
 .legal{max-width:none;margin-top:2.4rem;padding-top:1.4rem;border-top:1px solid #33434A;font-size:.9rem}
 @media (max-width:820px){.foot{grid-template-columns:1fr}}
 
@@ -235,7 +251,10 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
 <main id="main">
   <section class="hero">
     <div class="hero-left">
-      <h1 class="title" aria-label="T lo traigo"><span class="row t1" data-split>T lo</span><span class="row t2" data-split>traigo</span></h1>
+      <h1 class="title" aria-label="T lo traigo"><svg viewBox="0 330 4600 1240" aria-hidden="true"><g transform="translate(40 40)">
+        <path class="wm" d="M185 612V472H518Q525 483 530.5 501.0Q536 519 536 540Q536 577 519.5 594.5Q503 612 475 612ZM369 472V612H36Q29 601 23.5 583.0Q18 565 18 544Q18 506 34.5 489.0Q51 472 79 472ZM187 585H362V1077Q351 1080 328.0 1083.0Q305 1086 281 1086Q229 1086 208.0 1067.5Q187 1049 187 1003Z  M793 814H963V1077Q952 1080 931.5 1083.0Q911 1086 887 1086Q838 1086 815.5 1069.0Q793 1052 793 1006ZM963 903H793V426Q804 423 824.5 420.0Q845 417 869 417Q919 417 941.0 433.5Q963 450 963 497Z M1565 835Q1565 915 1532.5 973.0Q1500 1031 1441.5 1062.5Q1383 1094 1303 1094Q1224 1094 1165.0 1063.0Q1106 1032 1073.5 974.0Q1041 916 1041 835Q1041 756 1074.0 698.0Q1107 640 1166.0 608.5Q1225 577 1303 577Q1382 577 1440.5 609.0Q1499 641 1532.0 699.0Q1565 757 1565 835ZM1303 710Q1262 710 1238.5 742.5Q1215 775 1215 835Q1215 897 1238.0 929.0Q1261 961 1303 961Q1345 961 1368.0 928.5Q1391 896 1391 835Q1391 776 1367.5 743.0Q1344 710 1303 710Z  M1830 814H1998V911Q1998 936 2014.5 947.5Q2031 959 2061 959Q2076 959 2092.0 956.5Q2108 954 2120 950Q2129 960 2135.5 974.0Q2142 988 2142 1007Q2142 1044 2113.5 1068.5Q2085 1093 2013 1093Q1925 1093 1877.5 1053.0Q1830 1013 1830 923ZM1940 733V603H2129Q2135 613 2140.5 630.0Q2146 647 2146 667Q2146 702 2130.5 717.5Q2115 733 2089 733ZM1998 838H1830V479Q1841 476 1861.5 472.5Q1882 469 1905 469Q1954 469 1976.0 486.0Q1998 503 1998 549Z M2385 735V849H2215V709Q2215 680 2230.5 658.5Q2246 637 2271 621Q2306 600 2353.0 589.0Q2400 578 2450 578Q2559 578 2559 655Q2559 673 2554.0 688.5Q2549 704 2542 715Q2532 713 2518.0 712.0Q2504 711 2487 711Q2462 711 2434.0 717.0Q2406 723 2385 735ZM2215 814H2385V1077Q2374 1080 2353.5 1083.0Q2333 1086 2309 1086Q2260 1086 2237.5 1069.0Q2215 1052 2215 1006Z M2824 970Q2841 970 2861.5 966.5Q2882 963 2892 957V877L2820 883Q2792 885 2774.0 895.0Q2756 905 2756 925Q2756 945 2771.5 957.5Q2787 970 2824 970ZM2816 577Q2925 577 2990.5 621.5Q3056 666 3056 760V984Q3056 1010 3041.5 1026.5Q3027 1043 3007 1055Q2975 1074 2929.0 1084.0Q2883 1094 2824 1094Q2719 1094 2655.5 1053.5Q2592 1013 2592 931Q2592 862 2633.5 825.0Q2675 788 2760 779L2891 765V758Q2891 729 2865.5 716.5Q2840 704 2792 704Q2755 704 2718.5 712.0Q2682 720 2653 732Q2640 723 2631.0 704.5Q2622 686 2622 666Q2622 618 2673 598Q2702 587 2741.5 582.0Q2781 577 2816 577Z M3146 457Q3146 419 3172.0 393.0Q3198 367 3239 367Q3280 367 3306.0 393.0Q3332 419 3332 457Q3332 494 3306.0 520.5Q3280 547 3239 547Q3198 547 3172.0 520.5Q3146 494 3146 457ZM3154 814H3324V1077Q3313 1080 3292.5 1083.0Q3272 1086 3248 1086Q3199 1086 3176.5 1069.0Q3154 1052 3154 1006ZM3324 903H3154V599Q3165 596 3185.5 593.0Q3206 590 3230 590Q3280 590 3302.0 606.5Q3324 623 3324 670Z M3623 1058Q3563 1058 3512.0 1035.0Q3461 1012 3430.5 959.5Q3400 907 3400 821Q3400 741 3432.0 686.5Q3464 632 3522.5 604.5Q3581 577 3659 577Q3716 577 3764.5 592.0Q3813 607 3839 624Q3859 637 3870.5 655.0Q3882 673 3882 700V1015H3719V722Q3709 717 3697.0 713.5Q3685 710 3666 710Q3623 710 3596.0 736.5Q3569 763 3569 822Q3569 885 3593.5 908.0Q3618 931 3655 931Q3685 931 3705.0 920.5Q3725 910 3741 897L3746 1030Q3723 1042 3693.5 1050.0Q3664 1058 3623 1058ZM3722 1067V977H3882V1071Q3882 1141 3848.0 1186.5Q3814 1232 3756.5 1254.0Q3699 1276 3628 1276Q3575 1276 3533.5 1267.5Q3492 1259 3468 1243Q3432 1219 3432 1175Q3432 1152 3441.5 1133.0Q3451 1114 3463 1105Q3492 1121 3528.5 1132.0Q3565 1143 3605 1143Q3658 1143 3690.0 1125.0Q3722 1107 3722 1067Z M4480 835Q4480 915 4447.5 973.0Q4415 1031 4356.5 1062.5Q4298 1094 4218 1094Q4139 1094 4080.0 1063.0Q4021 1032 3988.5 974.0Q3956 916 3956 835Q3956 756 3989.0 698.0Q4022 640 4081.0 608.5Q4140 577 4218 577Q4297 577 4355.5 609.0Q4414 641 4447.0 699.0Q4480 757 4480 835ZM4218 710Q4177 710 4153.5 742.5Q4130 775 4130 835Q4130 897 4153.0 929.0Q4176 961 4218 961Q4260 961 4283.0 928.5Q4306 896 4306 835Q4306 776 4282.5 743.0Q4259 710 4218 710Z" fill="#FFF8EC"/>
+        <path class="smile" pathLength="1" d="M960 1420 C 1900 1560, 3200 1550, 4330 1365" fill="none" stroke="#F2B544" stroke-width="80" stroke-linecap="round"/>
+        <circle class="dot" cx="4400" cy="1350" r="62" fill="#F2B544"/></g></svg></h1>
       <p class="lead in d1" data-k="hero.lead">La compra del súper, en la puerta de casa. Tú eliges con los precios del supermercado y un vecino repartidor te la lleva. También puede pedirla tu hijo o tu hija desde su móvil.</p>
       <div class="cta in d2">
         <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">Descargar la app</a>
@@ -245,16 +264,16 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
     <div class="hero-right" id="heroRight">
       <canvas id="plexus" aria-hidden="true"></canvas>
       <div class="dots"></div>
-      <div class="claim" aria-hidden="true"><small data-k="hero.zona">Vega del Esla · León</small><span data-k="hero.claim1" style="color:#fff">Del súper</span><br><span data-k="hero.claim2">a tu casa</span></div>
+      <div class="claim" aria-hidden="true"><small data-k="hero.zona">Vega del Esla · León</small><span data-k="hero.claim1" style="color:var(--pino-hondo)">Del súper</span><br><span data-k="hero.claim2">a tu casa</span></div>
       <div class="scene" id="scene" role="img" aria-label="Una bolsa de la compra viaja por la carretera desde el supermercado hasta una casa del pueblo">
         <svg viewBox="0 0 520 520" aria-hidden="true">
-          <g class="layer" data-depth=".06"><path d="M0 340 C 90 300 170 330 250 305 S 420 270 520 295 V520 H0Z" fill="#2F3D44"/></g>
-          <g class="layer" data-depth=".1" fill="#3E5A55">
+          <g class="layer" data-depth=".06"><path d="M0 340 C 90 300 170 330 250 305 S 420 270 520 295 V520 H0Z" fill="#B9D8C8"/></g>
+          <g class="layer" data-depth=".1" fill="#7FB79C">
             <ellipse cx="170" cy="282" rx="9" ry="30"/><ellipse cx="188" cy="290" rx="7" ry="24"/><ellipse cx="350" cy="258" rx="9" ry="30"/>
             <ellipse cx="368" cy="266" rx="7" ry="22"/><ellipse cx="480" cy="262" rx="8" ry="26"/>
           </g>
           <g class="layer" data-depth=".16">
-            <path d="M0 410 C120 360 220 420 320 380 S470 330 520 350 V520 H0Z" fill="#37474F"/>
+            <path d="M0 410 C120 360 220 420 320 380 S470 330 520 350 V520 H0Z" fill="#9CCAB3"/>
             <path id="road" pathLength="1" d="M70 380 C 150 300, 230 410, 300 320 S 420 200, 440 150" fill="none" stroke="#F2B544" stroke-width="6" stroke-linecap="round" stroke-dasharray="1" style="filter:drop-shadow(0 0 6px rgba(242,181,68,.7))"/>
             <g transform="translate(30 372)">
               <rect x="0" y="0" width="84" height="58" rx="6" fill="#ECEFF1"/>
@@ -381,6 +400,14 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
     </div>
   </section>
 
+  <section class="wrap" aria-label="Publicidad" style="padding:2rem 0">
+    <a class="ad rv" href="mailto:info@unocerobits.com?subject=Anuncio%20en%20T%20lo%20traigo">
+      <span class="ad-tag">Publicidad</span>
+      <strong data-k="ad.titulo">¡TU ANUNCIO AQUÍ!</strong>
+      <span data-k="ad.texto">Contacta con info@unocerobits.com</span>
+    </a>
+  </section>
+
   <section class="mist get" id="descargar">
     <div class="wrap">
       <h2 class="rv" data-k="descargar.titulo">Descárgala gratis</h2>
@@ -406,7 +433,7 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
         </div>
       </div>
       <div><h3>Contacto</h3><p><a href="mailto:info@unocerobits.com">info@unocerobits.com</a><br><a href="https://unocerobits.com">unocerobits.com</a></p></div>
-      <div><h3>Legal</h3><p><a href="privacidad.html">Política de privacidad</a><br><a href="privacidad.html#eliminar">Eliminar mi cuenta</a></p></div>
+      <div><h3>Legal</h3><p><a href="aviso-legal.html">Aviso legal</a><br><a href="condiciones.html">Condiciones de uso</a><br><a href="repartidores.html">Condiciones para repartidores</a><br><a href="privacidad.html">Privacidad</a> · <a href="privacidad.html#eliminar">Eliminar cuenta</a><br><small>Esta web no usa cookies.</small></p></div>
     </div>
     <p class="legal">© 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.</p>
   </div>
@@ -495,9 +522,9 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
       if (md < 9000) { p.x += mdx * .015; p.y += mdy * .015; }   // los puntos se apartan del ratón
       for (var j = i + 1; j < pts.length; j++) {
         var q = pts[j], dx = p.x - q.x, dy = p.y - q.y, d = dx * dx + dy * dy;
-        if (d < 14000) { ctx.strokeStyle = 'rgba(0,255,222,' + (0.15 * (1 - d / 14000)) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+        if (d < 14000) { ctx.strokeStyle = 'rgba(46,107,87,' + (0.22 * (1 - d / 14000)) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
       }
-      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+      ctx.fillStyle = 'rgba(46,107,87,.35)'; ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
     }
     if (!reduce && heroVisible) requestAnimationFrame(frame);
   }

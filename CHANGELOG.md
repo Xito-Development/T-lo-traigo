@@ -2,6 +2,20 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.5.0] - 2026-10-13
+### Añadido
+- Repartidores: avisos de pedidos nuevos en el móvil mientras están disponibles.
+- Repartidores: botón «Ruta» con navegación GPS y ubicación compartida con el cliente solo durante el reparto.
+- Clientes: ven a qué distancia está su repartidor cuando el pedido va en camino.
+- Ficha de producto con IVA desglosado, alérgenos e ingredientes; productos +18 con confirmación de edad.
+- Confirmación del pedido en dos pasos y botón «Confirmar pedido con obligación de pago».
+- Condiciones de uso, condiciones para repartidores y aviso legal; aceptación obligatoria en la app.
+- Candidatura de repartidor con declaraciones (mayoría de edad, autónomo, seguro, alimentos, geolocalización).
+- Nuevo logotipo de texto «T lo traigo» y espacio «¡TU ANUNCIO AQUÍ!».
+### Cambiado
+- Web con la estética de la app, logotipo animado y fuentes propias (sin cookies ni conexiones a terceros).
+- Web propia en https://tlotraigo.unocerobits.com
+
 ## [0.4.1] - 2026-10-12
 ### Añadido
 - Actualizaciones dentro de la app (versión GitHub) con animación de descarga e instalación.

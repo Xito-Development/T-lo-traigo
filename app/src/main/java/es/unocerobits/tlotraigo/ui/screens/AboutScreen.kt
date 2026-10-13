@@ -54,7 +54,7 @@ fun AboutDialog(onDismiss: () -> Unit, vm: es.unocerobits.tlotraigo.AppViewModel
                 Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     BrandMark(96)
                     Spacer(Modifier.height(12.dp))
-                    Text("T lo traigo", style = MaterialTheme.typography.headlineLarge)
+                    es.unocerobits.tlotraigo.ui.components.Wordmark(width = 220.dp)
                     Text("Versión ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
@@ -89,6 +89,10 @@ fun AboutDialog(onDismiss: () -> Unit, vm: es.unocerobits.tlotraigo.AppViewModel
                     ListItem(headlineContent = { Text("unocerobits.com") }, supportingContent = { Text("Web del proyecto") },
                         leadingContent = { Icon(Icons.Filled.Language, null) },
                         trailingContent = { TextButton({ open(BuildConfig.WEB_URL) }) { Text("Abrir") } })
+                    ListItem(headlineContent = { Text("Condiciones de uso") }, leadingContent = { Icon(Icons.Filled.Gavel, null) },
+                        trailingContent = { TextButton({ open(BuildConfig.WEB_URL.trimEnd('/') + "/condiciones.html") }) { Text("Leer") } })
+                    ListItem(headlineContent = { Text("Aviso legal") }, leadingContent = { Icon(Icons.Filled.Info, null) },
+                        trailingContent = { TextButton({ open(BuildConfig.WEB_URL.trimEnd('/') + "/aviso-legal.html") }) { Text("Leer") } })
                     ListItem(headlineContent = { Text("Política de privacidad") }, leadingContent = { Icon(Icons.Filled.PrivacyTip, null) },
                         trailingContent = { TextButton({ open(BuildConfig.PRIVACY_URL) }) { Text("Leer") } })
 

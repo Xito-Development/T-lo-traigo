@@ -129,6 +129,9 @@ fun ProductEditorScreen(id: Long?, onBack: () -> Unit) {
     var icon by rememberSaveable { mutableStateOf<String?>(null) }
     var image by rememberSaveable { mutableStateOf<String?>(null) }
     var active by rememberSaveable { mutableStateOf(true) }
+    var allergens by rememberSaveable { mutableStateOf("") }
+    var ingredients by rememberSaveable { mutableStateOf("") }
+    var adultOnly by rememberSaveable { mutableStateOf(false) }
     var pickIcon by remember { mutableStateOf(false) }
     var uploading by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -141,6 +144,7 @@ fun ProductEditorScreen(id: Long?, onBack: () -> Unit) {
             Locator.repo.product(id)?.let { p ->
                 name = p.name; brand = p.brand.orEmpty(); ean = p.ean.orEmpty(); cat = p.categoryId; unit = p.unit
                 priceTxt = fmtNum(p.price); vat = p.vatRate; icon = p.icon; image = p.imageUrl; active = p.active; market = p.supermarketId
+                allergens = p.allergens.orEmpty(); ingredients = p.ingredients.orEmpty(); adultOnly = p.ageRestricted
             }
             loaded = true
         } catch (e: ApiException) { err = e.message }
@@ -224,6 +228,18 @@ fun ProductEditorScreen(id: Long?, onBack: () -> Unit) {
                     }
                 }
             }
+            SectionTitle("Información alimentaria")
+            OutlinedTextField(allergens, { allergens = it }, Modifier.fillMaxWidth(), label = { Text("Alérgenos (obligatorio si es alimento)") },
+                placeholder = { Text("Ej.: Contiene gluten y leche. Puede contener frutos secos.") }, minLines = 2, shape = MaterialTheme.shapes.medium)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Ingredientes (opcional)") }, minLines = 2, shape = MaterialTheme.shapes.medium)
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Solo mayores de 18", style = MaterialTheme.typography.titleMedium)
+                    Text("Bebidas alcohólicas: el cliente confirma su edad y el repartidor pide el DNI", style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(adultOnly, { adultOnly = it })
+            }
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Visible en el catálogo", style = MaterialTheme.typography.titleMedium)
@@ -237,7 +253,7 @@ fun ProductEditorScreen(id: Long?, onBack: () -> Unit) {
                 scope.launch {
                     busy = true; err = null
                     try {
-                        Locator.repo.saveProduct(id, market, cat, name, brand, unit, price!!, vat, icon, image, ean, active)
+                        Locator.repo.saveProduct(id, market, cat, name, brand, unit, price!!, vat, icon, image, ean, active, allergens, ingredients, adultOnly)
                         onBack()
                     } catch (e: ApiException) { err = e.message }
                     busy = false

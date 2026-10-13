@@ -10,10 +10,14 @@ sealed interface Boot {
     data object Loading : Boot
     data object LoggedOut : Boot
     data object NeedsProfile : Boot
+    data object NeedsTerms : Boot
     data object Client : Boot
     data object Driver : Boot
     data class Error(val msg: String) : Boot
 }
+
+/** Versión de las condiciones/privacidad vigentes. Al cambiarla, todos deben volver a aceptarlas. */
+const val TERMS_VERSION = "2026-10"
 
 class AppViewModel : ViewModel() {
     private val repo = Locator.repo
@@ -72,6 +76,7 @@ class AppViewModel : ViewModel() {
             _profile.value = p
             when {
                 p == null -> { api.signOut(); Boot.LoggedOut }
+                p.termsVersion != TERMS_VERSION -> Boot.NeedsTerms
                 p.townId == null || p.fullName.isBlank() -> Boot.NeedsProfile
                 p.isDriver || (p.isAdmin && _driverView.value) -> Boot.Driver
                 else -> Boot.Client

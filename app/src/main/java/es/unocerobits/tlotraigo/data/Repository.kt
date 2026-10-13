@@ -8,7 +8,7 @@ class Repository(val api: SupabaseApi) {
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
     private val orderSel = "select=*,order_items(*),customer:profiles!orders_customer_id_fkey(full_name,phone)," +
         "driver:profiles!orders_driver_id_fkey(full_name,phone),order_reviews(order_id)"
-    private val productCols = "id,supermarket_id,category_id,name,brand,unit,price,image_url,vat_rate,icon,active,ean"
+    private val productCols = "id,supermarket_id,category_id,name,brand,unit,price,image_url,vat_rate,icon,active,ean,allergens,ingredients,age_restricted"
 
     // Catálogo
     suspend fun towns(): List<Town> = parse(api.rest("GET", "towns?active=eq.true&order=name"))
@@ -57,11 +57,11 @@ class Repository(val api: SupabaseApi) {
         }))
 
     suspend fun createOrder(customer: String, supermarket: Long, lines: Map<Long, Int>, method: String, address: String, notes: String?,
-                            date: String? = null, slot: String? = null): Long {
+                            date: String? = null, slot: String? = null, adult: Boolean = false): Long {
         val args = buildJsonObject {
             put("p_customer", customer); put("p_supermarket", supermarket); put("p_payment", method)
             put("p_address", address); put("p_notes", notes?.takeIf { it.isNotBlank() })
-            put("p_date", date); put("p_slot", slot)
+            put("p_date", date); put("p_slot", slot); put("p_adult", adult)
             putJsonArray("p_items") { lines.forEach { (id, q) -> addJsonObject { put("product_id", id); put("qty", q) } } }
         }
         return api.rpc("create_order", args).trim().toLong()
@@ -121,12 +121,21 @@ class Repository(val api: SupabaseApi) {
     suspend fun driverRating(id: String): Rating = parse(api.rpc("driver_rating", buildJsonObject { put("p_driver", id) }))
     suspend fun myApplication(): DriverApplication? =
         parse<List<DriverApplication>>(api.rest("GET", "driver_applications?driver_id=eq.${api.uid}")).firstOrNull()
-    suspend fun submitApplication(vehicle: String, towns: List<Long>, availability: String, experience: String, message: String) {
+    suspend fun submitApplication(vehicle: String, towns: List<Long>, availability: String, experience: String, message: String,
+                                  adult: Boolean, selfEmployed: Boolean, insurance: Boolean, food: Boolean, terms: Boolean, geo: Boolean) {
         api.rpc("submit_application", buildJsonObject {
             put("p_vehicle", vehicle); putJsonArray("p_towns") { towns.forEach { add(it) } }
             put("p_availability", availability); put("p_experience", experience); put("p_message", message)
+            put("p_adult", adult); put("p_self_employed", selfEmployed); put("p_insurance", insurance)
+            put("p_food", food); put("p_terms", terms); put("p_geo", geo)
         })
     }
+    suspend fun acceptTerms(version: String) { api.rpc("accept_terms", buildJsonObject { put("p_version", version) }) }
+    suspend fun updateLocation(orderId: Long, lat: Double, lng: Double, acc: Float?) {
+        api.rpc("update_driver_location", buildJsonObject { put("p_order", orderId); put("p_lat", lat); put("p_lng", lng); put("p_accuracy", acc) })
+    }
+    suspend fun driverLocation(orderId: Long): DriverLocation? =
+        parse<List<DriverLocation>>(api.rest("GET", "driver_locations?order_id=eq.$orderId&select=lat,lng,updated_at")).firstOrNull()
 
     // --- Valoraciones
     suspend fun review(orderId: Long): Review? = parse<List<Review>>(api.rest("GET", "order_reviews?order_id=eq.$orderId")).firstOrNull()
@@ -145,12 +154,14 @@ class Repository(val api: SupabaseApi) {
     suspend fun product(id: Long): Product? = parse<List<Product>>(api.rest("GET", "products?select=$productCols&id=eq.$id")).firstOrNull()
 
     suspend fun saveProduct(id: Long?, supermarket: Long, category: Long?, name: String, brand: String?, unit: String, price: Double,
-                            vat: Double, icon: String?, image: String?, ean: String?, active: Boolean): Long {
+                            vat: Double, icon: String?, image: String?, ean: String?, active: Boolean,
+                            allergens: String? = null, ingredients: String? = null, ageRestricted: Boolean = false): Long {
         val body = buildJsonObject {
             put("supermarket_id", supermarket); put("category_id", category); put("name", name.trim())
             put("brand", brand?.trim()?.ifBlank { null }); put("unit", unit); put("price", price); put("vat_rate", vat)
             put("icon", icon); put("image_url", image); put("ean", ean?.trim()?.ifBlank { null }); put("active", active)
-            put("source", "manual"); put("updated_at", java.time.OffsetDateTime.now().toString())
+            put("allergens", allergens?.trim()?.ifBlank { null }); put("ingredients", ingredients?.trim()?.ifBlank { null })
+            put("age_restricted", ageRestricted); put("source", "manual"); put("updated_at", java.time.OffsetDateTime.now().toString())
         }
         val res = if (id == null) api.rest("POST", "products?select=id", body.toString(), prefer = "return=representation")
                   else api.rest("PATCH", "products?id=eq.$id&select=id", body.toString(), prefer = "return=representation")

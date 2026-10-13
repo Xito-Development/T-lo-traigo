@@ -25,6 +25,14 @@
 5. Las cuentas nuevas de desarrollador personal deben hacer una prueba cerrada (12 testers, 14 días)
    antes de producción.
 
+## Declaraciones de permisos (Play Console → Contenido de la app)
+| Permiso | Justificación para Google |
+|---|---|
+| `FOREGROUND_SERVICE_DATA_SYNC` | Comprobar pedidos nuevos y avisar al repartidor mientras se marca como disponible |
+| `FOREGROUND_SERVICE_LOCATION` + ubicación precisa | Compartir la posición del repartidor con el cliente solo mientras su pedido está «en camino»; la app muestra un aviso destacado antes de pedir el permiso. No usa `ACCESS_BACKGROUND_LOCATION` |
+| `POST_NOTIFICATIONS` | Avisos de pedidos nuevos |
+Vídeo para la declaración: grabar el flujo «Estoy disponible → aviso → aceptar → Salgo a repartir → ubicación».
+
 ## Seguridad de los datos (formulario de Play)
 | Tipo | Recogido | Compartido | Finalidad | Opcional |
 |---|---|---|---|---|
@@ -32,6 +40,7 @@
 | Dirección | Sí | No (solo la ve el repartidor del pedido) | Funcionamiento | No |
 | Historial de compras | Sí | No | Funcionamiento | No |
 | Fotos (solo administradores, imágenes de producto) | Sí | No | Funcionamiento | Sí |
+| Ubicación precisa (solo repartidores en reparto) | Sí | Con el cliente del pedido, por acción del usuario | Funcionamiento | No (para repartir) |
 Cifrado en tránsito: sí (HTTPS). Eliminación: sí, desde la app y por correo.
 
 ## Revisión

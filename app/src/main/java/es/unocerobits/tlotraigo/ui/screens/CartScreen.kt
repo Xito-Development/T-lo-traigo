@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -50,6 +51,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     var quoteErr by remember { mutableStateOf<String?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     var confirm by remember { mutableStateOf(false) }
+    var payConfirm by remember { mutableStateOf(false) }
+    var adultOk by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var payingMsg by remember { mutableStateOf<String?>(null) }
     var err by remember { mutableStateOf<String?>(null) }
@@ -91,6 +94,23 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
         } catch (e: ApiException) { quoteErr = e.message }
     }
     val total = quote?.total ?: lines.values.sumOf { it.total }
+    fun placeOrder() = scope.launch {
+        busy = true; err = null
+        try {
+            val t = target ?: error("Sin cliente")
+            val id = Locator.repo.createOrder(t.id, lines.values.first().product.supermarketId,
+                lines.mapValues { it.value.qty }, method.db, address, notes, date?.toString(), if (date == null) null else slot, adultOk)
+            if (method != PayMethod.CASH) payingMsg = "Procesando pago con ${method.label} (simulado)…"
+            when (val r = Payments.provider(method).pay(id, total)) {
+                is PayResult.Failed -> err = "Pedido creado, pero el pago falló: ${r.reason}. Podrás pagar al recibirlo."
+                PayResult.Paid -> runCatching { Locator.repo.mockMarkPaid(id) }
+                PayResult.Deferred -> {}
+            }
+            payingMsg = null; vm.cart.clear(); onPlaced(id)
+        } catch (e: Exception) { err = e.message; payingMsg = null }
+        busy = false
+    }
+
 
     Scaffold(
         topBar = { TopAppBar({ Text("Mi cesta") }, navigationIcon = { IconButton(onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }) },
@@ -98,7 +118,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
             AnimatedVisibility(lines.isNotEmpty(), enter = slideInVertically { it }, exit = slideOutVertically { it }) {
                 Surface(tonalElevation = 6.dp, shadowElevation = 12.dp) {
                     Column(Modifier.navigationBarsPadding().padding(16.dp)) {
-                        BigButton("Hacer el pedido · ${eur(total)}", { confirm = true }, icon = Icons.Filled.CheckCircle,
+                        BigButton("Revisar y pedir · ${eur(total)}", { confirm = true }, icon = Icons.Filled.CheckCircle,
                             enabled = address.isNotBlank() && target?.townId != null && quote != null && (date == null || slot != null), loading = busy)
                     }
                 }
@@ -199,38 +219,46 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
         }
     }
 
-    if (confirm) AlertDialog(
-        onDismissRequest = { confirm = false },
-        icon = { Icon(Icons.Filled.ShoppingBag, null) },
-        title = { Text("¿Confirmas el pedido?") },
-        text = {
-            Text("${productos(lines.values.sumOf { it.qty })} por ${eur(total)}, pago: ${method.label}.\n" +
-                (date?.let { "Entrega: ${prettyDay(it.toString())}, ${slotLabel(slot)}." } ?: "Entrega: lo antes posible.") + "\nEn: $address")
-        },
-        confirmButton = {
-            Button({
-                confirm = false
-                scope.launch {
-                    busy = true; err = null
-                    try {
-                        val t = target ?: error("Sin cliente")
-                        val id = Locator.repo.createOrder(t.id, lines.values.first().product.supermarketId,
-                            lines.mapValues { it.value.qty }, method.db, address, notes, date?.toString(), if (date == null) null else slot)
-                        if (method != PayMethod.CASH) payingMsg = "Procesando pago con ${method.label} (simulado)…"
-                        when (val r = Payments.provider(method).pay(id, total)) {
-                            is PayResult.Failed -> err = "Pedido creado, pero el pago falló: ${r.reason}. Podrás pagar al recibirlo."
-                            PayResult.Paid -> runCatching { Locator.repo.mockMarkPaid(id) }
-                            PayResult.Deferred -> {}
-                        }
-                        payingMsg = null
-                        vm.cart.clear()
-                        onPlaced(id)
-                    } catch (e: Exception) { err = e.message; payingMsg = null }
-                    busy = false
+    val needsAdult = lines.values.any { it.product.ageRestricted }
+    if (confirm) {
+        // Paso 1: revisión completa del pedido. Botón con "obligación de pago" (art. 98.2 TRLGDCU).
+        var reviewed by remember { mutableStateOf(false) }
+        var adult by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { confirm = false },
+            icon = { Icon(Icons.Filled.ShoppingBag, null) },
+            title = { Text("Revisa tu pedido") },
+            text = {
+                Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                    ConfirmRow(Icons.Filled.ShoppingBasket, productos(lines.values.sumOf { it.qty }))
+                    ConfirmRow(Icons.Filled.Event, date?.let { prettyDay(it.toString()) + ", " + slotLabel(slot) } ?: "Lo antes posible")
+                    ConfirmRow(Icons.Filled.Home, address)
+                    ConfirmRow(Icons.Filled.Payments, method.label + if (method == PayMethod.CASH) " (al recibirlo)" else "")
+                    Text("Total: ${eur(total)}", Modifier.padding(top = 10.dp), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                    Text("IVA incluido. Puedes cancelarlo gratis mientras ningún repartidor lo haya aceptado.", style = MaterialTheme.typography.bodySmall)
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                        Checkbox(reviewed, { reviewed = it }); Text("He revisado los productos, la dirección y el importe.", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (needsAdult) Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(adult, { adult = it }); Text("Soy mayor de 18 años. El repartidor me pedirá el DNI al entregar las bebidas alcohólicas.", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
-            }) { Text("Sí, pedir") }
-        },
-        dismissButton = { TextButton({ confirm = false }) { Text("Revisar") } },
+            },
+            confirmButton = {
+                Button({ confirm = false; adultOk = adult; if (method == PayMethod.CASH) placeOrder() else payConfirm = true },
+                    enabled = reviewed && (!needsAdult || adult)) { Text("Confirmar pedido con obligación de pago") }
+            },
+            dismissButton = { TextButton({ confirm = false }) { Text("Volver") } },
+        )
+    }
+    // Paso 2 (tarjeta o Bizum): confirmación explícita del cobro
+    if (payConfirm) AlertDialog(
+        onDismissRequest = { payConfirm = false },
+        icon = { Icon(if (method == PayMethod.CARD) Icons.Filled.CreditCard else Icons.Filled.PhoneAndroid, null) },
+        title = { Text("¿Pagar ${eur(total)}?") },
+        text = { Text("Se cobrará ${eur(total)} con ${method.label}. Si el repartidor no puede completar la compra, se te devolverá lo que falte.") },
+        confirmButton = { Button({ payConfirm = false; placeOrder() }) { Text("Sí, pagar ${eur(total)}") } },
+        dismissButton = { TextButton({ payConfirm = false }) { Text("No, volver") } },
     )
     payingMsg?.let { msg ->
         AlertDialog({}, confirmButton = {}, icon = { CircularProgressIndicator() }, title = { Text("Pagando") }, text = { Text(msg) })
@@ -247,3 +275,9 @@ private fun SummaryLine(label: String, value: Double, strong: Boolean = false, m
             color = if (strong) MaterialTheme.colorScheme.primary else if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
     }
 }
+
+@Composable
+private fun ConfirmRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) =
+    Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp)); Text(text, style = MaterialTheme.typography.bodyLarge)
+    }

@@ -43,7 +43,7 @@ fun AppNav(vm: AppViewModel) {
     val boot by vm.boot.collectAsState()
     LaunchedEffect(boot) {
         val dest = when (boot) {
-            Boot.LoggedOut -> "login"; Boot.NeedsProfile -> "onboard"; Boot.Client -> "home"; Boot.Driver -> "driver"
+            Boot.LoggedOut -> "login"; Boot.NeedsTerms -> "terms"; Boot.NeedsProfile -> "onboard"; Boot.Client -> "home"; Boot.Driver -> "driver"
             else -> return@LaunchedEffect
         }
         if (nav.currentDestination?.route != dest) nav.navigate(dest) { popUpTo(nav.graph.id) { inclusive = true }; launchSingleTop = true }
@@ -67,6 +67,7 @@ fun AppNav(vm: AppViewModel) {
             VerifyScreen(vm, e.arguments?.getString("email").orEmpty(), e.arguments?.getString("mode") ?: "signup") { nav.popBackStack() }
         }
         composable("onboard") { OnboardingScreen(vm) }
+        composable("terms") { TermsScreen(vm) }
         composable("home") { ClientHome(vm, onCart = { nav.navigate("cart") }, onOrder = { nav.navigate("order/$it") }, onDebug = { nav.navigate("debug") },
             onEditProduct = { id -> nav.navigate("admin/product/${id ?: -1}") }) }
         composable("admin/product/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->

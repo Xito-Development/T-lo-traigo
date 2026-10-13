@@ -49,7 +49,7 @@ fun SplashScreen(vm: AppViewModel) {
     Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         BrandMark(120)
         Spacer(Modifier.height(24.dp))
-        Text("T lo traigo", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+        Wordmark(width = 260.dp)
         Spacer(Modifier.height(24.dp))
         when (val b = boot) {
             is Boot.Error -> { ErrorText(b.msg); BigButton("Reintentar", { vm.start() }, icon = Icons.Filled.Refresh) }
@@ -84,8 +84,10 @@ fun LoginScreen(vm: AppViewModel, onRegister: () -> Unit, onVerify: (email: Stri
         verticalArrangement = Arrangement.Center,
     ) {
         BrandMark()
-        Spacer(Modifier.height(28.dp))
-        Text("La compra del súper,\nen la puerta de casa.", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(18.dp))
+        Wordmark(width = 250.dp)
+        Spacer(Modifier.height(18.dp))
+        Text("La compra del súper,\nen la puerta de casa.", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         Text("Para los pueblos de León. Tú eliges, un vecino te lo trae.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(28.dp))
@@ -296,5 +298,49 @@ fun VerifyScreen(vm: AppViewModel, email: String, mode: String, onBack: () -> Un
                 }
             }
         }
+    }
+}
+
+/** Aceptación de condiciones y privacidad (se guarda versión y fecha: prueba del consentimiento, art. 7.1 RGPD). */
+@Composable
+fun TermsScreen(vm: AppViewModel) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val driver = vm.profile.collectAsState().value?.isDriver == true
+    var ok by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var err by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val base = es.unocerobits.tlotraigo.BuildConfig.WEB_URL.trimEnd('/')
+    Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(24.dp)) {
+        Wordmark(width = 200.dp)
+        Spacer(Modifier.height(20.dp))
+        Text("Antes de empezar", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(8.dp))
+        Text("Para usar T lo traigo necesitamos que leas y aceptes estas condiciones. Resumen:", style = MaterialTheme.typography.bodyLarge)
+        listOf(
+            "Pagas el precio del súper más el servicio y el envío que ves antes de pedir.",
+            "Puedes cancelar el pedido mientras ningún repartidor lo haya aceptado.",
+            "Los productos frescos no admiten devolución, pero si algo llega mal te lo solucionamos.",
+            "Usamos tus datos solo para gestionar tus pedidos; nunca los vendemos.",
+            if (driver) "Como repartidor, tu ubicación solo se comparte mientras llevas un pedido." else "El repartidor verá tu nombre, teléfono y dirección para entregarte la compra.",
+        ).forEach { Text("• $it", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium) }
+        Spacer(Modifier.height(12.dp))
+        TextButton({ ctx.openUrl("$base/condiciones.html") }) { Text("Leer las condiciones de uso") }
+        if (driver) TextButton({ ctx.openUrl("$base/repartidores.html") }) { Text("Leer las condiciones para repartidores") }
+        TextButton({ ctx.openUrl("$base/privacidad.html") }) { Text("Leer la política de privacidad") }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(ok, { ok = it })
+            Text("He leído y acepto las condiciones de uso y la política de privacidad, y soy mayor de edad.", style = MaterialTheme.typography.bodyMedium)
+        }
+        ErrorText(err)
+        Spacer(Modifier.height(12.dp))
+        BigButton("Aceptar y continuar", {
+            scope.launch {
+                busy = true; err = null
+                try { Locator.repo.acceptTerms(es.unocerobits.tlotraigo.TERMS_VERSION); vm.start() } catch (e: ApiException) { err = e.message }
+                busy = false
+            }
+        }, enabled = ok, loading = busy, icon = Icons.Filled.Check)
+        TextButton({ vm.logout() }, Modifier.align(Alignment.CenterHorizontally)) { Text("Salir") }
     }
 }

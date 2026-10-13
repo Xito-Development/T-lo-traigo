@@ -33,6 +33,9 @@ data class Product(
     val icon: String? = null,
     val active: Boolean = true,
     val ean: String? = null,
+    val allergens: String? = null,
+    val ingredients: String? = null,
+    @SerialName("age_restricted") val ageRestricted: Boolean = false,
 ) {
     /** Precio sin IVA (los precios del súper son PVP con IVA incluido). */
     val basePrice get() = price / (1 + vatRate / 100)
@@ -49,6 +52,7 @@ data class Profile(
     @SerialName("town_id") val townId: Long? = null,
     @SerialName("senior_mode") val seniorMode: Boolean = true,
     @SerialName("link_code") val linkCode: String? = null,
+    @SerialName("terms_version") val termsVersion: String? = null,
 ) {
     val firstName get() = fullName.trim().substringBefore(' ').ifBlank { "" }
     val isDriver get() = role == "repartidor"
@@ -107,6 +111,9 @@ data class Review(
     val comment: String? = null,
     @SerialName("created_at") val createdAt: String = "",
 )
+
+@Serializable
+data class DriverLocation(val lat: Double, val lng: Double, @SerialName("updated_at") val updatedAt: String)
 
 @Serializable
 data class Rating(val rating: Double? = null, val count: Int = 0)

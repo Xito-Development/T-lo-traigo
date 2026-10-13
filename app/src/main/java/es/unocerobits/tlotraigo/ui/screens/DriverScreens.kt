@@ -68,7 +68,34 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
     var err by remember { mutableStateOf<String?>(null) }
     var busyId by remember { mutableStateOf<Long?>(null) }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) { runCatching { ds = Locator.repo.driverSettings() } }
+    val ctxS = androidx.compose.ui.platform.LocalContext.current
+    val perms = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
+        es.unocerobits.tlotraigo.DriverService.start(ctxS)
+    }
+    var disclosure by remember { mutableStateOf(false) }
+    var pendientes by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Aviso destacado antes de pedir permisos (política de Google Play sobre ubicación)
+    if (disclosure) AlertDialog(
+        onDismissRequest = { disclosure = false },
+        icon = { Icon(Icons.Filled.NotificationsActive, null) },
+        title = { Text("Avisos y ubicación") },
+        text = { Text("Para avisarte de pedidos nuevos, T lo traigo mostrará notificaciones mientras estés disponible.\n\n" +
+            "Tu ubicación solo se usa mientras llevas un pedido «en camino», para que el cliente vea por dónde vas y para la ruta. " +
+            "Se deja de compartir al marcarlo como entregado y no se usa con la app cerrada fuera de un reparto.") },
+        confirmButton = { Button({ disclosure = false; perms.launch(pendientes.toTypedArray()) }) { Text("Continuar") } },
+        dismissButton = { TextButton({ disclosure = false; es.unocerobits.tlotraigo.DriverService.start(ctxS) }) { Text("Ahora no") } },
+    )
+    fun pedirPermisosYArrancar() {
+        val faltan = buildList {
+            if (android.os.Build.VERSION.SDK_INT >= 33) add(android.Manifest.permission.POST_NOTIFICATIONS)
+            add(android.Manifest.permission.ACCESS_FINE_LOCATION); add(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        }.filter { androidx.core.content.ContextCompat.checkSelfPermission(ctxS, it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
+        if (faltan.isEmpty()) es.unocerobits.tlotraigo.DriverService.start(ctxS) else { pendientes = faltan; disclosure = true }
+    }
+    LaunchedEffect(Unit) {
+        runCatching { ds = Locator.repo.driverSettings() }
+        if (ds?.available == true && ds?.approved == true) pedirPermisosYArrancar()
+    }
     LaunchedEffect(ds?.available) {
         while (ds?.available == true) {
             try { orders = Locator.repo.pendingOrders(); err = null } catch (e: ApiException) { err = e.message }
@@ -84,7 +111,9 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                         Text(if (on) "Estás disponible" else "No estás disponible", style = MaterialTheme.typography.titleLarge)
                         Text(if (on) "Recibirás pedidos de tus pueblos" else "Actívalo para ver pedidos nuevos", style = MaterialTheme.typography.bodyMedium)
                     }
-                    Switch(on, { v -> ds?.let { cur -> val n = cur.copy(available = v); ds = n; scope.launch { runCatching { Locator.repo.saveDriverSettings(n) } } } })
+                    Switch(on, { v -> ds?.let { cur -> val n = cur.copy(available = v); ds = n
+                        scope.launch { runCatching { Locator.repo.saveDriverSettings(n) } }
+                        if (v) pedirPermisosYArrancar() else es.unocerobits.tlotraigo.DriverService.stop(ctxS) } })
                 }
             }
             if (ds != null && ds?.approved == false) Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium) {
@@ -221,14 +250,26 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     o.customer?.phone?.let { ph -> OutlinedButton({ ctx.dial(ph) }, Modifier.weight(1f)) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Llamar") } }
-                    OutlinedButton({ ctx.openMap(o.address) }, Modifier.weight(1f)) { Icon(Icons.Filled.Map, null); Spacer(Modifier.width(6.dp)); Text("Mapa") }
+                    OutlinedButton({ ctx.navigateTo(o.address) }, Modifier.weight(1f)) { Icon(Icons.Filled.Navigation, null); Spacer(Modifier.width(6.dp)); Text("Ruta") }
                 }
+                val locPerm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
+                    es.unocerobits.tlotraigo.DriverService.start(ctx)
+                }
+                if (o.status == "en_camino") Text("📍 Tu ubicación se comparte con el cliente hasta que marques «entregado».",
+                    Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 next?.let { (st, label) ->
                     Spacer(Modifier.height(10.dp))
                     BigButton(label, {
                         scope.launch {
                             busy = true
-                            try { Locator.repo.setStatus(o.id, st); onChanged() } catch (e: ApiException) { err = e.message }
+                            try {
+                                Locator.repo.setStatus(o.id, st)
+                                if (st == "en_camino") {
+                                    if (es.unocerobits.tlotraigo.DriverService.hasLocation(ctx)) es.unocerobits.tlotraigo.DriverService.start(ctx)
+                                    else locPerm.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION))
+                                }
+                                onChanged()
+                            } catch (e: ApiException) { err = e.message }
                             busy = false
                         }
                     }, loading = busy, icon = Icons.Filled.ArrowForward)
@@ -339,6 +380,13 @@ fun DriverApplicationSection(vm: AppViewModel) {
     var availability by remember { mutableStateOf("") }
     var experience by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
+    var dAdult by remember { mutableStateOf(false) }
+    var dRETA by remember { mutableStateOf(false) }
+    var dSeguro by remember { mutableStateOf(false) }
+    var dAlimentos by remember { mutableStateOf(false) }
+    var dTerms by remember { mutableStateOf(false) }
+    var dGeo by remember { mutableStateOf(false) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     var busy by remember { mutableStateOf(false) }
     var err by remember { mutableStateOf<String?>(null) }
     var reload by remember { mutableIntStateOf(0) }
@@ -384,14 +432,27 @@ fun DriverApplicationSection(vm: AppViewModel) {
         minLines = 2, shape = MaterialTheme.shapes.medium)
     OutlinedTextField(message, { message = it }, Modifier.fillMaxWidth().padding(top = 10.dp), label = { Text("Mensaje para el responsable (opcional)") },
         minLines = 2, shape = MaterialTheme.shapes.medium)
+    Text("Declaraciones", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 14.dp))
+    @Composable fun Decl(v: Boolean, set: (Boolean) -> Unit, t: String) = Row(Modifier.fillMaxWidth().clickable { set(!v) }, verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(v, set); Text(t, style = MaterialTheme.typography.bodyMedium)
+    }
+    Decl(dAdult, { dAdult = it }, "Soy mayor de 18 años y tengo DNI o NIE en vigor. *")
+    Decl(dRETA, { dRETA = it }, "Estoy dado de alta como autónomo (RETA) o me daré de alta antes de empezar a repartir.")
+    Decl(dSeguro, { dSeguro = it }, "Mi vehículo tiene seguro en vigor y, si es necesario, carné de conducir.")
+    Decl(dAlimentos, { dAlimentos = it }, "Transportaré los alimentos limpios y separados, y los refrigerados o congelados sin romper la cadena de frío.")
+    Decl(dTerms, { dTerms = it }, "He leído y acepto las condiciones para repartidores. *")
+    TextButton({ ctx.openUrl(es.unocerobits.tlotraigo.BuildConfig.WEB_URL.trimEnd('/') + "/repartidores.html") }) { Text("Leer las condiciones para repartidores") }
+    Decl(dGeo, { dGeo = it }, "Acepto que mi ubicación se comparta con el cliente solo mientras llevo su pedido (ruta «en camino»). *")
+    Text("* Obligatorio. El alta como autónomo y el seguro son tu responsabilidad; consulta a una gestoría si tienes dudas.",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     ErrorText(err)
     Spacer(Modifier.height(10.dp))
     BigButton("Enviar candidatura", {
         scope.launch {
             busy = true; err = null
-            try { Locator.repo.submitApplication(vehicle, sel.toList(), availability, experience, message); editing = false; reload++ }
+            try { Locator.repo.submitApplication(vehicle, sel.toList(), availability, experience, message, dAdult, dRETA, dSeguro, dAlimentos, dTerms, dGeo); editing = false; reload++ }
             catch (e: ApiException) { err = e.message }
             busy = false
         }
-    }, enabled = sel.isNotEmpty(), loading = busy, icon = Icons.AutoMirrored.Filled.Send)
+    }, enabled = sel.isNotEmpty() && dAdult && dTerms && dGeo, loading = busy, icon = Icons.AutoMirrored.Filled.Send)
 }
