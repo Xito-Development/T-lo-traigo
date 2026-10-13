@@ -27,6 +27,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        es.unocerobits.tlotraigo.data.ChatNotifier.start(this)
+        intent?.getLongExtra("chat", 0L)?.takeIf { it > 0 }?.let { vm.openChat.value = it }
         setContent {
             val settings by vm.settings.collectAsState()
             val dark = settings.mode.isDark(isSystemInDarkTheme())
@@ -52,5 +54,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        intent.getLongExtra("chat", 0L).takeIf { it > 0 }?.let { vm.openChat.value = it }
     }
 }

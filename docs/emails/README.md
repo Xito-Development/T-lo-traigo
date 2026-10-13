@@ -11,5 +11,5 @@ Copia el **asunto** y pega el contenido del archivo en **Message body** (pestañ
 | Invite user | `invite.html` | Te han invitado a T lo traigo |
 | Reauthentication | `reauthentication.html` | Confirma que eres tú |
 
-Las imágenes se cargan desde `https://tlotraigo.unocerobits.com/email/` (sube la carpeta `web/t-lo-traigo/email/`).
+El logo se carga desde GitHub (raw.githubusercontent.com, repositorio público). El nombre «T lo traigo» es texto, así que se ve aunque el correo bloquee las imágenes.
 Remitente: **T Lo Traigo UNOCEROBITS** `<tlotraigo@unocerobits.com>` vía Brevo.

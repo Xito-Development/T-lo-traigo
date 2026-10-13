@@ -162,6 +162,7 @@ fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
                 Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(q, { q = it }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), placeholder = { Text("Buscar: leche, pan, pañales…") },
                 leadingIcon = { Icon(Icons.Filled.Search, null) }, singleLine = true, shape = androidx.compose.foundation.shape.CircleShape)
+            needs?.let { all -> if (q.isBlank()) VoiceListCard(all) { items -> items.forEach { (n, qty, d) -> vm.cart.addNeed(n, d, qty) } } }
             if (usual.isNotEmpty() && q.isBlank()) {
                 Text("Lo de siempre", Modifier.padding(start = 16.dp, top = 10.dp), style = MaterialTheme.typography.titleMedium)
                 androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

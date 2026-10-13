@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 private enum class ASec(val label: String, val superOnly: Boolean = false) {
-    PRODUCTOS("Productos"), TARIFAS("Tarifas"), ESTADISTICAS("Estadísticas"), REEMBOLSOS("Reembolsos"),
+    PRODUCTOS("Productos"), LISTA("Lista fácil"), TARIFAS("Tarifas"), ESTADISTICAS("Estadísticas"), REEMBOLSOS("Reembolsos"),
     RECLAMACIONES("Reclamaciones"), OPINIONES("Opiniones"), EMPRESA("Facturación", true),
     REPARTIDORES("Repartidores", true), USUARIOS("Usuarios", true)
 }
@@ -64,6 +64,7 @@ fun AdminHome(vm: AppViewModel, onEditProduct: (Long?) -> Unit) {
                 ASec.PRODUCTOS -> AdminProducts(onEditProduct)
                 ASec.TARIFAS -> AdminFees()
                 ASec.OPINIONES -> AdminReviews()
+                ASec.LISTA -> AdminNeeds()
                 ASec.ESTADISTICAS -> AdminStats()
                 ASec.REEMBOLSOS -> AdminRefunds()
                 ASec.RECLAMACIONES -> AdminComplaints()
@@ -301,7 +302,7 @@ private fun AdminFees() {
             val c = Locator.repo.fees(); f = c
             v["pct"] = fmtNum(c.servicePct); v["min"] = fmtNum(c.minService); v["item"] = fmtNum(c.perItem); v["free"] = c.freeItems.toString()
             v["km"] = fmtNum(c.perKm, 3); v["exp"] = fmtNum(c.express); v["pen"] = fmtNum(c.stalePenalty); v["hrs"] = c.staleHours.toString()
-            v["pp"] = fmtNum(c.platformPct); v["gp"] = fmtNum(c.gestionPct); v["gm"] = fmtNum(c.gestionMin); v["mg"] = fmtNum(c.marginPct)
+            v["pp"] = fmtNum(c.platformPct); v["ckm"] = fmtNum(c.costPerKm); v["gp"] = fmtNum(c.gestionPct); v["gm"] = fmtNum(c.gestionMin); v["mg"] = fmtNum(c.marginPct)
             towns = Locator.repo.towns()
             towns.forEach { t -> v["tf${t.id}"] = fmtNum(t.deliveryFee); v["tk${t.id}"] = fmtNum(t.distanceKm, 0) }
         } catch (e: ApiException) { err = e.message }
@@ -321,6 +322,35 @@ private fun AdminFees() {
             NumField("Productos incluidos", v["free"].orEmpty(), "uds", Modifier.weight(1f)) { v["free"] = it }
             NumField("Por cada ud. extra", v["item"].orEmpty(), "€", Modifier.weight(1f)) { v["item"] = it }
         }
+        var card by remember { mutableStateOf(f!!.cardEnabled) }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Pagos con tarjeta", style = MaterialTheme.typography.titleMedium)
+                Text("Desactivado: solo efectivo. Actívalo cuando estés dado de alta y tengas Stripe configurado.", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(card, { card = it; f = f!!.copy(cardEnabled = it) })
+        }
+        var demo by remember { mutableStateOf(f!!.demoPayments) }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Modo demostración", style = MaterialTheme.typography.titleMedium)
+                Text("Permite «Simular pago». Desactívalo cuando configures Stripe: si no, cualquiera podría marcar pedidos como pagados.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(demo, { demo = it; f = f!!.copy(demoPayments = it) })
+        }
+        SectionTitle("Modelo de repartidores")
+        var mode by remember { mutableStateOf(f!!.payoutMode) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(mode == "gastos", { mode = "gastos"; f = f!!.copy(payoutMode = "gastos"); v["km"] = fmtNum((parseNum(v["ckm"].orEmpty()) ?: 0.26) * 2) },
+                { Text("Vecinos: solo gastos") })
+            FilterChip(mode == "porcentaje", { mode = "porcentaje"; f = f!!.copy(payoutMode = "porcentaje") }, { Text("Profesionales: % de tarifas") })
+        }
+        Text(if (mode == "gastos") "El repartidor recibe solo sus gastos de desplazamiento (km ida y vuelta × €/km), sin beneficio: no necesita ser autónomo. Servicio, gestión y tarifas adicionales son de la plataforma. El «por km» que paga el cliente se pone al doble del coste por km."
+             else "El repartidor (autónomo o contratado) recibe servicio + envío + suplemento menos la comisión de la plataforma.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (mode == "gastos") NumField("Coste por km del vehículo (exento hasta 0,26 €)", v["ckm"].orEmpty(), "€/km", Modifier.fillMaxWidth()) { v["ckm"] = it; parseNum(it)?.let { c -> v["km"] = fmtNum(c * 2) } }
         SectionTitle("Reparto de ganancias")
         NumField("Comisión de la plataforma sobre las tarifas del repartidor", v["pp"].orEmpty(), "%", Modifier.fillMaxWidth()) { v["pp"] = it }
         Text("El repartidor recibe servicio + envío + suplemento menos esta comisión. La gestión y las tarifas adicionales son de la plataforma.",
@@ -399,7 +429,7 @@ private fun AdminFees() {
             scope.launch {
                 busy = true; err = null; msg = null
                 try {
-                    Locator.repo.saveFeeConfig(FeeConfig(n("pct")!!, n("min")!!, n("item")!!, n("free")!!.toInt(), n("km")!!, n("exp")!!, n("pen")!!, n("hrs")!!.toInt(), n("gp")!!, n("gm")!!, n("mg")!!, n("pp")!!))
+                    Locator.repo.saveFeeConfig(FeeConfig(n("pct")!!, n("min")!!, n("item")!!, n("free")!!.toInt(), n("km")!!, n("exp")!!, n("pen")!!, n("hrs")!!.toInt(), n("gp")!!, n("gm")!!, n("mg")!!, n("pp")!!, f!!.demoPayments, f!!.cardEnabled, f!!.payoutMode, n("ckm") ?: 0.26))
                     towns.forEach { t ->
                         val fee = n("tf${t.id}")!!; val km = n("tk${t.id}")!!
                         if (fee != t.deliveryFee || km != t.distanceKm) Locator.repo.saveTown(t.id, fee, km)

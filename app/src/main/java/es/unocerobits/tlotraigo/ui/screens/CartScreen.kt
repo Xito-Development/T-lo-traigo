@@ -52,6 +52,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     var quoteErr by remember { mutableStateOf<String?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     var confirm by remember { mutableStateOf(false) }
+    var cardOn by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { cardOn = runCatching { Locator.repo.fees().cardEnabled }.getOrDefault(false); if (!cardOn) method = PayMethod.CASH }
     var payConfirm by remember { mutableStateOf(false) }
     var adultOk by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -163,10 +165,14 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                 }
                 AnimatedVisibility(date != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                        FilterChip(slot == "manana", { slot = "manana" }, { Text("Mañana · 9–13 h") }, leadingIcon = { Icon(Icons.Filled.WbSunny, null, Modifier.size(18.dp)) })
-                        FilterChip(slot == "tarde", { slot = "tarde" }, { Text("Tarde · 16–20 h") }, leadingIcon = { Icon(Icons.Filled.WbTwilight, null, Modifier.size(18.dp)) })
+                        FilterChip(slot == "manana", { slot = "manana" }, { Text("9–14 h") }, leadingIcon = { Icon(Icons.Filled.WbSunny, null, Modifier.size(18.dp)) })
+                        FilterChip(slot == "tarde", { slot = "tarde" }, { Text("14–18 h") }, leadingIcon = { Icon(Icons.Filled.WbTwilight, null, Modifier.size(18.dp)) })
+                        FilterChip(slot == "noche", { slot = "noche" }, { Text("18–22 h") }, leadingIcon = { Icon(Icons.Filled.NightsStay, null, Modifier.size(18.dp)) })
                     }
                 }
+                val hour = java.time.LocalTime.now(ZoneId.of("Europe/Madrid")).hour
+                if (date == null && (hour < 9 || hour >= 22)) Text("🌙 Fuera del horario de entrega (9:00 a 22:00): te lo llevarán a partir de las 9:00.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(top = 4.dp))
                 if (date == null || date == today) Text("La entrega en el día lleva un pequeño suplemento.", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
             }
@@ -187,9 +193,9 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     if (av.isEmpty()) Text("Ahora mismo no hay repartidores activos en tu pueblo. Tu pedido quedará en espera y se pagará en efectivo.",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     PayMethod.entries.forEach { m ->
-                        val enabled = m != PayMethod.BIZUM && (if (av.isEmpty()) m != PayMethod.BIZUM else m.db in av || m == PayMethod.CARD)
+                        val enabled = when (m) { PayMethod.BIZUM -> false; PayMethod.CARD -> cardOn; PayMethod.CASH -> true }
                         val icon = when (m) { PayMethod.CASH -> Icons.Filled.Payments; PayMethod.BIZUM -> Icons.Filled.PhoneAndroid; PayMethod.CARD -> Icons.Filled.CreditCard }
-                        ChoiceRow(m.label, if (m == PayMethod.BIZUM) "Próximamente" else if (enabled) m.hint else "No disponible ahora en tu pueblo", method == m, enabled, icon) { method = m }
+                        ChoiceRow(m.label, if (m == PayMethod.BIZUM || (m == PayMethod.CARD && !cardOn)) "Próximamente" else m.hint, method == m, enabled, icon) { method = m }
                     }
                 }
             }
@@ -204,11 +210,11 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     }
                     SummaryLine("Productos (precio orientativo)", q.subtotal)
                     SummaryLine("   de los que IVA", q.productsVat, muted = true)
-                    SummaryLine("Servicio del repartidor (${q.servicePct.toInt()} %)", q.service)
+                    SummaryLine((if (q.payoutMode == "gastos") "Servicio de T lo traigo" else "Servicio del repartidor") + " (${q.servicePct.toInt()} %)", q.service)
                     SummaryLine("Gestión del pedido (${q.gestionPct.toInt()} %)", q.gestion)
                     if (q.itemsFee > 0) SummaryLine("Por cantidad (${q.units - q.freeItems} uds. más de ${q.freeItems})", q.itemsFee)
                     SummaryLine("Envío a ${q.town}", q.deliveryBase)
-                    SummaryLine("Distancia (${q.distanceKm.toInt()} km)", q.distanceFee)
+                    SummaryLine(if (q.payoutMode == "gastos") "Gastos de desplazamiento del repartidor (${q.distanceKm.toInt()} km, ida y vuelta)" else "Distancia (${q.distanceKm.toInt()} km)", q.distanceFee)
                     if (q.expressFee > 0) SummaryLine("Entrega en el día", q.expressFee)
                     q.extras.filter { it.amount > 0 }.forEach { SummaryLine(it.name, it.amount) }
                     SummaryLine("   IVA del servicio (21 %)", q.feesVat, muted = true)

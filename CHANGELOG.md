@@ -2,6 +2,26 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.5.5] - 2026-10-13
+### Añadido
+- Lista fácil: escribe o dicta por voz tu lista («2 litros de leche, pan y 6 huevos») y se añade sola a la cesta.
+- Administración → Lista fácil: crear, editar, ocultar y borrar los artículos básicos (precio, IVA, icono, opciones).
+- Chat en directo entre cliente y repartidor durante el pedido, con mensajes rápidos y notificaciones.
+- Editar el pedido (cantidades, quitar, añadir más y notas) hasta que el repartidor llega al súper.
+- Reclamar un pedido no recibido: plazo de 6 horas para entregarlo y botón para llamar al 112 en emergencias.
+- Modo oscuro en la web, automático o con el botón 🌙.
+- Propinas al terminar el pedido (1, 2, 3, 5 € u otra cantidad), íntegras para el repartidor; se ven en sus ganancias.
+- Interruptores en Administración → Tarifas: «Pagos con tarjeta» y «Modo demostración».
+- Correos de la app con diseño nuevo y contactos de soporte y de Xito Development.
+### Cambiado
+- Horario de entrega de 9:00 a 22:00, con franjas de mañana, tarde y noche.
+- Pagos con tarjeta desactivados por ahora (solo efectivo); se activan desde Administración → Tarifas.
+### Corregido
+- Seguridad: los pagos simulados solo funcionan en modo demostración.
+- Seguridad: un repartidor ya no puede cambiar su cuenta de cobro ni su autorización.
+- Estadísticas: límite contra envíos masivos de eventos.
+- Modelo «vecinos colaboradores»: el repartidor recibe solo sus gastos de desplazamiento (km ida y vuelta) y no necesita ser autónomo; servicio y gestión son de la plataforma (Administración → Tarifas).
+
 ## [0.5.4] - 2026-10-13
 ### Añadido
 - Correos de la app con diseño nuevo (código de verificación, contraseña, acceso, cambio de correo, invitación y seguridad), enviados desde tlotraigo@unocerobits.com.

@@ -55,8 +55,11 @@ fun AppNav(vm: AppViewModel) {
     val update by vm.update.collectAsState()
     LaunchedEffect(Unit) { vm.checkUpdate() }
     update?.let { UpdateDialog(it) { vm.dismissUpdate() } }
+    val chatReq by vm.openChat.collectAsState()
+    LaunchedEffect(chatReq, boot) { val id = chatReq; if (id != null && (boot == Boot.Client || boot == Boot.Driver)) { nav.navigate("chat/$id"); vm.openChat.value = null } }
     val toVerify: (String, String) -> Unit = { email, mode -> nav.navigate("verify/$mode/${Uri.encode(email)}") }
     val spec = tween<IntOffset>(380, easing = EaseOutCubic)
+    CompositionLocalProvider(LocalOpenChat provides { id: Long -> nav.navigate("chat/$id") }) {
     NavHost(
         nav, "splash",
         enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, spec) + fadeIn(tween(300)) },
@@ -71,6 +74,7 @@ fun AppNav(vm: AppViewModel) {
             VerifyScreen(vm, e.arguments?.getString("email").orEmpty(), e.arguments?.getString("mode") ?: "signup") { nav.popBackStack() }
         }
         composable("onboard") { OnboardingWizard(vm) }
+        composable("chat/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e -> ChatScreen(vm, e.arguments?.getLong("id") ?: 0) { nav.popBackStack() } }
         composable("needs") { NeedsScreen(vm, onBack = { nav.popBackStack() }, onCart = { nav.navigate("cart") }) }
         composable("terms") { TermsScreen(vm) }
         composable("home") { ClientHome(vm, onCart = { nav.navigate("cart") }, onOrder = { nav.navigate("order/$it") }, onDebug = { nav.navigate("debug") },
@@ -86,6 +90,7 @@ fun AppNav(vm: AppViewModel) {
         composable("order/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->
             OrderDetailScreen(vm, e.arguments?.getLong("id") ?: 0, onBack = { nav.popBackStack() }, onRepeat = { nav.navigate("cart") { popUpTo("home") } })
         }
+    }
     }
 }
 

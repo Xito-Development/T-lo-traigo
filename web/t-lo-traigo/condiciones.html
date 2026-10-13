@@ -7,7 +7,10 @@ body{font:1.08rem/1.65 "Atkinson Hyperlegible",system-ui,sans-serif;color:#1C262
 main{max-width:780px;margin:0 auto;padding:2rem 1.25rem 4rem} h1,h2{font-family:"Baloo 2",sans-serif;color:#1F4D3F;line-height:1.1}
 h1{font-size:2.4rem} h2{margin-top:2rem;font-size:1.45rem} a{color:#2E6B57} .todo{background:#FFF1C7;padding:0 .3rem;border-radius:4px}
 .box{background:#fff;border:2px solid #D5E0DA;border-radius:16px;padding:1rem 1.2rem} li{margin:.3rem 0}
-nav{display:flex;gap:1rem;flex-wrap:wrap;font-weight:700}</style></head><body><main>
+nav{display:flex;gap:1rem;flex-wrap:wrap;font-weight:700}html[data-theme="dark"] body{background:#101715;color:#E3EBE7} html[data-theme="dark"] h1,html[data-theme="dark"] h2{color:#9ED8BE}
+html[data-theme="dark"] a{color:#8FD3B6} html[data-theme="dark"] .box{background:#1C2723;border-color:#2B3A35} html[data-theme="dark"] td,html[data-theme="dark"] th{border-color:#2B3A35}
+html[data-theme="dark"] .todo{background:#5C4100;color:#FFDE9E} html[data-theme="dark"] img[src="wordmark.svg"]{content:url(wordmark-claro.svg)}
+</style><script>(function(){try{var t=localStorage.getItem('tlt_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script></head><body><main>
 <p><a href="./"><img src="wordmark.svg" alt="T lo traigo" style="height:42px"></a></p>
 <h1>Condiciones de uso</h1><p>Última actualización: 13 de octubre de 2026 · versión 2026-10-2.</p>
 <div class="box"><strong>En pocas palabras:</strong> eliges lo que necesitas; un repartidor de tu zona lo compra por encargo tuyo y te lo lleva. Los precios de los productos son <strong>orientativos</strong>: no pagas al pedir: cuando el repartidor hace la compra ves la foto del ticket y pagas su importe real más el servicio, la gestión y el envío. Puedes cancelar mientras el repartidor no esté ya en el súper.</div>
@@ -21,13 +24,19 @@ nav{display:flex;gap:1rem;flex-wrap:wrap;font-weight:700}</style></head><body><m
 <li>Se añaden el servicio del repartidor (porcentaje con mínimo, más un importe por unidad a partir de cierta cantidad), el envío según la distancia a tu pueblo y, si pides para el mismo día, un suplemento. Todo se muestra desglosado antes de confirmar.</li>
 <li>Si el súper cambia un precio o falta un producto, el repartidor te lo indicará y solo pagarás lo realmente comprado.</li></ul>
 <h2>4. Pedido y pago</h2><ul><li>El pedido se realiza al pulsar «Confirmar pedido con obligación de pago» tras revisar el resumen (art. 98.2 del Texto refundido de la Ley General para la Defensa de los Consumidores, RDL 1/2007).</li>
-<li>El pago se hace cuando el repartidor sube el ticket: con tarjeta (procesada por Stripe Payments Europe, entidad de pago autorizada; la app no guarda tu tarjeta) o confirmando que pagarás en efectivo al recibirlo. El repartidor no sale hacia tu casa hasta entonces.</li>
+<li>El pago se hace cuando el repartidor sube el ticket. De momento solo se admite efectivo al recibir el pedido; el pago con tarjeta (Stripe) se activará más adelante. El repartidor no sale hacia tu casa hasta entonces.</li>
 <li>Productos para mayores de 18 años (bebidas alcohólicas): debes confirmar tu edad y el repartidor puede pedirte el DNI; si no se acredita, no se entregarán. No vendemos tabaco ni medicamentos.</li></ul>
 <h2>5. Cancelación y desistimiento</h2><ul><li>Puedes cancelar mientras el repartidor no haya llegado al súper. Si nadie lo había aceptado, se devuelve todo; si ya estaba aceptado, se devuelve todo salvo la tarifa de servicio y gestión. Cuando el repartidor está en el súper o en reparto ya no se puede cancelar.</li>
 <li>Reembolsos: tras la entrega, puedes pedir el reembolso de productos dañados, caducados o que falten en un plazo de 7 días desde la app. La tarifa de servicio y gestión no se reembolsa.</li>
 <li>No cabe el desistimiento de 14 días para productos perecederos o que caducan con rapidez, ni para productos precintados de higiene que se hayan desprecintado (art. 103 RDL 1/2007). El servicio de compra y entrega, una vez prestado por completo con tu conformidad, tampoco es desistible.</li>
 <li>Si un producto llega dañado, caducado o no es el pedido, avísanos en 48 horas y te lo reponemos o devolvemos su importe.</li></ul>
 <h2>6. Información de los productos</h2><p>En la ficha de cada producto se muestran el precio, el IVA y los alérgenos e ingredientes disponibles (Reglamento (UE) 1169/2011). Si tienes alergias, revisa siempre el envase al recibirlo.</p>
+<h2>5 bis. Horario, cambios y reclamaciones</h2><ul>
+<li>Horario de entrega: de 9:00 a 22:00. Los pedidos hechos fuera de ese horario se entregan a partir de las 9:00.</li>
+<li>Puedes editar el pedido (añadir, quitar o cambiar cantidades) hasta que el repartidor llegue al súper.</li>
+<li>Durante el pedido puedes hablar con el repartidor por el chat de la app.</li>
+<li>Si un pedido no te llega, puedes reclamarlo en la app: habrá un plazo de 6 horas para entregarlo. Si hay una emergencia (por ejemplo, la persona mayor no responde), llama al 112.</li></ul>
+<h2>6. Propinas</h2><p>Al terminar el pedido puedes dejar una propina voluntaria al repartidor, en efectivo o con tarjeta. Va íntegra para él y no forma parte de la factura de T lo traigo.</p>
 <h2>6 bis. Facturas</h2><p>Al entregarse el pedido se emite una factura descargable en la app. El importe de la compra en el supermercado figura como suplido (pagado en tu nombre, art. 78.Tres.3º de la Ley 37/1992 del IVA) y el servicio con su IVA del 21 %.</p>
 <h2>7. Reclamaciones</h2><p>Escríbenos a <a href="mailto:support@tlotraigo.unocerobits.com">support@tlotraigo.unocerobits.com</a> o usa la <a href="reclamaciones.html">hoja de reclamaciones</a>. Tenemos hojas de reclamaciones a tu disposición. También puedes acudir a la Junta Arbitral de Consumo de Castilla y León o a la Oficina Municipal de Información al Consumidor.</p>
 <h2>8. Responsabilidad</h2><p>Respondemos del correcto funcionamiento de la plataforma y de la información que mostramos. Los repartidores son responsables de la compra y entrega que realizan.</p>

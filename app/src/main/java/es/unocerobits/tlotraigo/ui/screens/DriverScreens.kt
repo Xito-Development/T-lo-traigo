@@ -238,6 +238,8 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 Text(if (o.isPaid) "Ya pagado (${PayMethod.of(o.paymentMethod).label}) · ${eur(o.total)}" else "Cobrar: ${eur(o.total)} · ${PayMethod.of(o.paymentMethod).label}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 ScheduleBadge(o.scheduledDate, o.scheduledSlot)
+                o.claimDeadline?.let { Text("⚠️ Pedido reclamado: entrégalo antes de las ${prettyDate(it).substringAfterLast(", ")}", style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 4.dp)) }
                 if (o.hasCold) Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.small, modifier = Modifier.padding(vertical = 4.dp)) {
                     Text("❄ Lleva refrigerados o congelados: usa bolsa isotérmica y no rompas la cadena de frío.", Modifier.padding(8.dp),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
@@ -257,6 +259,8 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     o.customer?.phone?.let { ph -> OutlinedButton({ ctx.dial(ph) }, Modifier.weight(1f)) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Llamar") } }
+                    val openChat = LocalOpenChat.current
+                    OutlinedButton({ openChat(o.id) }, Modifier.weight(1f)) { Icon(Icons.Filled.Forum, null); Spacer(Modifier.width(6.dp)); Text("Chat") }
                     OutlinedButton({ ctx.navigateTo(o.address) }, Modifier.weight(1f)) { Icon(Icons.Filled.Navigation, null); Spacer(Modifier.width(6.dp)); Text("Ruta") }
                 }
                 val locPerm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
@@ -265,7 +269,8 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 if (o.status == "en_camino") Text("📍 Tu ubicación se comparte con el cliente hasta que marques «entregado».",
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (o.status == "comprando" && o.ticketPath == null) TicketSection(o) { onChanged() }
-                else if (o.ticketTotal != null) Text("🧾 Ticket guardado: ${eur(o.ticketTotal)} · total cliente ${eur(o.amount)} · ganas ${eur(o.driverEarnings)}",
+                else if (o.ticketTotal != null) Text("🧾 Ticket guardado: ${eur(o.ticketTotal)} · total cliente ${eur(o.amount)} · ganas ${eur(o.driverEarnings)}" +
+                    (if (o.tipStatus == "pagada") " + propina ${eur(o.tipAmount)} 💛" else ""),
                     Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 next?.let { (st, label) ->
                     Spacer(Modifier.height(10.dp))
@@ -358,6 +363,7 @@ private fun DriverEarningsScreen() {
                         Text(eur(x.net), style = MaterialTheme.typography.displaySmall)
                         Spacer(Modifier.height(8.dp))
                         EarnRow("${x.delivered} pedidos entregados", x.gross)
+                        if (x.tips > 0) EarnRow("Propinas 💛", x.tips)
                         if (x.penalties > 0) EarnRow("Penalizaciones", -x.penalties)
                     }
                 }

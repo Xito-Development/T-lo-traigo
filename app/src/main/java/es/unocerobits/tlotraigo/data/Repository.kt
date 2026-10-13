@@ -186,7 +186,7 @@ class Repository(val api: SupabaseApi) {
             put("service_fee_pct", f.servicePct); put("min_service_fee", f.minService); put("per_item_fee", f.perItem)
             put("free_items", f.freeItems); put("per_km_fee", f.perKm); put("express_fee", f.express)
             put("stale_penalty", f.stalePenalty); put("stale_hours", f.staleHours)
-            put("platform_pct", f.platformPct); put("gestion_pct", f.gestionPct); put("gestion_min", f.gestionMin); put("price_margin_pct", f.marginPct)
+            put("platform_pct", f.platformPct); put("demo_payments", f.demoPayments); put("card_enabled", f.cardEnabled); put("payout_mode", f.payoutMode); put("cost_per_km", f.costPerKm); put("gestion_pct", f.gestionPct); put("gestion_min", f.gestionMin); put("price_margin_pct", f.marginPct)
         }.toString())
     }
     suspend fun addTown(name: String, cp: String?, fee: Double, km: Double) {
@@ -229,6 +229,40 @@ class Repository(val api: SupabaseApi) {
     suspend fun needs(): List<Need> = parse(api.rest("GET", "needs?active=eq.true&order=sort"))
     suspend fun cardCheckoutUrl(orderId: Long): String? =
         api.function("pagos", buildJsonObject { put("action", "checkout"); put("order_id", orderId) })["url"]?.jsonPrimitive?.contentOrNull
+    // --- Chat, edición, reclamación y lista fácil (admin)
+    suspend fun messages(orderId: Long): List<ChatMessage> = parse(api.rest("GET", "order_messages?order_id=eq.$orderId&order=id"))
+    suspend fun sendMessage(orderId: Long, body: String) { api.rpc("send_message", buildJsonObject { put("p_order", orderId); put("p_body", body) }) }
+    suspend fun unread(): List<Unread> = parse(api.rpc("unread_messages"))
+    suspend fun markRead(orderId: Long) { runCatching { api.rpc("mark_messages_read", buildJsonObject { put("p_order", orderId) }) } }
+    /** Sustituye los artículos del pedido. Cada línea: product_id o need_id (+ detalle) y cantidad. */
+    suspend fun editOrder(orderId: Long, lines: List<Triple<OrderItem, Int, String?>>, notes: String?) {
+        api.rpc("edit_order", buildJsonObject {
+            put("p_order", orderId); put("p_notes", notes)
+            putJsonArray("p_items") { lines.forEach { (it, q, det) -> addJsonObject {
+                if (it.needId != null) { put("need_id", it.needId); put("detail", det ?: it.detail) } else put("product_id", it.productId)
+                put("qty", q) } } }
+        })
+    }
+    suspend fun claimOrder(orderId: Long, reason: String?) { api.rpc("claim_order", buildJsonObject { put("p_order", orderId); put("p_reason", reason) }) }
+    suspend fun allNeeds(): List<Need> = parse(api.rest("GET", "needs?order=sort,name"))
+    suspend fun saveNeed(id: Long?, n: Need) {
+        val body = buildJsonObject {
+            put("name", n.name.trim()); put("icon", n.icon); put("est_price", n.estPrice); put("unit_label", n.unitLabel); put("vat_rate", n.vatRate)
+            put("cold_chain", n.coldChain); put("active", n.active); put("sort", n.sort)
+            putJsonArray("options") { n.options.forEach { o -> addJsonObject { put("t", o.t); putJsonArray("v") { o.v.forEach { add(it) } } } } }
+        }.toString()
+        if (id == null) api.rest("POST", "needs", body) else api.rest("PATCH", "needs?id=eq.$id", body)
+    }
+    /** Si el artículo ya se usó en pedidos no se puede borrar: se oculta. */
+    suspend fun deleteNeed(id: Long) {
+        try { api.rest("DELETE", "needs?id=eq.$id") } catch (e: ApiException) { api.rest("PATCH", "needs?id=eq.$id", buildJsonObject { put("active", false) }.toString()) }
+    }
+    suspend fun giveTip(orderId: Long, amount: Double, method: String) {
+        api.rpc("give_tip", buildJsonObject { put("p_order", orderId); put("p_amount", amount); put("p_method", method) })
+    }
+    suspend fun tipCheckoutUrl(orderId: Long): String? =
+        api.function("pagos", buildJsonObject { put("action", "tip"); put("order_id", orderId) })["url"]?.jsonPrimitive?.contentOrNull
+    suspend fun mockTipPaid(orderId: Long) { api.rpc("mock_tip_paid", buildJsonObject { put("p_order", orderId) }) }
     suspend fun confirmCash(orderId: Long) { api.rpc("confirm_cash", buildJsonObject { put("p_order", orderId) }) }
     suspend fun payout(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "payout"); put("order_id", orderId) }) } }
     suspend fun captureCard(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "capture"); put("order_id", orderId) }) } }

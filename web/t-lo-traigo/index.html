@@ -6,6 +6,8 @@
 <title>T lo traigo: la compra del súper en la puerta de casa</title>
 <meta name="description" content="App para que las personas mayores de los pueblos de la Vega del Esla (León) o sus familias pidan la compra del supermercado y un vecino repartidor se la lleve a casa.">
 <meta name="theme-color" content="#263238">
+<script>/* Tema: preferencia guardada o la del sistema (almacenamiento técnico, sin consentimiento) */
+(function(){try{var t=localStorage.getItem('tlt_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta property="og:title" content="T lo traigo">
 <meta property="og:description" content="La compra del súper, en la puerta de casa. Empezamos en Villaquejida y pueblos de alrededor.">
@@ -239,6 +241,22 @@ img,svg,canvas{max-width:100%}
 @media (min-width:1600px){:root{font-size:18px}.wrap{width:min(1320px,100% - 4rem)}.title{width:min(100%,640px)}}
 @media (min-width:2200px){:root{font-size:21px}.wrap{width:min(1600px,100% - 6rem)}}
 @media (orientation:landscape) and (max-height:500px){.hero{min-height:auto}.hero-left{padding-top:5rem}}
+
+/* ===== Modo oscuro (automático según el sistema o con el botón 🌙) ===== */
+:root[data-theme="dark"]{--niebla:#101715;--texto:#E3EBE7;--gris:#A8B8B1;--linea:#2B3A35;--pino-hondo:#9ED8BE;--pino:#7CC4A6; color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--niebla:#101715;--texto:#E3EBE7;--gris:#A8B8B1;--linea:#2B3A35;--pino-hondo:#9ED8BE;--pino:#7CC4A6; color-scheme:dark}}
+:root[data-theme="dark"] body, :root[data-theme="dark"] .light{background:#141C19} :root[data-theme="dark"] .mist{background:#101715}
+:root[data-theme="dark"] .dark{background:#0C2A20} :root[data-theme="dark"] footer{background:#0A1F18}
+:root[data-theme="dark"] .hero{background:#16241F} :root[data-theme="dark"] .hero-left{background:#1F4D3F}
+:root[data-theme="dark"] .ticket, :root[data-theme="dark"] .num, :root[data-theme="dark"] .chips span, :root[data-theme="dark"] #ck, :root[data-theme="dark"] .modal form, :root[data-theme="dark"] .replay{background:#1C2723!important;color:var(--texto)!important}
+:root[data-theme="dark"] .ticket::after{background:radial-gradient(circle at 10px 100%,#101715 7px,transparent 7.5px) 0 0/20px 10px repeat-x}
+:root[data-theme="dark"] .chips span.hub{background:#2E6B57!important;color:#fff!important}
+:root[data-theme="dark"] .scene path[fill="#B9D8C8"]{fill:#26403A} :root[data-theme="dark"] .scene path[fill="#9CCAB3"]{fill:#2F4F46}
+:root[data-theme="dark"] .scene g[fill="#7FB79C"]{fill:#3D6B5B} :root[data-theme="dark"] .dots{background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1.2px)}
+:root[data-theme="dark"] .modal input{background:#141C19;color:var(--texto);border-color:var(--linea)}
+:root[data-theme="dark"] a{color:#8FD3B6} :root[data-theme="dark"] .btn-main{color:#1B2428} :root[data-theme="dark"] footer a{color:#fff}
+#themeBtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;width:42px;height:42px;font-size:1.1rem;cursor:pointer;margin-left:1rem}
+#themeBtn:hover{border-color:var(--mostaza)}
 </style>
 </head>
 <body>
@@ -252,6 +270,7 @@ img,svg,canvas{max-width:100%}
       <a href="#precios">Precios</a>
       <a href="#pueblos">Pueblos</a>
       <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk" style="padding:.55rem 1.1rem;margin-left:1.5rem">Descargar</a>
+      <button id="themeBtn" type="button" aria-label="Cambiar entre modo claro y oscuro">🌙</button>
     </nav>
   </div>
 </header>
@@ -320,7 +339,7 @@ img,svg,canvas{max-width:100%}
         <div class="track" aria-hidden="true"><i></i></div>
         <li class="rv"><span class="num">1</span><h3 data-k="como.p1.t">Eliges tu compra</h3><p data-k="como.p1.d">Pan, leche, fruta, limpieza… con los precios del supermercado. La lista se guarda aunque cierres la app.</p></li>
         <li class="rv"><span class="num">2</span><h3 data-k="como.p2.t">Un vecino la hace</h3><p data-k="como.p2.d">Un repartidor de tu zona acepta el pedido, compra en el súper y marca cada producto.</p></li>
-        <li class="rv"><span class="num">3</span><h3 data-k="como.p3.t">Te la trae a casa</h3><p data-k="como.p3.d">Hoy mismo o el día que elijas, por la mañana o por la tarde. Pagas en efectivo, con Bizum o con tarjeta.</p></li>
+        <li class="rv"><span class="num">3</span><h3 data-k="como.p3.t">Te la trae a casa</h3><p data-k="como.p3.d">Hoy mismo o el día que elijas, de 9:00 a 22:00. Pagas en efectivo al recibirlo, con el precio real del ticket.</p></li>
       </ol>
     </div>
   </section>
@@ -677,5 +696,8 @@ img,svg,canvas{max-width:100%}
   var c = get('tlt_consent'); if (c === 'si') start(); else if (c !== 'no') ask();
 })();
 </script>
+<script>(function(){var b=document.getElementById('themeBtn'),r=document.documentElement;
+function upd(){b.textContent=r.getAttribute('data-theme')==='dark'?'☀️':'🌙';}
+b.onclick=function(){var t=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',t);try{localStorage.setItem('tlt_theme',t);}catch(e){}upd();};upd();})();</script>
 </body>
 </html>

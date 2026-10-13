@@ -41,3 +41,15 @@ Marco: Gravedad (1-5) × Probabilidad (1-5). 🟢 1-4 · 🟡 5-9 · 🟠 10-16 
 - **Estadísticas/cookies**: consentimiento previo y rechazo igual de fácil (guía AEPD de cookies 2023); registro de actividades de tratamiento.
 - **Seguro de responsabilidad civil** de la plataforma y de los repartidores.
 - **Prevención de riesgos** (LPRL, coordinación de actividades) aunque sean autónomos.
+
+## Repartidores voluntarios con una pequeña compensación (orientativo, consultar gestoría)
+- **Voluntariado (Ley 45/2015):** el voluntario no puede cobrar; solo se le pueden **reembolsar gastos reales justificados** (p. ej. kilometraje). Un pago fijo de 5 € por pedido es **retribución**, no voluntariado.
+- **Si cobran:** es una actividad económica → Hacienda (IRPF, rendimientos de actividad) y Seguridad Social (alta en RETA si es habitual). Ganar poco no exime por ley; la «habitualidad» la valoran los tribunales caso a caso.
+- **La plataforma** que intermedia pagos a terceros debe informar a Hacienda de lo que cobran los proveedores de servicios (DAC7, Ley 13/2023, modelo 238), y quien cobra la tarifa de gestión también ejerce una actividad económica.
+- **Opciones:** (1) asociación sin ánimo de lucro con voluntarios, seguro de voluntariado y solo reembolso de gastos (kilometraje exento hasta 0,26 €/km); (2) repartidores autónomos (cuota reducida el primer año); (3) contratarlos a tiempo parcial; (4) cooperativa. Para la fase de prueba: opción 1 o piloto sin dinero.
+
+### Modelo adoptado (v0.5.5): vecinos colaboradores + plataforma con tarifas
+- Repartidor: solo compensación de gastos de desplazamiento (km ida y vuelta × 0,26 €/km) + propinas ocasionales. Sin beneficio → no es actividad económica ni requiere RETA. Debe ser coherente con el gasto real (no inflar el €/km ni pagar «por pedido»).
+- Plataforma (tú): cobra servicio y gestión → actividad económica: alta en Hacienda (modelo 036/037) y RETA (cuota reducida), facturas con IVA 21 %. Si trabajas por cuenta ajena: pluriactividad (revisa también la cláusula de exclusividad de tu contrato).
+- Riesgos: si el repartidor reparte mucho y de forma organizada, la Inspección puede ver relación laboral encubierta (Ley Rider) aunque solo cobre gastos. Mantener: libertad total para aceptar, sin penalizaciones, sin horarios impuestos, pocos pedidos por persona.
+- Seguro: póliza de responsabilidad civil de la plataforma que cubra a los colaboradores, y que el repartidor tenga seguro del vehículo.

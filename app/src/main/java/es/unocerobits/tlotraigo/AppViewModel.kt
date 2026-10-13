@@ -52,6 +52,9 @@ class AppViewModel : ViewModel() {
     fun dismissUpdate() { _update.value = null }
     fun clearUpdateMsg() { _updateMsg.value = null }
 
+    /** Pedido cuyo chat se debe abrir (al pulsar una notificación). */
+    val openChat = MutableStateFlow<Long?>(null)
+
     private val _driverView = MutableStateFlow(false)
     val driverView: StateFlow<Boolean> = _driverView
 

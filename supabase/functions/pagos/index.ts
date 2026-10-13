@@ -1,4 +1,4 @@
-// Pasarela de pago T lo traigo (Stripe). Acciones: checkout (tras el ticket), payout, refund, connect.
+// Pasarela de pago T lo traigo (Stripe). Acciones: checkout (tras el ticket), tip, payout, refund, connect.
 // Secretos necesarios en Supabase → Edge Functions → Secrets: STRIPE_SECRET_KEY (sk_live_… o sk_test_…)
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SR = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -63,6 +63,21 @@ Deno.serve(async (req) => {
         success_url: `${WEB}/pago-ok.html?pedido=${o.id}`, cancel_url: `${WEB}/pago-cancelado.html?pedido=${o.id}`,
       });
       await db(`orders?id=eq.${o.id}`, { method: "PATCH", body: JSON.stringify({ stripe_session_id: s.id, payment_method: "tarjeta" }) });
+      return j({ url: s.url });
+    }
+
+    if (action === "tip") {   // Propina con tarjeta (100 % para el repartidor; se le transfiere desde el webhook)
+      if (!isCustomer) return j({ error: "No autorizado" }, 403);
+      if (o.tip_status !== "pendiente" || o.tip_method !== "tarjeta") return j({ error: "Elige primero la propina" }, 400);
+      const s = await stripe("checkout/sessions", {
+        mode: "payment", locale: "es", "payment_method_types[0]": "card",
+        "line_items[0][quantity]": "1", "line_items[0][price_data][currency]": "eur",
+        "line_items[0][price_data][unit_amount]": cents(Number(o.tip_amount)),
+        "line_items[0][price_data][product_data][name]": `Propina para tu repartidor · pedido nº ${o.id}`,
+        "metadata[order_id]": String(o.id), "metadata[kind]": "tip",
+        "payment_intent_data[metadata][order_id]": String(o.id), "payment_intent_data[metadata][kind]": "tip",
+        success_url: `${WEB}/pago-ok.html?propina=${o.id}`, cancel_url: `${WEB}/pago-cancelado.html?pedido=${o.id}`,
+      });
       return j({ url: s.url });
     }
 

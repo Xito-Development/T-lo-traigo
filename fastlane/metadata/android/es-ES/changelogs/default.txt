@@ -1,3 +1,5 @@
-• Correos de la app con diseño nuevo (código de verificación, contraseña, acceso, cambio de correo, invitación y seguridad), enviados desde tlotraigo@unocerobits.com.
-• Contacto de soporte (support@tlotraigo.unocerobits.com) y de Xito Development (xito@unocerobits.com) en la app y en la web.
-• Política de privacidad: Brevo como servicio de envío de correos.
+• Lista fácil: escribe o dicta por voz tu lista («2 litros de leche, pan y 6 huevos») y se añade sola a la cesta.
+• Administración → Lista fácil: crear, editar, ocultar y borrar los artículos básicos (precio, IVA, icono, opciones).
+• Chat en directo entre cliente y repartidor durante el pedido, con mensajes rápidos y notificaciones.
+• Editar el pedido (cantidades, quitar, añadir más y notas) hasta que el repartidor llega al súper.
+• Reclamar un pedido no recibido: plazo de 6 

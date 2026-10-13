@@ -38,7 +38,7 @@ import java.util.Locale
 private val dateFmt = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM, HH:mm", Locale("es", "ES"))
 private val dayFmt = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale("es", "ES"))
 fun prettyDay(isoDate: String): String = runCatching { java.time.LocalDate.parse(isoDate.take(10)).format(dayFmt) }.getOrDefault(isoDate)
-fun slotLabel(slot: String?) = when (slot) { "manana" -> "por la mañana (9–13 h)"; "tarde" -> "por la tarde (16–20 h)"; else -> "a cualquier hora" }
+fun slotLabel(slot: String?) = when (slot) { "manana" -> "por la mañana (9–14 h)"; "tarde" -> "por la tarde (14–18 h)"; "noche" -> "por la noche (18–22 h)"; else -> "de 9 a 22 h" }
 fun hoursSince(iso: String): Long = runCatching {
     java.time.Duration.between(OffsetDateTime.parse(iso).toInstant(), java.time.Instant.now()).toHours()
 }.getOrDefault(0)
@@ -185,6 +185,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     var err by remember { mutableStateOf<String?>(null) }
     var askCancel by remember { mutableStateOf(false) }
     var showRefund by remember { mutableStateOf(false) }
+    var showEdit by remember { mutableStateOf(false) }
     var invoice by remember { mutableStateOf<Invoice?>(null) }
     var showComplaint by remember { mutableStateOf(false) }
     var info by remember { mutableStateOf<String?>(null) }
@@ -212,7 +213,15 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             ScheduleBadge(o.scheduledDate, o.scheduledSlot)
             o.driver?.let { d -> o.driverId?.let { DriverCard(d, it) } }
             if (o.status == "en_camino") TrackingCard(o)
+            if (o.driverId != null && (!o.isFinal || o.status == "entregado")) {
+                val openChat = LocalOpenChat.current
+                OutlinedButton({ openChat(o.id) }, Modifier.fillMaxWidth().padding(top = 10.dp).heightIn(min = 52.dp), shape = MaterialTheme.shapes.medium) {
+                    Icon(Icons.Filled.Forum, null); Spacer(Modifier.width(8.dp)); Text("Chat con el repartidor")
+                }
+            }
+            if (!o.isFinal) ClaimSection(o) { scope.launch { order = Locator.repo.order(id) } }
             if (o.awaitingPayment) Spacer(Modifier.height(4.dp))
+            if (o.status == "entregado" && o.driverId != null) TipCard(o) { scope.launch { order = Locator.repo.order(id) } }
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
             ItemsWithDiff(o)
@@ -233,6 +242,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             if (o.awaitingPayment) PayNowCard(o) { scope.launch { order = Locator.repo.order(id) } }
             else if (o.ticketTotal != null && !o.isFinal) Text(if (o.isPaid) "✓ Pagado: ${eur(o.amount)}" else "✓ Pagarás ${eur(o.amount)} en efectivo al recibirlo",
                 style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
+            if (o.canCancel) { BigButton("Editar pedido", { showEdit = true }, tonal = true, icon = Icons.Filled.EditNote); Spacer(Modifier.height(10.dp)) }
             if (o.canCancel) BigButton("Cancelar pedido", { askCancel = true }, tonal = true, icon = Icons.Filled.Close)
             else if (!o.isFinal) Text("El repartidor ya está en el súper o de camino: ya no se puede cancelar. Si hay un problema, llama al teléfono de ayuda.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -256,6 +266,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     order?.let { o ->
         if (showRefund) RefundDialog(o) { m -> showRefund = false; m?.let { info = it } }
         invoice?.let { InvoiceDialog(it, o) { invoice = null } }
+        if (showEdit) EditOrderDialog(o) { m -> showEdit = false; m?.let { info = it; scope.launch { order = Locator.repo.order(id) } } }
         if (showComplaint) ComplaintDialog(vm, o.id) { m -> showComplaint = false; m?.let { info = it } }
     }
     if (askCancel) AlertDialog(
@@ -402,6 +413,8 @@ private fun PayNowCard(o: Order, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     var err by remember { mutableStateOf<String?>(null) }
     var demo by remember { mutableStateOf(false) }
+    var cardOn by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { runCatching { Locator.repo.fees() }.getOrNull()?.let { demo = it.demoPayments && it.cardEnabled; cardOn = it.cardEnabled } }
     var busy by remember { mutableStateOf(false) }
     Card(Modifier.fillMaxWidth().padding(vertical = 10.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer)) {
         Column(Modifier.padding(18.dp)) {
@@ -412,11 +425,11 @@ private fun PayNowCard(o: Order, onDone: () -> Unit) {
             Text("El repartidor saldrá hacia tu casa en cuanto pagues o confirmes que pagarás en efectivo.", style = MaterialTheme.typography.bodySmall)
             ErrorText(err)
             Spacer(Modifier.height(8.dp))
-            BigButton("Pagar ${eur(o.amount)} con tarjeta", {
+            if (cardOn) BigButton("Pagar ${eur(o.amount)} con tarjeta", {
                 scope.launch {
                     busy = true; err = null
                     try { Locator.repo.cardCheckoutUrl(o.id)?.let { ctx.openUrl(it) } }
-                    catch (e: ApiException) { err = e.message; demo = e.code == 503 }
+                    catch (e: ApiException) { err = e.message }
                     busy = false
                 }
             }, loading = busy, icon = Icons.Filled.CreditCard)
@@ -425,6 +438,63 @@ private fun PayNowCard(o: Order, onDone: () -> Unit) {
             BigButton("Pagaré en efectivo al recibirlo", {
                 scope.launch { try { Locator.repo.confirmCash(o.id); onDone() } catch (e: ApiException) { err = e.message } }
             }, tonal = true, icon = Icons.Filled.Payments)
+        }
+    }
+}
+
+/** Propina al terminar: 100 % para el repartidor, fuera de la factura. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TipCard(o: Order, onDone: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var amount by remember { mutableStateOf<Double?>(null) }
+    var other by remember { mutableStateOf("") }
+    var demo by remember { mutableStateOf(false) }
+    var err by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var cardOn by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { runCatching { Locator.repo.fees() }.getOrNull()?.let { demo = it.demoPayments && it.cardEnabled; cardOn = it.cardEnabled } }
+    val name = o.driver?.fullName?.substringBefore(' ')?.ifBlank { null } ?: "tu repartidor"
+    Card(Modifier.fillMaxWidth().padding(top = 12.dp), shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer)) {
+        Column(Modifier.padding(18.dp).animateContentSize()) {
+            if (o.tipStatus == "pagada") {
+                Text("💛 ¡Gracias por tu propina de ${eur(o.tipAmount)}!", style = MaterialTheme.typography.titleMedium)
+                Text("Es íntegra para $name.", style = MaterialTheme.typography.bodyMedium)
+                return@Column
+            }
+            Text("¿Quieres dejarle propina a $name?", style = MaterialTheme.typography.titleLarge)
+            Text("Es voluntaria y va entera para el repartidor.", style = MaterialTheme.typography.bodyMedium)
+            if (o.tipStatus == "pendiente") {
+                Text("Propina de ${eur(o.tipAmount)} pendiente de pago con tarjeta.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium)
+                BigButton("Pagar propina ${eur(o.tipAmount)}", { scope.launch { try { Locator.repo.tipCheckoutUrl(o.id)?.let { ctx.openUrl(it) } } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.CreditCard)
+                if (demo) TextButton({ scope.launch { runCatching { Locator.repo.mockTipPaid(o.id) }; onDone() } }) { Text("Simular pago de la propina (demo)") }
+                ErrorText(err); return@Column
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                listOf(1.0, 2.0, 3.0, 5.0).forEach { v -> FilterChip(amount == v && other.isBlank(), { amount = v; other = "" }, { Text(eur(v)) }) }
+            }
+            OutlinedTextField(other, { other = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(5); amount = parseNum(other) }, Modifier.fillMaxWidth().padding(top = 6.dp),
+                label = { Text("Otra cantidad") }, suffix = { Text("€") }, singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal))
+            ErrorText(err)
+            val a = amount
+            Spacer(Modifier.height(8.dp))
+            if (cardOn) BigButton(if (a != null) "Dar ${eur(a)} con tarjeta" else "Dar propina con tarjeta", {
+                scope.launch {
+                    busy = true; err = null
+                    try { Locator.repo.giveTip(o.id, a!!, "tarjeta"); onDone()
+                        try { Locator.repo.tipCheckoutUrl(o.id)?.let { ctx.openUrl(it) } } catch (e: ApiException) { if (!demo) err = e.message } }
+                    catch (e: ApiException) { err = e.message }
+                    busy = false
+                }
+            }, enabled = a != null && a >= 0.5, loading = busy, icon = Icons.Filled.Favorite)
+            if (cardOn) TextButton({ scope.launch { try { Locator.repo.giveTip(o.id, a!!, "efectivo"); onDone() } catch (e: ApiException) { err = e.message } } },
+                enabled = a != null && a >= 0.5) { Text("Ya se la di en efectivo") }
+            else BigButton(if (a != null) "Le he dado ${eur(a)} en efectivo" else "Apuntar propina en efectivo", {
+                scope.launch { try { Locator.repo.giveTip(o.id, a!!, "efectivo"); onDone() } catch (e: ApiException) { err = e.message } } },
+                enabled = a != null && a >= 0.5, icon = Icons.Filled.Favorite)
         }
     }
 }

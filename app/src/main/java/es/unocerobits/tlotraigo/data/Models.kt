@@ -102,6 +102,10 @@ data class FeeConfig(
     @SerialName("gestion_min") val gestionMin: Double = 0.5,
     @SerialName("price_margin_pct") val marginPct: Double = 15.0,
     @SerialName("platform_pct") val platformPct: Double = 20.0,
+    @SerialName("demo_payments") val demoPayments: Boolean = true,
+    @SerialName("card_enabled") val cardEnabled: Boolean = false,
+    @SerialName("payout_mode") val payoutMode: String = "gastos",
+    @SerialName("cost_per_km") val costPerKm: Double = 0.26,
 )
 
 /** Desglose calculado en servidor (función quote_order). */
@@ -124,6 +128,7 @@ data class Quote(
     @SerialName("max_total") val maxTotal: Double = 0.0,
     @SerialName("margin_pct") val marginPct: Double = 15.0,
     val extras: List<QuoteExtra> = emptyList(),
+    @SerialName("payout_mode") val payoutMode: String = "gastos",
     @SerialName("extra_total") val extraTotal: Double = 0.0,
     val total: Double = 0.0,
     val town: String = "",
@@ -154,7 +159,14 @@ data class Need(
     val id: Long, val name: String, val icon: String, @SerialName("est_price") val estPrice: Double,
     @SerialName("unit_label") val unitLabel: String = "ud", @SerialName("vat_rate") val vatRate: Double = 10.0,
     val options: List<NeedOption> = emptyList(), @SerialName("cold_chain") val coldChain: Boolean = false,
+    val sort: Int = 0, val active: Boolean = true,
 )
+
+@Serializable
+data class ChatMessage(val id: Long, @SerialName("order_id") val orderId: Long = 0, @SerialName("sender_role") val role: String,
+    val body: String, @SerialName("created_at") val createdAt: String = "", @SerialName("read_at") val readAt: String? = null)
+@Serializable
+data class Unread(@SerialName("order_id") val orderId: Long, val id: Long, val body: String, val role: String)
 
 @Serializable
 data class Invoice(
@@ -198,7 +210,7 @@ data class Penalty(
 @Serializable
 data class Earnings(
     val from: String = "", val delivered: Int = 0, val gross: Double = 0.0, val penalties: Double = 0.0,
-    val net: Double = 0.0, val rating: Double? = null, val reviews: Int = 0,
+    val net: Double = 0.0, val tips: Double = 0.0, val rating: Double? = null, val reviews: Int = 0,
     @SerialName("penalty_list") val penaltyList: List<Penalty> = emptyList(),
 )
 
@@ -268,6 +280,11 @@ data class Order(
     @SerialName("gestion_fee") val gestionFee: Double = 0.0,
     @SerialName("extra_fee") val extraFee: Double = 0.0,
     @SerialName("driver_payout") val driverPayout: Double? = null,
+    @SerialName("tip_amount") val tipAmount: Double = 0.0,
+    @SerialName("tip_status") val tipStatus: String = "ninguna",
+    @SerialName("tip_method") val tipMethod: String? = null,
+    @SerialName("claimed_at") val claimedAt: String? = null,
+    @SerialName("claim_deadline") val claimDeadline: String? = null,
     @SerialName("max_total") val maxTotal: Double? = null,
     @SerialName("ticket_path") val ticketPath: String? = null,
     @SerialName("ticket_total") val ticketTotal: Double? = null,
