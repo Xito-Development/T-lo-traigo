@@ -7,7 +7,7 @@
 2. El repartidor compra, hace la **foto del ticket** y escribe el total.
 3. El cliente ve el ticket y el **importe real** y entonces paga: con tarjeta (página segura de Stripe) o confirmando que pagará en efectivo.
 4. Solo entonces el repartidor puede salir a repartir.
-5. Al entregar, Stripe **transfiere al repartidor** su parte (servicio + envío + suplemento) a su cuenta Connect; la gestión queda para T lo traigo.
+5. Al entregar, Stripe **transfiere al repartidor** su parte: servicio + envío + suplemento **menos la comisión de la plataforma** (20 % por defecto, en Admin → Tarifas). La gestión y las tarifas adicionales quedan para T lo traigo.
 6. Reembolsos aprobados → devolución automática en Stripe, **sin la tarifa de servicio y gestión** (salvo pedido sin aceptar).
 
 En el prototipo, sin claves de Stripe, aparece el botón «Simular pago con tarjeta (demo)».

@@ -25,6 +25,8 @@ import es.unocerobits.tlotraigo.AppViewModel
 import es.unocerobits.tlotraigo.Boot
 import es.unocerobits.tlotraigo.Locator
 import es.unocerobits.tlotraigo.data.ApiException
+import es.unocerobits.tlotraigo.data.composeAddress
+import es.unocerobits.tlotraigo.data.Profile
 import es.unocerobits.tlotraigo.ui.components.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -170,43 +172,87 @@ fun RegisterScreen(vm: AppViewModel, onBack: () -> Unit, onVerify: (email: Strin
     }
 }
 
+/** Datos y dirección de entrega paso a paso: nombre → pueblo (CP y provincia) → calle y número → piso e indicaciones → revisar. */
 @Composable
 fun ProfileForm(vm: AppViewModel, title: String, cta: String, onSaved: () -> Unit) {
     val p by vm.profile.collectAsState()
     val towns by vm.towns.collectAsState()
+    var step by rememberSaveable { mutableIntStateOf(0) }
     var name by rememberSaveable(p?.id) { mutableStateOf(p?.fullName.orEmpty()) }
     var phone by rememberSaveable(p?.id) { mutableStateOf(p?.phone.orEmpty()) }
-    var address by rememberSaveable(p?.id) { mutableStateOf(p?.address.orEmpty()) }
+    var recipient by rememberSaveable(p?.id) { mutableStateOf(p?.recipientName ?: p?.fullName.orEmpty()) }
     var town by rememberSaveable(p?.id) { mutableStateOf(p?.townId) }
+    var cp by rememberSaveable(p?.id) { mutableStateOf(p?.postalCode.orEmpty()) }
+    var province by rememberSaveable(p?.id) { mutableStateOf(p?.province ?: "León") }
+    var street by rememberSaveable(p?.id) { mutableStateOf(p?.street.orEmpty()) }
+    var number by rememberSaveable(p?.id) { mutableStateOf(p?.streetNumber.orEmpty()) }
+    var floor by rememberSaveable(p?.id) { mutableStateOf(p?.floorDoor.orEmpty()) }
+    var directions by rememberSaveable(p?.id) { mutableStateOf(p?.directions.orEmpty()) }
     var busy by remember { mutableStateOf(false) }
     var err by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val townName = towns.firstOrNull { it.id == town }?.name
+    val draft = (p ?: Profile(id = "")).copy(recipientName = recipient, street = street, streetNumber = number, floorDoor = floor,
+        postalCode = cp, province = province, directions = directions, townId = town)
+    val steps = listOf("Tus datos", "Pueblo", "Calle", "Piso e indicaciones", "Revisar")
+    val valid = when (step) {
+        0 -> name.isNotBlank() && phone.filter(Char::isDigit).length >= 9
+        1 -> town != null && (cp.isBlank() || Regex("^[0-9]{5}$").matches(cp))
+        2 -> street.isNotBlank() && number.isNotBlank()
+        else -> true
+    }
+    @Composable fun field(v: String, set: (String) -> Unit, label: String, kb: KeyboardType = KeyboardType.Text, cap: KeyboardCapitalization = KeyboardCapitalization.Sentences, ph: String? = null) =
+        OutlinedTextField(v, set, Modifier.fillMaxWidth().padding(top = 10.dp), label = { Text(label) }, singleLine = true,
+            placeholder = ph?.let { { Text(it) } }, textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium,
+            keyboardOptions = KeyboardOptions(keyboardType = kb, capitalization = cap))
     Column(Modifier.fillMaxWidth()) {
         if (title.isNotEmpty()) Text(title, style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Nombre y apellidos") }, singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(phone, { phone = it }, Modifier.fillMaxWidth(), label = { Text("Teléfono") }, singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
-        Spacer(Modifier.height(12.dp))
-        TownPicker(towns, town) { town = it.id }
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth(), label = { Text("Dirección (calle, número, piso…)") },
-            minLines = 2, textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences))
+        Text("Paso ${step + 1} de ${steps.size}: ${steps[step]}", Modifier.padding(top = 4.dp), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+        LinearProgressIndicator({ (step + 1f) / steps.size }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
+        AnimatedContent(step, transitionSpec = { (slideInHorizontally { it / 4 } + fadeIn()) togetherWith fadeOut() }, label = "addr") { st ->
+            Column {
+                when (st) {
+                    0 -> {
+                        field(name, { name = it }, "Tu nombre y apellidos", cap = KeyboardCapitalization.Words)
+                        field(phone, { phone = it.filter { c -> c.isDigit() || c == '+' || c == ' ' } }, "Teléfono de contacto", KeyboardType.Phone)
+                        field(recipient, { recipient = it }, "¿A nombre de quién se entrega?", cap = KeyboardCapitalization.Words, ph = "Si es para otra persona, su nombre")
+                    }
+                    1 -> {
+                        Spacer(Modifier.height(10.dp))
+                        TownPicker(towns, town) { t -> town = t.id; t.postalCode?.let { cp = it } }
+                        field(cp, { cp = it.filter(Char::isDigit).take(5) }, "Código postal", KeyboardType.Number)
+                        field(province, { province = it }, "Provincia", cap = KeyboardCapitalization.Words)
+                    }
+                    2 -> {
+                        field(street, { street = it }, "Calle, plaza o camino", cap = KeyboardCapitalization.Words, ph = "Ej.: Calle Mayor")
+                        field(number, { number = it.take(10) }, "Número", ph = "Ej.: 12 o s/n")
+                    }
+                    3 -> {
+                        field(floor, { floor = it.take(30) }, "Piso, puerta o bloque (opcional)", ph = "Ej.: 1º B")
+                        OutlinedTextField(directions, { directions = it.take(200) }, Modifier.fillMaxWidth().padding(top = 10.dp), label = { Text("Indicaciones para el repartidor (opcional)") },
+                            placeholder = { Text("Ej.: casa con portón verde, llamar fuerte") }, minLines = 2, shape = MaterialTheme.shapes.medium)
+                    }
+                    else -> Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = MaterialTheme.shapes.medium) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(recipient.ifBlank { name }, style = MaterialTheme.typography.titleMedium)
+                            Text(composeAddress(draft, townName), style = MaterialTheme.typography.bodyLarge)
+                            Text("Tel.: $phone", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        }
         ErrorText(err)
         Spacer(Modifier.height(16.dp))
-        BigButton(cta, {
+        if (step < steps.lastIndex) BigButton("Siguiente", { step++ }, enabled = valid, icon = Icons.Filled.ArrowForward)
+        else BigButton(cta, {
             scope.launch {
                 busy = true; err = null
-                try { Locator.repo.updateProfile(name, phone, address, town); vm.refreshProfile(); onSaved() }
-                catch (e: ApiException) { err = e.message }
+                try { Locator.repo.saveAddress(draft, name, phone); vm.refreshProfile(); step = 0; onSaved() } catch (e: ApiException) { err = e.message }
                 busy = false
             }
-        }, enabled = name.isNotBlank() && town != null && address.isNotBlank(), loading = busy, icon = Icons.Filled.Save)
+        }, loading = busy, icon = Icons.Filled.Save)
+        if (step > 0) TextButton({ step-- }, Modifier.align(Alignment.CenterHorizontally)) { Text("Atrás") }
     }
 }
 

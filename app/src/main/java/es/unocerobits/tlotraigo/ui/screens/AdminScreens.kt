@@ -288,6 +288,9 @@ private fun NumField(label: String, value: String, suffix: String, modifier: Mod
 private fun AdminFees() {
     val scope = rememberCoroutineScope()
     var f by remember { mutableStateOf<FeeConfig?>(null) }
+    var extras by remember { mutableStateOf<List<ExtraFee>>(emptyList()) }
+    var reloadX by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reloadX) { extras = runCatching { Locator.repo.extraFees() }.getOrDefault(emptyList()) }
     var towns by remember { mutableStateOf<List<Town>>(emptyList()) }
     val v = remember { mutableStateMapOf<String, String>() }
     var busy by remember { mutableStateOf(false) }
@@ -298,6 +301,7 @@ private fun AdminFees() {
             val c = Locator.repo.fees(); f = c
             v["pct"] = fmtNum(c.servicePct); v["min"] = fmtNum(c.minService); v["item"] = fmtNum(c.perItem); v["free"] = c.freeItems.toString()
             v["km"] = fmtNum(c.perKm, 3); v["exp"] = fmtNum(c.express); v["pen"] = fmtNum(c.stalePenalty); v["hrs"] = c.staleHours.toString()
+            v["pp"] = fmtNum(c.platformPct); v["gp"] = fmtNum(c.gestionPct); v["gm"] = fmtNum(c.gestionMin); v["mg"] = fmtNum(c.marginPct)
             towns = Locator.repo.towns()
             towns.forEach { t -> v["tf${t.id}"] = fmtNum(t.deliveryFee); v["tk${t.id}"] = fmtNum(t.distanceKm, 0) }
         } catch (e: ApiException) { err = e.message }
@@ -317,6 +321,16 @@ private fun AdminFees() {
             NumField("Productos incluidos", v["free"].orEmpty(), "uds", Modifier.weight(1f)) { v["free"] = it }
             NumField("Por cada ud. extra", v["item"].orEmpty(), "€", Modifier.weight(1f)) { v["item"] = it }
         }
+        SectionTitle("Reparto de ganancias")
+        NumField("Comisión de la plataforma sobre las tarifas del repartidor", v["pp"].orEmpty(), "%", Modifier.fillMaxWidth()) { v["pp"] = it }
+        Text("El repartidor recibe servicio + envío + suplemento menos esta comisión. La gestión y las tarifas adicionales son de la plataforma.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionTitle("Gestión y precios orientativos")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumField("Gestión", v["gp"].orEmpty(), "%", Modifier.weight(1f)) { v["gp"] = it }
+            NumField("Mínimo", v["gm"].orEmpty(), "€", Modifier.weight(1f)) { v["gm"] = it }
+            NumField("Margen máx.", v["mg"].orEmpty(), "%", Modifier.weight(1f)) { v["mg"] = it }
+        }
         SectionTitle("Distancia y rapidez")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NumField("Por km", v["km"].orEmpty(), "€/km", Modifier.weight(1f)) { v["km"] = it }
@@ -327,14 +341,46 @@ private fun AdminFees() {
             NumField("Tras", v["hrs"].orEmpty(), "horas", Modifier.weight(1f)) { v["hrs"] = it }
             NumField("Importe", v["pen"].orEmpty(), "€", Modifier.weight(1f)) { v["pen"] = it }
         }
+        SectionTitle("Tarifas adicionales")
+        Text("Se suman al pedido como servicio de la plataforma (IVA 21 % incluido). Fijas en € o en % de la compra.", style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        extras.forEach { e ->
+            ListItem(headlineContent = { Text(e.name) }, supportingContent = { Text(if (e.kind == "fijo") eur(e.amount) else "${fmtNum(e.amount)} % de la compra") },
+                trailingContent = { IconButton({ scope.launch { runCatching { Locator.repo.deleteExtraFee(e.id) }; reloadX++ } }) { Icon(Icons.Filled.Delete, "Eliminar tarifa") } })
+        }
+        var exName by remember { mutableStateOf("") }; var exKind by remember { mutableStateOf("fijo") }; var exAmt by remember { mutableStateOf("") }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedTextField(exName, { exName = it }, Modifier.weight(1.4f), label = { Text("Nombre") }, singleLine = true)
+            NumField("Importe", exAmt, if (exKind == "fijo") "€" else "%", Modifier.weight(1f)) { exAmt = it }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilterChip(exKind == "fijo", { exKind = "fijo" }, { Text("Fija (€)") }); FilterChip(exKind == "porcentaje", { exKind = "porcentaje" }, { Text("Porcentaje") })
+            Spacer(Modifier.weight(1f))
+            Button({ scope.launch { try { Locator.repo.addExtraFee(exName, exKind, parseNum(exAmt)!!); exName = ""; exAmt = ""; reloadX++ } catch (e: Exception) { err = e.message } } },
+                enabled = exName.trim().length >= 2 && parseNum(exAmt) != null) { Text("Añadir") }
+        }
         SectionTitle("Pueblos (envío base y distancia al súper)")
         towns.forEach { t ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+                IconButton({ scope.launch { runCatching { Locator.repo.deactivateTown(t.id) }; towns = towns - t } }) { Icon(Icons.Filled.RemoveCircleOutline, "Quitar ${t.name}", tint = MaterialTheme.colorScheme.error) }
                 Text(t.name, Modifier.weight(1.2f), style = MaterialTheme.typography.bodyLarge)
                 NumField("Base", v["tf${t.id}"].orEmpty(), "€", Modifier.weight(1f)) { v["tf${t.id}"] = it }
                 Spacer(Modifier.width(6.dp))
                 NumField("Dist.", v["tk${t.id}"].orEmpty(), "km", Modifier.weight(1f)) { v["tk${t.id}"] = it }
             }
+        }
+        var tName by remember { mutableStateOf("") }; var tCp by remember { mutableStateOf("") }; var tFee by remember { mutableStateOf("1,50") }; var tKm by remember { mutableStateOf("") }
+        Text("Añadir pueblo", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedTextField(tName, { tName = it }, Modifier.weight(1.5f), label = { Text("Pueblo") }, singleLine = true)
+            OutlinedTextField(tCp, { tCp = it.filter(Char::isDigit).take(5) }, Modifier.weight(1f), label = { Text("CP") }, singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            NumField("Base", tFee, "€", Modifier.weight(1f)) { tFee = it }; NumField("Distancia", tKm, "km", Modifier.weight(1f)) { tKm = it }
+            Button({ scope.launch { try { Locator.repo.addTown(tName, tCp, parseNum(tFee)!!, parseNum(tKm)!!); towns = Locator.repo.towns()
+                towns.forEach { t -> v["tf${t.id}"] = fmtNum(t.deliveryFee); v["tk${t.id}"] = fmtNum(t.distanceKm, 0) }; tName = ""; tCp = ""; tKm = "" } catch (e: Exception) { err = e.message } } },
+                enabled = tName.isNotBlank() && parseNum(tFee) != null && parseNum(tKm) != null) { Text("Añadir") }
         }
         // Ejemplo en vivo
         val ex = runCatching {
@@ -348,12 +394,12 @@ private fun AdminFees() {
         ErrorText(err)
         msg?.let { Text(it, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp)) }
         Spacer(Modifier.height(12.dp))
-        val valid = v.values.all { parseNum(it) != null }
+        val valid = v.entries.all { parseNum(it.value) != null }
         BigButton("Guardar tarifas", {
             scope.launch {
                 busy = true; err = null; msg = null
                 try {
-                    Locator.repo.saveFeeConfig(FeeConfig(n("pct")!!, n("min")!!, n("item")!!, n("free")!!.toInt(), n("km")!!, n("exp")!!, n("pen")!!, n("hrs")!!.toInt()))
+                    Locator.repo.saveFeeConfig(FeeConfig(n("pct")!!, n("min")!!, n("item")!!, n("free")!!.toInt(), n("km")!!, n("exp")!!, n("pen")!!, n("hrs")!!.toInt(), n("gp")!!, n("gm")!!, n("mg")!!, n("pp")!!))
                     towns.forEach { t ->
                         val fee = n("tf${t.id}")!!; val km = n("tk${t.id}")!!
                         if (fee != t.deliveryFee || km != t.distanceKm) Locator.repo.saveTown(t.id, fee, km)
@@ -574,7 +620,7 @@ private fun AdminRefunds() {
     var list by remember { mutableStateOf<List<RefundRequest>?>(null) }
     var reload by remember { mutableIntStateOf(0) }
     var err by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(reload) { try { list = Locator.repo.refundRequests() } catch (e: ApiException) { err = e.message; list = emptyList() } }
+    LaunchedEffect(reload) { while (true) { try { list = Locator.repo.refundRequests() } catch (e: ApiException) { err = e.message; list = list ?: emptyList() }; kotlinx.coroutines.delay(30_000) } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         item { ErrorText(err); Text("La tarifa de servicio y gestión no se reembolsa. Si se pagó con tarjeta, la devolución se hace sola en Stripe al aprobar.", style = MaterialTheme.typography.bodySmall) }
         val l = list
@@ -603,7 +649,7 @@ private fun AdminComplaints() {
     val scope = rememberCoroutineScope()
     var list by remember { mutableStateOf<List<Complaint>?>(null) }
     var reload by remember { mutableIntStateOf(0) }
-    LaunchedEffect(reload) { list = runCatching { Locator.repo.complaints() }.getOrDefault(emptyList()) }
+    LaunchedEffect(reload) { while (true) { list = runCatching { Locator.repo.complaints() }.getOrDefault(list ?: emptyList()); kotlinx.coroutines.delay(30_000) } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         item { Text("Plazo de respuesta: 10 días hábiles. Guarda las respuestas: pueden pedirlas los servicios de consumo.", style = MaterialTheme.typography.bodySmall) }
         val l = list

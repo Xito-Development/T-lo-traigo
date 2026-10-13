@@ -199,7 +199,10 @@ private fun DriverMine() {
     var err by remember { mutableStateOf<String?>(null) }
     var reload by remember { mutableIntStateOf(0) }
     LaunchedEffect(reload) {
-        try { orders = Locator.repo.myDeliveries(); err = null } catch (e: ApiException) { err = e.message; orders = orders ?: emptyList() }
+        while (true) {   // refresco automático (pagos del cliente, cambios de estado…)
+            try { orders = Locator.repo.myDeliveries(); err = null } catch (e: ApiException) { err = e.message; orders = orders ?: emptyList() }
+            delay(12_000)
+        }
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         item { Text("Mis repartos", style = MaterialTheme.typography.headlineLarge) }
@@ -261,7 +264,9 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 }
                 if (o.status == "en_camino") Text("📍 Tu ubicación se comparte con el cliente hasta que marques «entregado».",
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (o.status == "comprando" || (o.status == "en_camino" && o.ticketPath == null)) TicketSection(o) { onChanged() }
+                if (o.status == "comprando" && o.ticketPath == null) TicketSection(o) { onChanged() }
+                else if (o.ticketTotal != null) Text("🧾 Ticket guardado: ${eur(o.ticketTotal)} · total cliente ${eur(o.amount)} · ganas ${eur(o.driverEarnings)}",
+                    Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 next?.let { (st, label) ->
                     Spacer(Modifier.height(10.dp))
                     BigButton(label, {

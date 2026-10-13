@@ -186,6 +186,25 @@ class Repository(val api: SupabaseApi) {
             put("service_fee_pct", f.servicePct); put("min_service_fee", f.minService); put("per_item_fee", f.perItem)
             put("free_items", f.freeItems); put("per_km_fee", f.perKm); put("express_fee", f.express)
             put("stale_penalty", f.stalePenalty); put("stale_hours", f.staleHours)
+            put("platform_pct", f.platformPct); put("gestion_pct", f.gestionPct); put("gestion_min", f.gestionMin); put("price_margin_pct", f.marginPct)
+        }.toString())
+    }
+    suspend fun addTown(name: String, cp: String?, fee: Double, km: Double) {
+        api.rest("POST", "towns", buildJsonObject { put("name", name.trim()); put("postal_code", cp?.ifBlank { null }); put("delivery_fee", fee); put("distance_km", km) }.toString())
+    }
+    /** Los pueblos con pedidos no se pueden borrar: se ocultan (activo = no). */
+    suspend fun deactivateTown(id: Long) { api.rest("PATCH", "towns?id=eq.$id", buildJsonObject { put("active", false) }.toString()) }
+    suspend fun extraFees(): List<ExtraFee> = parse(api.rest("GET", "extra_fees?order=id"))
+    suspend fun addExtraFee(name: String, kind: String, amount: Double) {
+        api.rest("POST", "extra_fees", buildJsonObject { put("name", name.trim()); put("kind", kind); put("amount", amount) }.toString())
+    }
+    suspend fun deleteExtraFee(id: Long) { api.rest("DELETE", "extra_fees?id=eq.$id") }
+    suspend fun saveAddress(a: Profile, fullName: String, phone: String) {
+        api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject {
+            put("full_name", fullName.trim()); put("phone", phone.trim()); put("recipient_name", a.recipientName?.trim())
+            put("street", a.street?.trim()); put("street_number", a.streetNumber?.trim()); put("floor_door", a.floorDoor?.trim()?.ifBlank { null })
+            put("postal_code", a.postalCode?.trim()?.ifBlank { null }); put("province", a.province ?: "León"); put("directions", a.directions?.trim()?.ifBlank { null })
+            put("town_id", a.townId); put("address", composeAddress(a))
         }.toString())
     }
     suspend fun saveTown(id: Long, fee: Double, km: Double) {
@@ -218,8 +237,18 @@ class Repository(val api: SupabaseApi) {
     suspend fun uploadTicket(orderId: Long, bytes: ByteArray): String {
         val path = "$orderId/${java.util.UUID.randomUUID()}.jpg"; api.upload("tickets", path, bytes, "image/jpeg"); return path
     }
-    suspend fun setTicket(orderId: Long, path: String, total: Double): JsonObject =
-        api.json.parseToJsonElement(api.rpc("set_ticket", buildJsonObject { put("p_order", orderId); put("p_path", path); put("p_total", total) })).jsonObject
+    suspend fun setTicket(orderId: Long, path: String, total: Double, itemReals: Map<Long, Double> = emptyMap()): JsonObject =
+        api.json.parseToJsonElement(api.rpc("set_ticket", buildJsonObject {
+            put("p_order", orderId); put("p_path", path); put("p_total", total)
+            if (itemReals.isNotEmpty()) putJsonArray("p_items") { itemReals.forEach { (id, r) -> addJsonObject { put("id", id); put("real", r) } } }
+        })).jsonObject
+    /** Vuelve a meter en la cesta un pedido anterior (productos y artículos de la lista fácil). */
+    suspend fun repeatOrder(o: Order) {
+        val prodQty = o.items.mapNotNull { i -> i.productId?.let { it to i.qty } }.toMap()
+        Locator.cart.replaceWith(productsByIds(prodQty.keys).map { it to prodQty.getValue(it.id) })
+        val needItems = o.items.filter { it.needId != null }
+        if (needItems.isNotEmpty()) { val ns = needs().associateBy { it.id }; needItems.forEach { i -> ns[i.needId]?.let { Locator.cart.addNeed(it, i.detail.orEmpty(), i.qty) } } }
+    }
     suspend fun ticketUrl(path: String) = api.signedUrl("tickets", path)
     suspend fun requestRefund(orderId: Long, reason: String, amount: Double?) {
         api.rpc("request_refund", buildJsonObject { put("p_order", orderId); put("p_reason", reason); put("p_amount", amount) })
@@ -244,3 +273,13 @@ class Repository(val api: SupabaseApi) {
         api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { usage?.let { put("usage", it) }; consent?.let { put("analytics_consent", it) } }.toString())
     }
 }
+
+/** Dirección completa para el repartidor: «Calle Mayor 12, 1º B — 24760 Villaquejida (León). Indicaciones». */
+fun composeAddress(p: Profile, townName: String? = null): String = buildString {
+    append(listOfNotNull(p.street?.trim()?.ifBlank { null }, p.streetNumber?.trim()?.ifBlank { null }).joinToString(" "))
+    p.floorDoor?.trim()?.ifBlank { null }?.let { append(", ").append(it) }
+    val loc = listOfNotNull(p.postalCode?.ifBlank { null }, townName).joinToString(" ")
+    if (loc.isNotBlank()) append(" — ").append(loc)
+    p.province?.ifBlank { null }?.let { append(" (").append(it).append(")") }
+    p.directions?.trim()?.ifBlank { null }?.let { append(". ").append(it) }
+}.trim().ifBlank { p.address.orEmpty() }

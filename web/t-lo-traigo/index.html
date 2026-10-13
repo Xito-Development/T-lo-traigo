@@ -231,6 +231,14 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
   .rv,.st>*,.line,.pin,.hero .in,.title .ch{opacity:1!important;transform:none!important;filter:none!important;clip-path:none!important}
   #road,#esla{stroke-dashoffset:0} #bag{offset-distance:100%;opacity:1} #glow{opacity:.3}
 }
+/* Resoluciones dinámicas: móvil pequeño, tablet, escritorio grande y 4K */
+html{overflow-x:hidden}
+img,svg,canvas{max-width:100%}
+@media (max-width:380px){.cta .btn{width:100%;justify-content:center}.title{width:100%}}
+@media (min-width:600px) and (max-width:900px){.steps{grid-template-columns:repeat(2,1fr)}.feats{grid-template-columns:1fr 1fr}.towns-grid{gap:2rem}}
+@media (min-width:1600px){:root{font-size:18px}.wrap{width:min(1320px,100% - 4rem)}.title{width:min(100%,640px)}}
+@media (min-width:2200px){:root{font-size:21px}.wrap{width:min(1600px,100% - 6rem)}}
+@media (orientation:landscape) and (max-height:500px){.hero{min-height:auto}.hero-left{padding-top:5rem}}
 </style>
 </head>
 <body>

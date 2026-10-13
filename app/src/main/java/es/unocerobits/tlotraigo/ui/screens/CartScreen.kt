@@ -42,7 +42,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
 
     var seniors by remember { mutableStateOf<List<Profile>>(emptyList()) }
     var target by remember(me) { mutableStateOf(me) }
-    var address by remember(target) { mutableStateOf(target?.address.orEmpty()) }
+    var address by remember(target) { mutableStateOf(target?.let { t -> composeAddress(t, vm.townName(t.townId)) }.orEmpty()) }
     var notes by remember { mutableStateOf("") }
     var methods by remember { mutableStateOf<List<String>?>(null) }
     var method by remember { mutableStateOf(PayMethod.CASH) }
@@ -64,7 +64,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
         runCatching {
             val fresh = Locator.repo.productsByIds(lines.keys).associateBy { it.id }
             var changed = 0; var gone = 0
-            lines.values.forEach { l ->
+            lines.values.filter { it.needId == null }.forEach { l ->
                 val f = fresh[l.product.id]
                 when {
                     f == null -> { vm.cart.set(l.product, 0); gone++ }
@@ -187,9 +187,9 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     if (av.isEmpty()) Text("Ahora mismo no hay repartidores activos en tu pueblo. Tu pedido quedará en espera y se pagará en efectivo.",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     PayMethod.entries.forEach { m ->
-                        val enabled = if (av.isEmpty()) m == PayMethod.CASH else m.db in av
+                        val enabled = m != PayMethod.BIZUM && (if (av.isEmpty()) m != PayMethod.BIZUM else m.db in av || m == PayMethod.CARD)
                         val icon = when (m) { PayMethod.CASH -> Icons.Filled.Payments; PayMethod.BIZUM -> Icons.Filled.PhoneAndroid; PayMethod.CARD -> Icons.Filled.CreditCard }
-                        ChoiceRow(m.label, if (enabled) m.hint else "No disponible ahora en tu pueblo", method == m, enabled, icon) { method = m }
+                        ChoiceRow(m.label, if (m == PayMethod.BIZUM) "Próximamente" else if (enabled) m.hint else "No disponible ahora en tu pueblo", method == m, enabled, icon) { method = m }
                     }
                 }
             }
@@ -199,7 +199,10 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                 val q = quote
                 if (q == null) Loading()
                 else {
-                    SummaryLine("Productos (precio del súper)", q.subtotal)
+                    lines.values.forEach { l ->
+                        SummaryLine("${l.qty} × ${l.product.name}" + (l.detail?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""), l.total, muted = true)
+                    }
+                    SummaryLine("Productos (precio orientativo)", q.subtotal)
                     SummaryLine("   de los que IVA", q.productsVat, muted = true)
                     SummaryLine("Servicio del repartidor (${q.servicePct.toInt()} %)", q.service)
                     SummaryLine("Gestión del pedido (${q.gestionPct.toInt()} %)", q.gestion)
@@ -207,6 +210,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     SummaryLine("Envío a ${q.town}", q.deliveryBase)
                     SummaryLine("Distancia (${q.distanceKm.toInt()} km)", q.distanceFee)
                     if (q.expressFee > 0) SummaryLine("Entrega en el día", q.expressFee)
+                    q.extras.filter { it.amount > 0 }.forEach { SummaryLine(it.name, it.amount) }
                     SummaryLine("   IVA del servicio (21 %)", q.feesVat, muted = true)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     SummaryLine("Total estimado (IVA incluido)", q.total, strong = true)

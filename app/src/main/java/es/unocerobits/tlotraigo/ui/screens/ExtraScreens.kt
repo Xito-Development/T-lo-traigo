@@ -147,14 +147,31 @@ fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
     var needs by remember { mutableStateOf<List<Need>?>(null) }
     var sel by remember { mutableStateOf<Need?>(null) }
     val lines by vm.cart.lines.collectAsState()
-    LaunchedEffect(Unit) { needs = runCatching { Locator.repo.needs() }.getOrDefault(emptyList()) }
+    var q by rememberSaveable { mutableStateOf("") }
+    var usual by remember { mutableStateOf<List<OrderItem>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        needs = runCatching { Locator.repo.needs() }.getOrDefault(emptyList())
+        // «Lo de siempre»: artículos de la lista fácil de pedidos anteriores
+        usual = runCatching { Locator.repo.myOrders().flatMap { it.items }.filter { it.needId != null }.distinctBy { it.needId to it.detail }.take(6) }.getOrDefault(emptyList())
+    }
     Scaffold(topBar = { TopAppBar({ Text("Lista fácil") }, navigationIcon = { IconButton(onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }) },
         bottomBar = { if (lines.isNotEmpty()) Surface(tonalElevation = 6.dp) { Box(Modifier.navigationBarsPadding().padding(16.dp)) {
             BigButton("Ver mi cesta (${productos(lines.values.sumOf { it.qty })})", onCart, icon = Icons.Filled.ShoppingCart) } } }) { pad ->
         Column(Modifier.padding(pad)) {
             Text("Toca lo que necesites y dinos cómo lo quieres. Los precios son orientativos: pagarás lo que marque el ticket del súper.",
                 Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            val n = needs
+            OutlinedTextField(q, { q = it }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), placeholder = { Text("Buscar: leche, pan, pañales…") },
+                leadingIcon = { Icon(Icons.Filled.Search, null) }, singleLine = true, shape = androidx.compose.foundation.shape.CircleShape)
+            if (usual.isNotEmpty() && q.isBlank()) {
+                Text("Lo de siempre", Modifier.padding(start = 16.dp, top = 10.dp), style = MaterialTheme.typography.titleMedium)
+                androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(usual.size) { i -> val it = usual[i]
+                        AssistChip({ needs?.firstOrNull { n -> n.id == it.needId }?.let { n -> vm.cart.addNeed(n, it.detail.orEmpty(), it.qty) } },
+                            { Text("${it.name}${it.detail?.let { d -> " · $d" } ?: ""}", maxLines = 1) }, leadingIcon = { Icon(Icons.Filled.Add, null, Modifier.size(18.dp)) })
+                    }
+                }
+            }
+            val n = needs?.filter { q.isBlank() || q.trim().lowercase() in it.name.lowercase() || it.options.any { o -> o.v.any { v -> q.trim().lowercase() in v.lowercase() } } }
             if (n == null) Loading()
             else LazyVerticalGrid(GridCells.Adaptive(150.dp), contentPadding = PaddingValues(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -193,7 +210,7 @@ private fun NeedDialog(n: Need, onAdd: (String, Int) -> Unit, onDismiss: () -> U
                 Text("Marca", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf("Cualquiera", "La más barata", "Marca blanca", "La de siempre").forEach { v -> FilterChip(brand == v, { brand = v }, { Text(v) }) } }
                 OutlinedTextField(note, { note = it.take(120) }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text("¿Algo más? (opcional)") },
-                    placeholder = { Text("Ej.: marca Pascual, que no esté muy maduro") }, shape = MaterialTheme.shapes.medium)
+                    placeholder = { Text(if (n.options.isEmpty()) "Escribe qué necesitas: ej. pilas AA, velas…" else "Ej.: marca Pascual, que no esté muy maduro") }, shape = MaterialTheme.shapes.medium)
                 Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("Cantidad", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                     QtyStepper(qty, { if (qty > 1) qty-- }, { qty++ })
@@ -203,88 +220,186 @@ private fun NeedDialog(n: Need, onAdd: (String, Int) -> Unit, onDismiss: () -> U
         },
         confirmButton = {
             Button({ onAdd((n.options.mapNotNull { picks[it.t] } + listOfNotNull(brand.takeIf { it != "Cualquiera" }, note.trim().ifBlank { null })).joinToString(" · "), qty) },
-                enabled = n.options.all { picks[it.t] != null }) { Text("Añadir a la cesta") }
+                enabled = n.options.all { picks[it.t] != null } && (n.options.isNotEmpty() || note.trim().length >= 3)) { Text("Añadir a la cesta") }
         },
         dismissButton = { TextButton(onDismiss) { Text("Cancelar") } })
 }
 
 // =================== Ticket de compra (repartidor) ===================
+/** Foto del ticket + total (obligatorio) y precio real de cada línea (opcional). Una vez guardado no se puede cambiar. */
 @Composable
 fun TicketSection(o: Order, onSaved: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var file by remember { mutableStateOf<File?>(null) }
     var shot by remember { mutableStateOf<Uri?>(null) }
-    var total by remember { mutableStateOf(o.ticketTotal?.let { fmtNum(it) } ?: "") }
+    val reals = remember { mutableStateMapOf<Long, String>() }
+    var total by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    var askSave by remember { mutableStateOf(false) }
     var msg by remember { mutableStateOf<String?>(null) }
     var err by remember { mutableStateOf<String?>(null) }
     val cam = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) shot = file?.let { Uri.fromFile(it) } }
     fun takePhoto() {
         val dir = File(ctx.cacheDir, "tickets").apply { mkdirs() }
-        val f = File(dir, "ticket_${o.id}.jpg"); file = f
+        val f = File(dir, "ticket_${o.id}_${System.currentTimeMillis()}.jpg"); file = f
         cam.launch(FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f))
     }
+    val sumReals = reals.values.mapNotNull { parseNum(it) }.sum()
     Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(14.dp)) {
             Text("🧾 Ticket de compra (obligatorio)", style = MaterialTheme.typography.titleMedium)
-            Text("Haz una foto al ticket y escribe el total. El cliente pagará lo real (máx. ${eur(o.maxTotal ?: o.total)}).", style = MaterialTheme.typography.bodySmall)
+            Text("Apunta el precio real de cada cosa si quieres (así el cliente ve qué salió más caro o barato), haz la foto y escribe el total.",
+                style = MaterialTheme.typography.bodySmall)
+            o.items.forEach { it ->
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text("${it.qty} × ${it.name}", style = MaterialTheme.typography.bodyMedium)
+                        Text("Estimado ${eur(it.unitPrice * it.qty)}${it.detail?.let { d -> " · $d" } ?: ""}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    OutlinedTextField(reals[it.id].orEmpty(), { v -> reals[it.id] = v.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(7) },
+                        Modifier.width(110.dp), placeholder = { Text("Real") }, suffix = { Text("€") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+                }
+            }
+            if (sumReals > 0) TextButton({ total = fmtNum(sumReals) }) { Text("Usar la suma como total (${eur(sumReals)})") }
             shot?.let { AsyncImage(it, null, Modifier.fillMaxWidth().height(160.dp).padding(top = 8.dp).clip(MaterialTheme.shapes.small), contentScale = ContentScale.Crop) }
-            if (o.ticketPath != null && shot == null) Text("✓ Ticket guardado: ${eur(o.ticketTotal ?: 0.0)}", color = MaterialTheme.colorScheme.primary)
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 OutlinedButton({ takePhoto() }) { Icon(Icons.Filled.PhotoCamera, null); Spacer(Modifier.width(6.dp)); Text(if (shot == null) "Foto" else "Repetir") }
                 Spacer(Modifier.width(8.dp))
                 OutlinedTextField(total, { total = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(7) }, Modifier.weight(1f), label = { Text("Total ticket") },
                     suffix = { Text("€") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
             }
+            parseNum(total)?.let { t -> val d = t - o.subtotal
+                Text(if (kotlin.math.abs(d) < 0.01) "Igual que lo estimado" else "${if (d > 0) "▲ " + eur(d) + " más caro" else "▼ " + eur(-d) + " más barato"} que lo estimado (${eur(o.subtotal)})",
+                    style = MaterialTheme.typography.bodySmall, color = if (d > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary) }
             ErrorText(err)
             msg?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
             Spacer(Modifier.height(6.dp))
-            BigButton("Guardar ticket", {
-                scope.launch {
-                    busy = true; err = null; msg = null
-                    try {
-                        val uri = shot ?: throw ApiException("Haz primero la foto del ticket")
-                        val bytes = withContext(Dispatchers.IO) { ImageUtil.prepare(ctx, uri, 1600) }
-                        val path = Locator.repo.uploadTicket(o.id, bytes)
-                        val r = Locator.repo.setTicket(o.id, path, parseNum(total) ?: throw ApiException("Escribe el total del ticket"))
-                        if (r["over_max"]?.toString() == "true") msg = "El total supera el máximo autorizado. Llama al cliente antes de salir y confirma con él."
-                        onSaved()
-                    } catch (e: ApiException) { err = e.message }
-                    busy = false
+            BigButton("Guardar ticket", { askSave = true }, enabled = shot != null && parseNum(total) != null, loading = busy, icon = Icons.Filled.Save)
+        }
+    }
+    if (askSave) AlertDialog(onDismissRequest = { askSave = false }, title = { Text("¿Guardar el ticket?") },
+        text = { Text("Total: ${eur(parseNum(total) ?: 0.0)}. Una vez guardado no se puede cambiar y el cliente recibirá el importe para pagar.") },
+        confirmButton = { Button({
+            askSave = false
+            scope.launch {
+                busy = true; err = null; msg = null
+                try {
+                    val uri = shot ?: throw ApiException("Haz primero la foto del ticket")
+                    val bytes = withContext(Dispatchers.IO) { ImageUtil.prepare(ctx, uri, 1600) }
+                    val path = Locator.repo.uploadTicket(o.id, bytes)
+                    val r = Locator.repo.setTicket(o.id, path, parseNum(total)!!, reals.mapNotNull { (k, v) -> parseNum(v)?.let { k to it } }.toMap())
+                    if (r["over_max"]?.toString() == "true") msg = "El total supera el máximo orientativo. Avisa al cliente por teléfono."
+                    onSaved()
+                } catch (e: ApiException) { err = e.message }
+                busy = false
+            }
+        }) { Text("Sí, guardar") } }, dismissButton = { TextButton({ askSave = false }) { Text("Revisar") } })
+}
+
+/** Lista de productos con lo estimado y, si se conoce, lo real (▲ más caro / ▼ más barato). */
+@Composable
+fun ItemsWithDiff(o: Order) {
+    o.items.forEach { i ->
+        val est = i.unitPrice * i.qty
+        Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("${i.qty} ×", Modifier.width(40.dp), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f)) {
+                Text(i.name, style = MaterialTheme.typography.bodyLarge)
+                i.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                val r = i.realTotal
+                if (r == null) Text(eur(est), style = MaterialTheme.typography.bodyLarge)
+                else {
+                    Text(eur(r), style = MaterialTheme.typography.bodyLarge)
+                    val d = r - est
+                    if (kotlin.math.abs(d) >= 0.01) Text((if (d > 0) "▲ +" else "▼ −") + eur(kotlin.math.abs(d)), style = MaterialTheme.typography.labelSmall,
+                        color = if (d > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                 }
-            }, enabled = shot != null && parseNum(total) != null, loading = busy, icon = Icons.Filled.Save)
+            }
+        }
+    }
+    o.ticketDiff?.let { d -> if (kotlin.math.abs(d) >= 0.01) Surface(Modifier.fillMaxWidth().padding(top = 6.dp), shape = MaterialTheme.shapes.small,
+        color = if (d > 0) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer) {
+        Text("La compra salió ${eur(kotlin.math.abs(d))} ${if (d > 0) "más cara" else "más barata"} que lo estimado (${eur(o.subtotal)} → ${eur(o.ticketTotal!!)}).",
+            Modifier.padding(10.dp), style = MaterialTheme.typography.bodyMedium)
+    } }
+}
+
+// =================== Factura: visor en la app y PDF ===================
+@Composable
+fun InvoiceDialog(inv: Invoice, o: Order, onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    androidx.compose.ui.window.Dialog(onDismiss, androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.fillMaxWidth(.94f).widthIn(max = 640.dp).fillMaxHeight(.9f), shape = MaterialTheme.shapes.large) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp)) {
+                Text("Factura", style = MaterialTheme.typography.headlineMedium)
+                Text("Nº ${inv.number} · ${prettyDate(inv.issuedAt)}", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(10.dp))
+                Text("Emisor", style = MaterialTheme.typography.titleSmall); Text("${inv.issuer["name"]} · NIF ${inv.issuer["nif"]}\n${inv.issuer["address"]}", style = MaterialTheme.typography.bodySmall)
+                Text("Cliente", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp)); Text("${inv.customerName.orEmpty()}\n${inv.customerAddress.orEmpty()}", style = MaterialTheme.typography.bodySmall)
+                SectionTitle("Productos")
+                ItemsWithDiff(o)
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                @Composable fun r(a: String, v: String, strong: Boolean = false) = Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                    Text(a, Modifier.weight(1f), style = if (strong) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium)
+                    Text(v, style = if (strong) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium) }
+                r("Compra en el súper (suplido, sin IVA de la plataforma)", eur(inv.suplidos))
+                r("Servicio, gestión y envío — base", eur(inv.base))
+                r("IVA ${inv.vatRate.toInt()} %", eur(inv.vat))
+                r("TOTAL", eur(inv.total), true)
+                if (o.refundAmount > 0) r("Reembolsado", "−" + eur(o.refundAmount))
+                Text("El suplido es lo pagado al supermercado en tu nombre (art. 78.Tres.3º Ley del IVA); su factura es el ticket.", Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(16.dp))
+                BigButton("Abrir en PDF", { InvoicePdf.open(ctx, inv, o, share = false) }, icon = Icons.Filled.PictureAsPdf)
+                Spacer(Modifier.height(8.dp))
+                BigButton("Compartir", { InvoicePdf.open(ctx, inv, o, share = true) }, tonal = true, icon = Icons.Filled.Share)
+                TextButton(onDismiss, Modifier.align(Alignment.CenterHorizontally)) { Text("Cerrar") }
+            }
         }
     }
 }
 
-// =================== Factura en PDF ===================
 object InvoicePdf {
-    fun share(ctx: Context, inv: Invoice, o: Order) {
+    fun open(ctx: Context, inv: Invoice, o: Order, share: Boolean) {
         val doc = PdfDocument(); val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create()); val c = page.canvas
-        val p = Paint().apply { textSize = 11f; isAntiAlias = true }; val b = Paint(p).apply { typeface = Typeface.DEFAULT_BOLD }
-        val h = Paint(b).apply { textSize = 20f; color = android.graphics.Color.rgb(46, 107, 87) }
-        var y = 60f; fun line(t: String, paint: Paint = p, x: Float = 50f, dy: Float = 16f) { c.drawText(t, x, y, paint); y += dy }
-        line("FACTURA", h, dy = 26f); line("Nº ${inv.number}", b); line("Fecha: ${prettyDate(inv.issuedAt)}"); y += 10
-        line("Emisor", b); line(inv.issuer["name"] ?: ""); line("NIF: ${inv.issuer["nif"]}"); line(inv.issuer["address"] ?: ""); line(inv.issuer["email"] ?: ""); y += 10
-        line("Cliente", b); line(inv.customerName ?: ""); line(inv.customerAddress ?: ""); line("Pedido nº ${o.id}"); y += 14
-        fun row(a: String, v: String, paint: Paint = p) { c.drawText(a, 50f, y, paint); c.drawText(v, 470f, y, paint); y += 18 }
-        row("Concepto", "Importe", b)
+        val p = Paint().apply { textSize = 10.5f; isAntiAlias = true }; val b = Paint(p).apply { typeface = Typeface.DEFAULT_BOLD }
+        val small = Paint(p).apply { textSize = 8.5f; color = android.graphics.Color.DKGRAY }
+        val h = Paint(b).apply { textSize = 22f; color = android.graphics.Color.rgb(46, 107, 87) }
+        val right = Paint(p).apply { textAlign = Paint.Align.RIGHT }; val rightB = Paint(b).apply { textAlign = Paint.Align.RIGHT }
+        var y = 56f
+        fun line(t: String, paint: Paint = p, x: Float = 48f, dy: Float = 15f) { c.drawText(t.take(95), x, y, paint); y += dy }
+        fun row(a: String, v: String, bold: Boolean = false) { c.drawText(a.take(80), 48f, y, if (bold) b else p); c.drawText(v, 547f, y, if (bold) rightB else right); y += 16f }
+        line("FACTURA", h, dy = 24f); line("Nº ${inv.number}   ·   ${prettyDate(inv.issuedAt)}", b, dy = 22f)
+        line("EMISOR", b); line("${inv.issuer["name"]}  ·  NIF ${inv.issuer["nif"]}"); line(inv.issuer["address"] ?: ""); line(inv.issuer["email"] ?: "", dy = 20f)
+        line("CLIENTE", b); line(inv.customerName ?: ""); line(inv.customerAddress ?: ""); line("Pedido nº ${o.id}", dy = 22f)
+        row("Productos (estimado → real)", "Importe", true)
+        o.items.forEach { i -> val est = i.unitPrice * i.qty
+            val d = i.realTotal?.let { it - est }
+            row("${i.qty} × ${i.name}${i.detail?.let { " · $it" } ?: ""}" + (d?.takeIf { kotlin.math.abs(it) >= 0.01 }?.let { if (it > 0) "  (+${eur(it)})" else "  (−${eur(-it)})" } ?: ""), eur(i.realTotal ?: est)) }
+        o.ticketDiff?.takeIf { kotlin.math.abs(it) >= 0.01 }?.let { line("La compra salió ${eur(kotlin.math.abs(it))} ${if (it > 0) "más cara" else "más barata"} que lo estimado (${eur(o.subtotal)}).", small) }
+        y += 8; c.drawLine(48f, y - 10, 547f, y - 10, p)
         row("Compra en supermercado por cuenta del cliente (suplido*)", eur(inv.suplidos))
         row("Servicio de compra, gestión y entrega — base imponible", eur(inv.base))
-        row("IVA ${inv.vatRate.toInt()} % del servicio", eur(inv.vat))
-        y += 6; row("TOTAL", eur(inv.total), b)
+        row("IVA ${inv.vatRate.toInt()} %", eur(inv.vat))
+        row("TOTAL", eur(inv.total), true)
         if (o.refundAmount > 0) row("Reembolsado", "−" + eur(o.refundAmount))
-        y += 16
-        listOf("* Importe pagado al supermercado en nombre del cliente (art. 78.Tres.3º Ley 37/1992 del IVA):",
-            "  no forma parte de la base imponible. El ticket del supermercado está disponible en la app.",
-            "Huella de registro: ${inv.hash.take(32)}…").forEach { line(it, Paint(p).apply { textSize = 9f }, dy = 13f) }
+        y += 14
+        line("* Pagado al supermercado en nombre del cliente (art. 78.Tres.3º Ley 37/1992): no forma parte de la base imponible.", small, dy = 12f)
+        line("  El ticket del supermercado está disponible en la app.   Huella: ${inv.hash.take(24)}…", small)
         doc.finishPage(page)
         val dir = File(ctx.cacheDir, "facturas").apply { mkdirs() }
         val f = File(dir, "Factura_${inv.number}.pdf"); f.outputStream().use { doc.writeTo(it) }; doc.close()
         val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f)
-        ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/pdf").putExtra(Intent.EXTRA_STREAM, uri)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Factura ${inv.number}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val i = if (share) Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/pdf").putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Compartir factura")
+        else Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        catch (_: android.content.ActivityNotFoundException) { ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/pdf")
+            .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Abrir factura").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 }
 

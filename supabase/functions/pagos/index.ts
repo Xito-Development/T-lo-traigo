@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       const ds = (await db(`driver_settings?driver_id=eq.${o.driver_id}&select=stripe_account_id,stripe_ready`))[0];
       const pi = await stripe(`payment_intents/${o.stripe_payment_intent}`, {}, "GET");
       if (!ds?.stripe_ready || !ds.stripe_account_id || !pi.latest_charge) return j({ skipped: true });
-      const share = Number(o.service_fee) + Number(o.delivery_fee) + Number(o.express_fee);
+      const share = Number(o.driver_payout ?? 0);   // parte del repartidor ya descontada la comisión de la plataforma
       await stripe("transfers", { amount: cents(share), currency: "eur", destination: ds.stripe_account_id, source_transaction: pi.latest_charge, transfer_group: `pedido_${o.id}` });
       return j({ transferred: share });
     }

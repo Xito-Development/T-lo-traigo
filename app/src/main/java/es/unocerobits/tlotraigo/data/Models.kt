@@ -11,7 +11,14 @@ data class Town(
     val id: Long, val name: String,
     @SerialName("delivery_fee") val deliveryFee: Double = 0.0,
     @SerialName("distance_km") val distanceKm: Double = 0.0,
+    @SerialName("postal_code") val postalCode: String? = null,
+    val active: Boolean = true,
 )
+
+@Serializable
+data class ExtraFee(val id: Long, val name: String, val kind: String, val amount: Double, val active: Boolean = true)
+@Serializable
+data class QuoteExtra(val name: String, val amount: Double)
 
 @Serializable
 data class Supermarket(val id: Long, val name: String)
@@ -55,6 +62,13 @@ data class Profile(
     @SerialName("link_code") val linkCode: String? = null,
     @SerialName("terms_version") val termsVersion: String? = null,
     val usage: String? = null,
+    @SerialName("recipient_name") val recipientName: String? = null,
+    val street: String? = null,
+    @SerialName("street_number") val streetNumber: String? = null,
+    @SerialName("floor_door") val floorDoor: String? = null,
+    @SerialName("postal_code") val postalCode: String? = null,
+    val province: String? = "León",
+    val directions: String? = null,
     @SerialName("analytics_consent") val analyticsConsent: Boolean? = null,
 ) {
     val firstName get() = fullName.trim().substringBefore(' ').ifBlank { "" }
@@ -84,6 +98,10 @@ data class FeeConfig(
     @SerialName("express_fee") val express: Double = 1.50,
     @SerialName("stale_penalty") val stalePenalty: Double = 1.50,
     @SerialName("stale_hours") val staleHours: Int = 48,
+    @SerialName("gestion_pct") val gestionPct: Double = 5.0,
+    @SerialName("gestion_min") val gestionMin: Double = 0.5,
+    @SerialName("price_margin_pct") val marginPct: Double = 15.0,
+    @SerialName("platform_pct") val platformPct: Double = 20.0,
 )
 
 /** Desglose calculado en servidor (función quote_order). */
@@ -105,6 +123,8 @@ data class Quote(
     @SerialName("gestion_pct") val gestionPct: Double = 5.0,
     @SerialName("max_total") val maxTotal: Double = 0.0,
     @SerialName("margin_pct") val marginPct: Double = 15.0,
+    val extras: List<QuoteExtra> = emptyList(),
+    @SerialName("extra_total") val extraTotal: Double = 0.0,
     val total: Double = 0.0,
     val town: String = "",
 )
@@ -211,6 +231,7 @@ data class OrderItem(
     @SerialName("product_id") val productId: Long? = null,
     @SerialName("need_id") val needId: Long? = null,
     val detail: String? = null,
+    @SerialName("real_total") val realTotal: Double? = null,
     val products: Cold? = null,
     val needs: Cold? = null,
     val name: String,
@@ -245,6 +266,8 @@ data class Order(
     val driver: PersonLite? = null,
     @SerialName("express_fee") val expressFee: Double = 0.0,
     @SerialName("gestion_fee") val gestionFee: Double = 0.0,
+    @SerialName("extra_fee") val extraFee: Double = 0.0,
+    @SerialName("driver_payout") val driverPayout: Double? = null,
     @SerialName("max_total") val maxTotal: Double? = null,
     @SerialName("ticket_path") val ticketPath: String? = null,
     @SerialName("ticket_total") val ticketTotal: Double? = null,
@@ -264,7 +287,10 @@ data class Order(
     val awaitingPayment get() = ticketTotal != null && !amountConfirmed && !isPaid && !isFinal
     val canCancel get() = status == "pendiente" || status == "aceptado"
     val hasCold get() = items.any { it.products?.coldChain == true || it.needs?.coldChain == true }
-    val driverEarnings get() = serviceFee + deliveryFee + expressFee
+    /** Lo que gana el repartidor (sus tarifas menos la comisión de la plataforma). */
+    val driverEarnings get() = driverPayout ?: ((serviceFee + deliveryFee + expressFee) * 0.8)
+    /** Diferencia ticket − estimado (positivo: salió más caro). */
+    val ticketDiff get() = ticketTotal?.let { it - subtotal }
 }
 
 @Serializable

@@ -9,6 +9,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -40,7 +42,13 @@ class MainActivity : ComponentActivity() {
             AppTheme(settings) {
                 CompositionLocalProvider(LocalSpeaker provides if (settings.speak) speaker else null) {
                     // Surface fija el color de texto por defecto (onBackground): sin él, el texto sale negro en temas oscuros.
-                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { AppNav(vm) }
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        // En pantallas anchas el contenido se centra con un ancho cómodo de lectura
+                        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
+                            val w = if (maxWidth > 900.dp) 860.dp else maxWidth
+                            androidx.compose.foundation.layout.Box(Modifier.width(w).fillMaxSize()) { AppNav(vm) }
+                        }
+                    }
                 }
             }
         }

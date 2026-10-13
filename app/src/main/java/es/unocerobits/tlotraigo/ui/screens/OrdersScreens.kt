@@ -117,6 +117,13 @@ fun OrdersScreen(onOpen: (Long) -> Unit) {
                         Column(Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 StatusChip(o.status)
+                                if (o.awaitingPayment) {
+                                    Spacer(Modifier.width(8.dp))
+                                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape) {
+                                        Text("💳 Pagar ${eur(o.amount)}", Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onErrorContainer)
+                                    }
+                                }
                                 if (o.status == "entregado" && !o.hasReview) {
                                     Spacer(Modifier.width(8.dp))
                                     Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
@@ -178,6 +185,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     var err by remember { mutableStateOf<String?>(null) }
     var askCancel by remember { mutableStateOf(false) }
     var showRefund by remember { mutableStateOf(false) }
+    var invoice by remember { mutableStateOf<Invoice?>(null) }
     var showComplaint by remember { mutableStateOf(false) }
     var info by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -185,8 +193,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     LaunchedEffect(id) {
         while (true) {
             try { order = Locator.repo.order(id); err = null } catch (e: ApiException) { err = e.message }
-            if (order?.isFinal == true) break
-            delay(10_000) // TODO: sustituir por Supabase Realtime
+            delay(if (order?.isFinal == true) 30_000 else 8_000)   // refresco automático
         }
     }
     Scaffold(topBar = {
@@ -208,19 +215,15 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             if (o.awaitingPayment) Spacer(Modifier.height(4.dp))
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
-            o.items.forEach { i ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Text("${i.qty} ×", Modifier.width(44.dp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                    Text(i.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                    Text(eur(i.unitPrice * i.qty), style = MaterialTheme.typography.bodyLarge)
-                }
-            }
+            ItemsWithDiff(o)
             HorizontalDivider(Modifier.padding(vertical = 10.dp))
-            Row { Text("Productos (IVA incl.)", Modifier.weight(1f)); Text(eur(o.subtotal)) }
+            Row { Text(if (o.ticketTotal != null) "Productos (ticket del súper)" else "Productos (estimado)", Modifier.weight(1f)); Text(eur(o.ticketTotal ?: o.subtotal)) }
             Row { Text("Servicio del repartidor", Modifier.weight(1f)); Text(eur(o.serviceFee)) }
+            Row { Text("Gestión", Modifier.weight(1f)); Text(eur(o.gestionFee)) }
+            if (o.extraFee > 0) Row { Text("Tarifas adicionales", Modifier.weight(1f)); Text(eur(o.extraFee)) }
             Row { Text("Envío", Modifier.weight(1f)); Text(eur(o.deliveryFee)) }
             if (o.expressFee > 0) Row { Text("Entrega en el día", Modifier.weight(1f)); Text(eur(o.expressFee)) }
-            Row { Text("Total", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Text(eur(o.total), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary) }
+            Row { Text(if (o.finalTotal != null) "Total" else "Total estimado", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Text(eur(o.amount), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary) }
             Spacer(Modifier.height(6.dp))
             Text("Pago: ${PayMethod.of(o.paymentMethod).label} · ${if (o.isPaid) "pagado" else if (o.paymentMethod == "efectivo") "al recibirlo" else "pendiente"}",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -234,7 +237,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             else if (!o.isFinal) Text("El repartidor ya está en el súper o de camino: ya no se puede cancelar. Si hay un problema, llama al teléfono de ayuda.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (o.status == "entregado") {
-                BigButton("Descargar factura", { scope.launch { Locator.repo.invoice(id)?.let { InvoicePdf.share(ctx, it, o) } ?: run { err = "La factura aún no está disponible" } } }, tonal = true, icon = Icons.Filled.Receipt)
+                BigButton("Ver factura", { scope.launch { invoice = Locator.repo.invoice(id); if (invoice == null) err = "La factura aún no está disponible" } }, tonal = true, icon = Icons.Filled.Receipt)
                 Spacer(Modifier.height(10.dp))
                 BigButton("Solicitar reembolso", { showRefund = true }, tonal = true, icon = Icons.Filled.CurrencyExchange)
             }
@@ -243,11 +246,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             TextButton({ showComplaint = true }) { Icon(Icons.Filled.Feedback, null); Spacer(Modifier.width(6.dp)); Text("Hoja de reclamaciones") }
             if (o.isFinal) BigButton("Repetir esta compra", {
                 scope.launch {
-                    runCatching {
-                        val q = o.items.mapNotNull { i -> i.productId?.let { it to i.qty } }.toMap()
-                        vm.cart.replaceWith(Locator.repo.productsByIds(q.keys).map { it to q.getValue(it.id) })
-                        onRepeat()
-                    }
+                    runCatching { Locator.repo.repeatOrder(o); onRepeat() }
                 }
             }, icon = Icons.Filled.Replay)
             Spacer(Modifier.height(10.dp))
@@ -256,6 +255,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     }
     order?.let { o ->
         if (showRefund) RefundDialog(o) { m -> showRefund = false; m?.let { info = it } }
+        invoice?.let { InvoiceDialog(it, o) { invoice = null } }
         if (showComplaint) ComplaintDialog(vm, o.id) { m -> showComplaint = false; m?.let { info = it } }
     }
     if (askCancel) AlertDialog(

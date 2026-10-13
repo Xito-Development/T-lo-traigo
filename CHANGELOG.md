@@ -2,6 +2,24 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.5.3] - 2026-10-13
+### Añadido
+- Dirección paso a paso: destinatario, teléfono, pueblo (código postal y provincia), calle y número, piso e indicaciones.
+- Lista fácil: buscador, «Lo de siempre», más artículos (zumos, conservas, congelados, mascotas, bebé…) y «Otra cosa» con texto libre.
+- Resumen de la cesta con el desglose de cada producto.
+- El repartidor puede apuntar el precio real de cada producto; el cliente y la factura muestran si salió más caro (▲) o más barato (▼).
+- Factura visible en la app, con botones «Abrir en PDF» y «Compartir».
+- Administración → Tarifas: añadir y quitar pueblos, añadir y eliminar tarifas adicionales, gestión, margen y comisión de la plataforma.
+- Diseño adaptable a tablets, plegables y pantallas grandes (app y web).
+### Cambiado
+- El repartidor recibe sus tarifas menos la comisión de la plataforma (20 % por defecto); la gestión y las tarifas adicionales son de la plataforma.
+- El ticket, una vez guardado, no se puede modificar.
+- Pedidos, repartos, reembolsos y reclamaciones se actualizan solos.
+- Bizum aparece como «Próximamente».
+### Corregido
+- Los artículos de la lista fácil desaparecían al abrir la cesta.
+- «Repetir compra» no incluía los artículos de la lista fácil.
+
 ## [0.5.2] - 2026-10-13
 ### Cambiado
 - El cliente ya no paga al hacer el pedido: paga cuando el repartidor sube la foto del ticket con el importe real (tarjeta o efectivo).

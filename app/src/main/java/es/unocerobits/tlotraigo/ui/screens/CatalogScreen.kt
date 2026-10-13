@@ -117,12 +117,7 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit, onNeeds: () -> Unit 
                         Button({
                             scope.launch {
                                 repeating = true
-                                runCatching {
-                                    val qty = lo.items.mapNotNull { i -> i.productId?.let { it to i.qty } }.toMap()
-                                    val ps = Locator.repo.productsByIds(qty.keys)
-                                    vm.cart.replaceWith(ps.map { it to qty.getValue(it.id) })
-                                    onOpenCart()
-                                }
+                                runCatching { Locator.repo.repeatOrder(lo); onOpenCart() }
                                 repeating = false
                             }
                         }, enabled = !repeating, colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)) {
