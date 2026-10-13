@@ -101,16 +101,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
             val t = target ?: error("Sin cliente")
             val id = Locator.repo.createOrder(t.id, lines.values.first().product.supermarketId,
                 lines.mapValues { it.value.qty }, method.db, address, notes, date?.toString(), if (date == null) null else slot, adultOk)
-            when (method) {
-                PayMethod.CARD -> {   // Pasarela Stripe: se autoriza el máximo y se cobra lo real del ticket
-                    payingMsg = "Abriendo el pago seguro…"
-                    try { Locator.repo.cardCheckoutUrl(id)?.let { ctx.openUrl(it) } }
-                    catch (e: ApiException) { err = "Pedido hecho, pero no se pudo abrir el pago: ${e.message}" }
-                }
-                PayMethod.BIZUM -> { payingMsg = "Procesando Bizum (simulado)…"; if (Payments.provider(method).pay(id, total) == PayResult.Paid) runCatching { Locator.repo.mockMarkPaid(id) } }
-                PayMethod.CASH -> {}
-            }
-            payingMsg = null; vm.cart.clear(); onPlaced(id)
+            // No se cobra ahora: el cliente paga cuando el repartidor sube el ticket con el importe real
+            vm.cart.clear(); onPlaced(id)
         } catch (e: Exception) { err = e.message; payingMsg = null }
         busy = false
     }
@@ -246,7 +238,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     ConfirmRow(Icons.Filled.Home, address)
                     ConfirmRow(Icons.Filled.Payments, method.label + if (method == PayMethod.CASH) " (al recibirlo)" else "")
                     Text("Total: ${eur(total)}", Modifier.padding(top = 10.dp), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-                    Text("IVA incluido. Puedes cancelarlo gratis mientras ningún repartidor lo haya aceptado.", style = MaterialTheme.typography.bodySmall)
+                    Text("IVA incluido. No pagas ahora: cuando el repartidor haga la compra verás la foto del ticket con el importe real y entonces pagarás. Puedes cancelar mientras no esté en el súper.", style = MaterialTheme.typography.bodySmall)
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                         Checkbox(reviewed, { reviewed = it }); Text("He revisado los productos, la dirección y el importe.", style = MaterialTheme.typography.bodyMedium)
                     }
@@ -256,7 +248,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                 }
             },
             confirmButton = {
-                Button({ confirm = false; adultOk = adult; if (method == PayMethod.CASH) placeOrder() else payConfirm = true },
+                Button({ confirm = false; adultOk = adult; placeOrder() },
                     enabled = reviewed && (!needsAdult || adult)) { Text("Confirmar pedido con obligación de pago") }
             },
             dismissButton = { TextButton({ confirm = false }) { Text("Volver") } },

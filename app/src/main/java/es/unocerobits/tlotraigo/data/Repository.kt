@@ -210,6 +210,8 @@ class Repository(val api: SupabaseApi) {
     suspend fun needs(): List<Need> = parse(api.rest("GET", "needs?active=eq.true&order=sort"))
     suspend fun cardCheckoutUrl(orderId: Long): String? =
         api.function("pagos", buildJsonObject { put("action", "checkout"); put("order_id", orderId) })["url"]?.jsonPrimitive?.contentOrNull
+    suspend fun confirmCash(orderId: Long) { api.rpc("confirm_cash", buildJsonObject { put("p_order", orderId) }) }
+    suspend fun payout(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "payout"); put("order_id", orderId) }) } }
     suspend fun captureCard(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "capture"); put("order_id", orderId) }) } }
     suspend fun refundCard(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "refund"); put("order_id", orderId) }) } }
     suspend fun connectStripe(): String? = api.function("pagos", buildJsonObject { put("action", "connect") })["url"]?.jsonPrimitive?.contentOrNull

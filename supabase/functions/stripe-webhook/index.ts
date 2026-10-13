@@ -19,9 +19,9 @@ Deno.serve(async (req) => {
   if (!WH || !(await valid(payload, req.headers.get("stripe-signature") ?? ""))) return new Response("firma no válida", { status: 400 });
   const ev = JSON.parse(payload); const o = ev.data?.object ?? {};
   if (ev.type === "checkout.session.completed" && o.metadata?.order_id)
-    await db(`orders?id=eq.${Number(o.metadata.order_id)}`, { payment_status: "autorizado", stripe_payment_intent: o.payment_intent });
+    await db(`orders?id=eq.${Number(o.metadata.order_id)}`, { payment_status: "pagado", amount_confirmed: true, stripe_payment_intent: o.payment_intent });
   if (ev.type === "checkout.session.expired" && o.metadata?.order_id)
-    await db(`orders?id=eq.${Number(o.metadata.order_id)}&payment_status=eq.pendiente`, { payment_status: "fallido" });
+    await db(`orders?id=eq.${Number(o.metadata.order_id)}&payment_status=eq.pendiente`, { stripe_session_id: null });
   if (ev.type === "account.updated" && o.id)
     await db(`driver_settings?stripe_account_id=eq.${o.id}`, { stripe_ready: !!o.payouts_enabled });
   return new Response("ok");

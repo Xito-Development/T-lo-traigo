@@ -2,6 +2,14 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.5.2] - 2026-10-13
+### Cambiado
+- El cliente ya no paga al hacer el pedido: paga cuando el repartidor sube la foto del ticket con el importe real (tarjeta o efectivo).
+- El repartidor sale a repartir cuando el cliente ha pagado o confirmado el pago en efectivo.
+- Al entregar un pedido pagado con tarjeta, se transfiere automáticamente su parte al repartidor (Stripe Connect).
+### Añadido
+- Prototipo de demostración: botón «Simular pago con tarjeta (demo)» mientras no esté configurada la pasarela.
+
 ## [0.5.1] - 2026-10-13
 ### Añadido
 - Pasarela de pago con Stripe: reserva del importe máximo, cobro del importe real del ticket y reparto al repartidor (Stripe Connect).

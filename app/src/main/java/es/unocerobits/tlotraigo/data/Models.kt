@@ -250,6 +250,7 @@ data class Order(
     @SerialName("ticket_total") val ticketTotal: Double? = null,
     @SerialName("final_total") val finalTotal: Double? = null,
     @SerialName("ticket_over_max") val ticketOverMax: Boolean = false,
+    @SerialName("amount_confirmed") val amountConfirmed: Boolean = false,
     @SerialName("refund_amount") val refundAmount: Double = 0.0,
     @SerialName("scheduled_date") val scheduledDate: String? = null,
     @SerialName("scheduled_slot") val scheduledSlot: String? = null,
@@ -259,6 +260,8 @@ data class Order(
     val isFinal get() = status == "entregado" || status == "cancelado"
     val isPaid get() = paymentStatus == "pagado"
     val amount get() = finalTotal ?: total
+    /** El repartidor subió el ticket y el cliente aún no ha pagado ni confirmado el efectivo. */
+    val awaitingPayment get() = ticketTotal != null && !amountConfirmed && !isPaid && !isFinal
     val canCancel get() = status == "pendiente" || status == "aceptado"
     val hasCold get() = items.any { it.products?.coldChain == true || it.needs?.coldChain == true }
     val driverEarnings get() = serviceFee + deliveryFee + expressFee

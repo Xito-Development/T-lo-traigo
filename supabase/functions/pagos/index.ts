@@ -1,4 +1,4 @@
-// Pasarela de pago T lo traigo (Stripe). Acciones: checkout, capture, refund, connect.
+// Pasarela de pago T lo traigo (Stripe). Acciones: checkout (tras el ticket), payout, refund, connect.
 // Secretos necesarios en Supabase → Edge Functions → Secrets: STRIPE_SECRET_KEY (sk_live_… o sk_test_…)
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SR = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -49,48 +49,39 @@ Deno.serve(async (req) => {
     const links = await db(`family_links?familiar_id=eq.${uid}&senior_id=eq.${o.customer_id}&select=senior_id`);
     const isCustomer = o.placed_by === uid || o.customer_id === uid || links.length > 0;
 
-    if (action === "checkout") {   // Autoriza el importe máximo; se cobra lo real al subir el ticket
+    if (action === "checkout") {   // Se paga el importe real cuando el repartidor ha subido el ticket
       if (!isCustomer) return j({ error: "No autorizado" }, 403);
-      if (o.payment_method !== "tarjeta" || o.payment_status !== "pendiente") return j({ error: "Este pedido no necesita pago con tarjeta" }, 400);
+      if (o.ticket_total == null) return j({ error: "Espera a que el repartidor suba el ticket de la compra" }, 400);
+      if (o.payment_status === "pagado") return j({ error: "Este pedido ya está pagado" }, 400);
       const s = await stripe("checkout/sessions", {
         mode: "payment", locale: "es", "payment_method_types[0]": "card",
         "line_items[0][quantity]": "1", "line_items[0][price_data][currency]": "eur",
-        "line_items[0][price_data][unit_amount]": cents(Number(o.max_total ?? o.total)),
-        "line_items[0][price_data][product_data][name]": `Pedido nº ${o.id} · T lo traigo (importe máximo; se cobra lo real del ticket)`,
-        "payment_intent_data[capture_method]": "manual", "payment_intent_data[metadata][order_id]": String(o.id),
-        "payment_intent_data[description]": `T lo traigo pedido ${o.id}`, "metadata[order_id]": String(o.id),
+        "line_items[0][price_data][unit_amount]": cents(Number(o.final_total)),
+        "line_items[0][price_data][product_data][name]": `Pedido nº ${o.id} · T lo traigo (ticket ${Number(o.ticket_total).toFixed(2)} € + tarifas)`,
+        "payment_intent_data[metadata][order_id]": String(o.id), "payment_intent_data[description]": `T lo traigo pedido ${o.id}`,
+        "metadata[order_id]": String(o.id),
         success_url: `${WEB}/pago-ok.html?pedido=${o.id}`, cancel_url: `${WEB}/pago-cancelado.html?pedido=${o.id}`,
       });
-      await db(`orders?id=eq.${o.id}`, { method: "PATCH", body: JSON.stringify({ stripe_session_id: s.id }) });
+      await db(`orders?id=eq.${o.id}`, { method: "PATCH", body: JSON.stringify({ stripe_session_id: s.id, payment_method: "tarjeta" }) });
       return j({ url: s.url });
     }
 
-    if (action === "capture") {   // Cobro del importe real (ticket + tarifas), con tope en lo autorizado
+    if (action === "payout") {   // Transfiere al repartidor su parte de un pedido pagado con tarjeta (Connect)
       if (o.driver_id !== uid && !admin) return j({ error: "No autorizado" }, 403);
-      if (o.payment_status !== "autorizado" || !o.stripe_payment_intent) return j({ skipped: true });
-      if (o.final_total == null) return j({ error: "Falta el ticket" }, 400);
-      const amount = Math.min(Number(o.final_total), Number(o.max_total ?? o.total));
-      const pi = await stripe(`payment_intents/${o.stripe_payment_intent}/capture`, { amount_to_capture: cents(amount) });
-      await db(`orders?id=eq.${o.id}`, { method: "PATCH", body: JSON.stringify({ payment_status: "pagado" }) });
-      const ds = o.driver_id && (await db(`driver_settings?driver_id=eq.${o.driver_id}&select=stripe_account_id,stripe_ready`))[0];
-      if (ds?.stripe_ready && ds.stripe_account_id && pi.latest_charge) {   // reparto del pago al repartidor (Connect)
-        const share = Number(o.service_fee) + Number(o.delivery_fee) + Number(o.express_fee);
-        await stripe("transfers", { amount: cents(share), currency: "eur", destination: ds.stripe_account_id, source_transaction: pi.latest_charge, transfer_group: `pedido_${o.id}` });
-      }
-      return j({ captured: amount });
+      if (o.payment_status !== "pagado" || !o.stripe_payment_intent) return j({ skipped: true });
+      const ds = (await db(`driver_settings?driver_id=eq.${o.driver_id}&select=stripe_account_id,stripe_ready`))[0];
+      const pi = await stripe(`payment_intents/${o.stripe_payment_intent}`, {}, "GET");
+      if (!ds?.stripe_ready || !ds.stripe_account_id || !pi.latest_charge) return j({ skipped: true });
+      const share = Number(o.service_fee) + Number(o.delivery_fee) + Number(o.express_fee);
+      await stripe("transfers", { amount: cents(share), currency: "eur", destination: ds.stripe_account_id, source_transaction: pi.latest_charge, transfer_group: `pedido_${o.id}` });
+      return j({ transferred: share });
     }
 
     if (action === "refund") {   // Devuelve lo aprobado (refund_amount) que aún no se haya devuelto
       if (!isCustomer && !admin) return j({ error: "No autorizado" }, 403);
       const due = Number(o.refund_amount) - Number(o.stripe_refunded);
       if (o.payment_method !== "tarjeta" || !o.stripe_payment_intent || due <= 0) return j({ skipped: true });
-      if (o.payment_status === "autorizado") {   // aún no cobrado: se libera o se cobra solo lo no reembolsable
-        const keep = Number(o.max_total ?? o.total) - Number(o.refund_amount);
-        if (keep <= 0.009) await stripe(`payment_intents/${o.stripe_payment_intent}/cancel`);
-        else await stripe(`payment_intents/${o.stripe_payment_intent}/capture`, { amount_to_capture: cents(Math.min(keep, Number(o.service_fee) + Number(o.gestion_fee))) });
-      } else {
-        await stripe("refunds", { payment_intent: o.stripe_payment_intent, amount: cents(due), reason: "requested_by_customer" });
-      }
+      await stripe("refunds", { payment_intent: o.stripe_payment_intent, amount: cents(due), reason: "requested_by_customer" });
       const total = Number(o.final_total ?? o.total);
       await db(`orders?id=eq.${o.id}`, { method: "PATCH", body: JSON.stringify({ stripe_refunded: Number(o.refund_amount), refunded_at: new Date().toISOString(),
         payment_status: Number(o.refund_amount) >= total - 0.009 ? "reembolsado" : "reembolso_parcial" }) });

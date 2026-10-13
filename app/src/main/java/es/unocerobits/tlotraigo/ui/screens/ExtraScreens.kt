@@ -249,7 +249,6 @@ fun TicketSection(o: Order, onSaved: () -> Unit) {
                         val path = Locator.repo.uploadTicket(o.id, bytes)
                         val r = Locator.repo.setTicket(o.id, path, parseNum(total) ?: throw ApiException("Escribe el total del ticket"))
                         if (r["over_max"]?.toString() == "true") msg = "El total supera el máximo autorizado. Llama al cliente antes de salir y confirma con él."
-                        if (o.paymentMethod == "tarjeta") Locator.repo.captureCard(o.id)
                         onSaved()
                     } catch (e: ApiException) { err = e.message }
                     busy = false

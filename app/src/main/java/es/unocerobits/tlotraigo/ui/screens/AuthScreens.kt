@@ -89,7 +89,7 @@ fun LoginScreen(vm: AppViewModel, onRegister: () -> Unit, onVerify: (email: Stri
         Spacer(Modifier.height(18.dp))
         Text("La compra del súper,\nen la puerta de casa.", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
-        Text("Para los pueblos de León. Tú eliges, un vecino te lo trae.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Prototipo de demostración · Para los pueblos de León. Tú eliges, un vecino te lo trae.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(28.dp))
         OutlinedTextField(email, { email = it }, Modifier.fillMaxWidth(), label = { Text("Correo electrónico") }, singleLine = true,
             leadingIcon = { Icon(Icons.Filled.Email, null) }, textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium,

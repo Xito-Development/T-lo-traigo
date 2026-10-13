@@ -3,10 +3,14 @@
 **Por qué Stripe:** es entidad de pago autorizada en la UE (Stripe Payments Europe), acepta tarjetas, Apple Pay y Google Pay, cumple PSD2 (autenticación reforzada) y su **Stripe Connect** reparte el dinero a los repartidores sin que pase por tu cuenta (evita necesitar licencia de pago propia).
 
 ## Cómo funciona en T lo traigo
-1. El cliente elige tarjeta → se abre la página segura de Stripe → se **reserva el importe máximo** (no se cobra).
-2. El repartidor sube la foto y el total del ticket → se **cobra solo lo real** (ticket + tarifas).
-3. Stripe **transfiere al repartidor** su parte (servicio + envío + suplemento) a su cuenta Connect; la gestión queda para T lo traigo.
-4. Cancelación o reembolso aprobado → se libera la reserva o se devuelve, **sin la tarifa de servicio y gestión** (salvo pedido aún sin aceptar: se devuelve todo).
+1. El cliente hace el pedido **sin pagar** (los precios son orientativos).
+2. El repartidor compra, hace la **foto del ticket** y escribe el total.
+3. El cliente ve el ticket y el **importe real** y entonces paga: con tarjeta (página segura de Stripe) o confirmando que pagará en efectivo.
+4. Solo entonces el repartidor puede salir a repartir.
+5. Al entregar, Stripe **transfiere al repartidor** su parte (servicio + envío + suplemento) a su cuenta Connect; la gestión queda para T lo traigo.
+6. Reembolsos aprobados → devolución automática en Stripe, **sin la tarifa de servicio y gestión** (salvo pedido sin aceptar).
+
+En el prototipo, sin claves de Stripe, aparece el botón «Simular pago con tarjeta (demo)».
 
 ## Qué tienes que hacer tú (una vez)
 1. **Date de alta** como autónomo o crea una sociedad: Stripe exige una actividad económica real y el IBAN de cobro.

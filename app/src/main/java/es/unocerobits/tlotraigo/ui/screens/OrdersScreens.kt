@@ -205,6 +205,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             ScheduleBadge(o.scheduledDate, o.scheduledSlot)
             o.driver?.let { d -> o.driverId?.let { DriverCard(d, it) } }
             if (o.status == "en_camino") TrackingCard(o)
+            if (o.awaitingPayment) Spacer(Modifier.height(4.dp))
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
             o.items.forEach { i ->
@@ -226,10 +227,9 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             Text("Entrega: ${o.address}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(24.dp))
             o.ticketPath?.let { TicketView(o) }
-            if (o.paymentMethod == "tarjeta" && o.paymentStatus in listOf("pendiente", "fallido") && !o.isFinal) {
-                BigButton("Pagar con tarjeta", { scope.launch { try { Locator.repo.cardCheckoutUrl(id)?.let { ctx.openUrl(it) } } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.CreditCard)
-                Spacer(Modifier.height(10.dp))
-            }
+            if (o.awaitingPayment) PayNowCard(o) { scope.launch { order = Locator.repo.order(id) } }
+            else if (o.ticketTotal != null && !o.isFinal) Text(if (o.isPaid) "✓ Pagado: ${eur(o.amount)}" else "✓ Pagarás ${eur(o.amount)} en efectivo al recibirlo",
+                style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
             if (o.canCancel) BigButton("Cancelar pedido", { askCancel = true }, tonal = true, icon = Icons.Filled.Close)
             else if (!o.isFinal) Text("El repartidor ya está en el súper o de camino: ya no se puede cancelar. Si hay un problema, llama al teléfono de ayuda.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -393,4 +393,38 @@ private fun TicketView(o: Order) {
         }
     }
     if (big) androidx.compose.ui.window.Dialog({ big = false }) { coil.compose.AsyncImage(url, "Ticket", Modifier.fillMaxWidth().clickable { big = false }) }
+}
+
+/** Cuando el repartidor sube el ticket: el cliente ve el importe real y paga (tarjeta) o confirma efectivo. */
+@Composable
+private fun PayNowCard(o: Order, onDone: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var err by remember { mutableStateOf<String?>(null) }
+    var demo by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    Card(Modifier.fillMaxWidth().padding(vertical = 10.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer)) {
+        Column(Modifier.padding(18.dp)) {
+            Text("¡Tu compra está hecha!", style = MaterialTheme.typography.titleLarge)
+            Text("Ticket del súper: ${eur(o.ticketTotal ?: 0.0)} (estimado ${eur(o.subtotal)})", style = MaterialTheme.typography.bodyMedium)
+            Text("Servicio, gestión y envío: ${eur(o.serviceFee + o.gestionFee + o.deliveryFee + o.expressFee)}", style = MaterialTheme.typography.bodyMedium)
+            Text("Total a pagar: ${eur(o.amount)}", Modifier.padding(vertical = 6.dp), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+            Text("El repartidor saldrá hacia tu casa en cuanto pagues o confirmes que pagarás en efectivo.", style = MaterialTheme.typography.bodySmall)
+            ErrorText(err)
+            Spacer(Modifier.height(8.dp))
+            BigButton("Pagar ${eur(o.amount)} con tarjeta", {
+                scope.launch {
+                    busy = true; err = null
+                    try { Locator.repo.cardCheckoutUrl(o.id)?.let { ctx.openUrl(it) } }
+                    catch (e: ApiException) { err = e.message; demo = e.code == 503 }
+                    busy = false
+                }
+            }, loading = busy, icon = Icons.Filled.CreditCard)
+            if (demo) TextButton({ scope.launch { runCatching { Locator.repo.mockMarkPaid(o.id) }; onDone() } }) { Text("Simular pago con tarjeta (demo)") }
+            Spacer(Modifier.height(8.dp))
+            BigButton("Pagaré en efectivo al recibirlo", {
+                scope.launch { try { Locator.repo.confirmCash(o.id); onDone() } catch (e: ApiException) { err = e.message } }
+            }, tonal = true, icon = Icons.Filled.Payments)
+        }
+    }
 }

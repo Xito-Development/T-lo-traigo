@@ -269,6 +269,7 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                             busy = true
                             try {
                                 Locator.repo.setStatus(o.id, st)
+                                if (st == "entregado" && o.paymentMethod == "tarjeta") Locator.repo.payout(o.id)
                                 if (st == "en_camino") {
                                     if (es.unocerobits.tlotraigo.DriverService.hasLocation(ctx)) es.unocerobits.tlotraigo.DriverService.start(ctx)
                                     else locPerm.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION))
@@ -277,7 +278,10 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                             } catch (e: ApiException) { err = e.message }
                             busy = false
                         }
-                    }, loading = busy, icon = Icons.Filled.ArrowForward, enabled = st != "en_camino" || o.ticketTotal != null)
+                    }, loading = busy, icon = Icons.Filled.ArrowForward, enabled = st != "en_camino" || (o.ticketTotal != null && (o.amountConfirmed || o.isPaid)))
+                    if (st == "en_camino" && o.ticketTotal != null && !(o.amountConfirmed || o.isPaid))
+                        Text("⏳ Esperando a que el cliente pague o confirme el importe (${eur(o.amount)}). Si tarda, llámale.",
+                            Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                 }
             }
         }
