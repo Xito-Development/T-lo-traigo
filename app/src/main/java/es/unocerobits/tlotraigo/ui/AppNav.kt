@@ -48,6 +48,10 @@ fun AppNav(vm: AppViewModel) {
         }
         if (nav.currentDestination?.route != dest) nav.navigate(dest) { popUpTo(nav.graph.id) { inclusive = true }; launchSingleTop = true }
     }
+    DisposableEffect(nav) {   // estadísticas de pantallas (solo con consentimiento)
+        val l = androidx.navigation.NavController.OnDestinationChangedListener { _, d, _ -> d.route?.let { es.unocerobits.tlotraigo.data.Analytics.screen(it.substringBefore('/')) } }
+        nav.addOnDestinationChangedListener(l); onDispose { nav.removeOnDestinationChangedListener(l); es.unocerobits.tlotraigo.data.Analytics.flush() }
+    }
     val update by vm.update.collectAsState()
     LaunchedEffect(Unit) { vm.checkUpdate() }
     update?.let { UpdateDialog(it) { vm.dismissUpdate() } }
@@ -66,10 +70,11 @@ fun AppNav(vm: AppViewModel) {
         composable("verify/{mode}/{email}") { e ->
             VerifyScreen(vm, e.arguments?.getString("email").orEmpty(), e.arguments?.getString("mode") ?: "signup") { nav.popBackStack() }
         }
-        composable("onboard") { OnboardingScreen(vm) }
+        composable("onboard") { OnboardingWizard(vm) }
+        composable("needs") { NeedsScreen(vm, onBack = { nav.popBackStack() }, onCart = { nav.navigate("cart") }) }
         composable("terms") { TermsScreen(vm) }
         composable("home") { ClientHome(vm, onCart = { nav.navigate("cart") }, onOrder = { nav.navigate("order/$it") }, onDebug = { nav.navigate("debug") },
-            onEditProduct = { id -> nav.navigate("admin/product/${id ?: -1}") }) }
+            onEditProduct = { id -> nav.navigate("admin/product/${id ?: -1}") }, onNeeds = { nav.navigate("needs") }) }
         composable("admin/product/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->
             ProductEditorScreen(e.arguments?.getLong("id")?.takeIf { it > 0 }) { nav.popBackStack() }
         }
@@ -85,7 +90,7 @@ fun AppNav(vm: AppViewModel) {
 }
 
 @Composable
-private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> Unit, onDebug: () -> Unit, onEditProduct: (Long?) -> Unit) {
+private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> Unit, onDebug: () -> Unit, onEditProduct: (Long?) -> Unit, onNeeds: () -> Unit) {
     val isAdmin = vm.profile.collectAsState().value?.isAdmin == true
     var tab by rememberSaveable { mutableStateOf(Tab.COMPRAR) }
     BackHandler(tab != Tab.COMPRAR) { tab = Tab.COMPRAR }
@@ -114,7 +119,7 @@ private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> 
             (fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 20 }) togetherWith fadeOut(tween(150))
         }, label = "tab") { t ->
             when (t) {
-                Tab.COMPRAR -> CatalogScreen(vm, onCart)
+                Tab.COMPRAR -> CatalogScreen(vm, onCart, onNeeds)
                 Tab.PEDIDOS -> OrdersScreen(onOrder)
                 Tab.ADMIN -> AdminHome(vm, onEditProduct)
                 Tab.AJUSTES -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { SettingsScreen(vm, onDebug = onDebug) }

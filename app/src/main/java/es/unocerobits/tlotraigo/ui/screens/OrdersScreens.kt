@@ -177,6 +177,9 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     var order by remember { mutableStateOf<Order?>(null) }
     var err by remember { mutableStateOf<String?>(null) }
     var askCancel by remember { mutableStateOf(false) }
+    var showRefund by remember { mutableStateOf(false) }
+    var showComplaint by remember { mutableStateOf(false) }
+    var info by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     LaunchedEffect(id) {
@@ -222,7 +225,22 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Entrega: ${o.address}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(24.dp))
-            if (o.status == "pendiente") BigButton("Cancelar pedido", { askCancel = true }, tonal = true, icon = Icons.Filled.Close)
+            o.ticketPath?.let { TicketView(o) }
+            if (o.paymentMethod == "tarjeta" && o.paymentStatus in listOf("pendiente", "fallido") && !o.isFinal) {
+                BigButton("Pagar con tarjeta", { scope.launch { try { Locator.repo.cardCheckoutUrl(id)?.let { ctx.openUrl(it) } } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.CreditCard)
+                Spacer(Modifier.height(10.dp))
+            }
+            if (o.canCancel) BigButton("Cancelar pedido", { askCancel = true }, tonal = true, icon = Icons.Filled.Close)
+            else if (!o.isFinal) Text("El repartidor ya está en el súper o de camino: ya no se puede cancelar. Si hay un problema, llama al teléfono de ayuda.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (o.status == "entregado") {
+                BigButton("Descargar factura", { scope.launch { Locator.repo.invoice(id)?.let { InvoicePdf.share(ctx, it, o) } ?: run { err = "La factura aún no está disponible" } } }, tonal = true, icon = Icons.Filled.Receipt)
+                Spacer(Modifier.height(10.dp))
+                BigButton("Solicitar reembolso", { showRefund = true }, tonal = true, icon = Icons.Filled.CurrencyExchange)
+            }
+            if (o.refundAmount > 0) Text("Reembolso: ${eur(o.refundAmount)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            info?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary) }
+            TextButton({ showComplaint = true }) { Icon(Icons.Filled.Feedback, null); Spacer(Modifier.width(6.dp)); Text("Hoja de reclamaciones") }
             if (o.isFinal) BigButton("Repetir esta compra", {
                 scope.launch {
                     runCatching {
@@ -236,12 +254,18 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             BigButton("Llamar para pedir ayuda", { ctx.dial(es.unocerobits.tlotraigo.BuildConfig.SUPPORT_PHONE) }, tonal = true, icon = Icons.Filled.Call)
         }
     }
+    order?.let { o ->
+        if (showRefund) RefundDialog(o) { m -> showRefund = false; m?.let { info = it } }
+        if (showComplaint) ComplaintDialog(vm, o.id) { m -> showComplaint = false; m?.let { info = it } }
+    }
     if (askCancel) AlertDialog(
         onDismissRequest = { askCancel = false },
-        title = { Text("¿Cancelar el pedido?") }, text = { Text("Solo puedes cancelarlo mientras ningún repartidor lo haya aceptado.") },
+        title = { Text("¿Cancelar el pedido?") },
+        text = { Text(if (order?.status == "pendiente") "Nadie lo ha aceptado todavía: se te devolverá todo lo pagado."
+                      else "Un repartidor ya lo había aceptado: se devolverá lo pagado salvo la tarifa de servicio y gestión.") },
         confirmButton = { TextButton({
             askCancel = false
-            scope.launch { try { Locator.repo.setStatus(id, "cancelado"); order = Locator.repo.order(id) } catch (e: ApiException) { err = e.message } }
+            scope.launch { try { Locator.repo.setStatus(id, "cancelado"); Locator.repo.refundCard(id); order = Locator.repo.order(id) } catch (e: ApiException) { err = e.message } }
         }) { Text("Sí, cancelar", color = MaterialTheme.colorScheme.error) } },
         dismissButton = { TextButton({ askCancel = false }) { Text("No") } },
     )
@@ -352,3 +376,21 @@ private fun hoursSinceSec(iso: String): String = runCatching {
     val s = java.time.Duration.between(OffsetDateTime.parse(iso).toInstant(), java.time.Instant.now()).seconds
     if (s < 60) "$s s" else "${s / 60} min"
 }.getOrDefault("un momento")
+
+@Composable
+private fun TicketView(o: Order) {
+    var url by remember { mutableStateOf<String?>(null) }
+    var big by remember { mutableStateOf(false) }
+    LaunchedEffect(o.ticketPath) { url = o.ticketPath?.let { Locator.repo.ticketUrl(it) } }
+    Card(Modifier.fillMaxWidth().padding(vertical = 10.dp), colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer)) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            url?.let { coil.compose.AsyncImage(it, "Ticket", Modifier.size(72.dp).clip(MaterialTheme.shapes.small).clickable { big = true }, contentScale = androidx.compose.ui.layout.ContentScale.Crop) }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text("Ticket del súper: ${eur(o.ticketTotal ?: 0.0)}", style = MaterialTheme.typography.titleMedium)
+                Text("Estimado: ${eur(o.subtotal)} · Total final: ${eur(o.amount)}", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+    if (big) androidx.compose.ui.window.Dialog({ big = false }) { coil.compose.AsyncImage(url, "Ticket", Modifier.fillMaxWidth().clickable { big = false }) }
+}

@@ -17,5 +17,6 @@ class App : Application() {
         Locator.repo = Repository(Locator.api)
         Locator.settings = SettingsStore(this)
         Locator.cart = Cart(this)
+        Analytics.init(this)
     }
 }

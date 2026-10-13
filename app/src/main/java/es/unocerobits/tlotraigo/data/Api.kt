@@ -91,6 +91,30 @@ class SupabaseApi(context: Context, private val baseUrl: String, private val key
 
     fun signOut() = save(null)
 
+    /** Llama a una Edge Function de Supabase (pasarela de pago). Devuelve el JSON de respuesta. */
+    suspend fun function(name: String, body: JsonObject): JsonObject {
+        ensureFresh()
+        return withContext(Dispatchers.IO) {
+            val req = Request.Builder().url("$baseUrl/functions/v1/$name").header("apikey", key)
+                .header("Authorization", "Bearer ${session?.accessToken ?: key}")
+                .post(body.toString().toRequestBody("application/json".toMediaType())).build()
+            try {
+                http.newCall(req).execute().use { r ->
+                    val o = runCatching { json.parseToJsonElement(r.body?.string().orEmpty()).jsonObject }.getOrDefault(JsonObject(emptyMap()))
+                    if (!r.isSuccessful) throw ApiException(o["error"]?.jsonPrimitive?.content ?: "Error ${r.code}", r.code)
+                    o
+                }
+            } catch (e: IOException) { throw ApiException("Sin conexión. Inténtalo de nuevo.") }
+        }
+    }
+
+    /** URL temporal (1 h) para ver un archivo privado de Storage (p. ej. la foto del ticket). */
+    suspend fun signedUrl(bucket: String, path: String): String? = runCatching {
+        ensureFresh()
+        val r = call("POST", "/storage/v1/object/sign/$bucket/$path", buildJsonObject { put("expiresIn", 3600) }.toString())
+        "$baseUrl/storage/v1" + json.parseToJsonElement(r).jsonObject["signedURL"]!!.jsonPrimitive.content
+    }.getOrNull()
+
     /** Se invoca si la sesión caduca y no se puede renovar (p. ej. usuario eliminado). */
     var onSessionLost: (() -> Unit)? = null
 

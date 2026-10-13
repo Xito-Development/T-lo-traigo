@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
-data class CartLine(val product: Product, val qty: Int) { val total get() = product.price * qty }
+data class CartLine(val product: Product, val qty: Int, val needId: Long? = null, val detail: String? = null) { val total get() = product.price * qty }
 
 /** Cesta persistente: no se pierde si se cierra la app (importante para personas mayores). */
 class Cart(context: Context) {
@@ -29,7 +29,14 @@ class Cart(context: Context) {
     fun qty(id: Long) = _lines.value[id]?.qty ?: 0
     fun add(p: Product) = set(p, qty(p.id) + 1)
     fun remove(p: Product) = set(p, qty(p.id) - 1)
-    fun set(p: Product, q: Int) = put(if (q <= 0) _lines.value - p.id else _lines.value + (p.id to CartLine(p, q.coerceAtMost(99))))
+    fun set(p: Product, q: Int) = put(if (q <= 0) _lines.value - p.id else _lines.value + (p.id to (_lines.value[p.id]?.copy(product = p, qty = q.coerceAtMost(99)) ?: CartLine(p, q.coerceAtMost(99)))))
     fun clear() = put(emptyMap())
+    /** Añade un artículo del pedido guiado (p. ej. «Leche · Semidesnatada · Pack de 6»). */
+    fun addNeed(n: Need, detail: String, q: Int) {
+        val id = -(n.id * 100_000 + (detail.hashCode().toLong() and 0xFFFF))
+        val p = Product(id = id, supermarketId = 1, name = n.name, brand = detail.ifBlank { null }, unit = n.unitLabel, price = n.estPrice,
+            vatRate = n.vatRate, icon = n.icon, coldChain = n.coldChain)
+        put(_lines.value + (id to CartLine(p, ((_lines.value[id]?.qty ?: 0) + q).coerceAtMost(99), n.id, detail)))
+    }
     fun replaceWith(items: List<Pair<Product, Int>>) = put(items.associate { (p, q) -> p.id to CartLine(p, q) })
 }

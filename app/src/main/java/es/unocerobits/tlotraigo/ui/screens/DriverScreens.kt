@@ -149,7 +149,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                         Text(if (h < 1) "Recibido hace un momento" else "En espera desde hace ${waitLabel(h)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = if (stale) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                        if (stale) Text("Más de ${fees.staleHours} h sin aceptar: si no lo aceptas se aplicará una penalización de ${eur(fees.stalePenalty)}.",
+                        if (stale && fees.stalePenalty > 0) Text("Más de ${fees.staleHours} h sin aceptar: si no lo aceptas se aplicará una penalización de ${eur(fees.stalePenalty)}.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -175,7 +175,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
             onDismissRequest = { rejecting = null },
             icon = { Icon(if (stale) Icons.Filled.Warning else Icons.Filled.Close, null) },
             title = { Text("¿Rechazar este pedido?") },
-            text = { Text(if (stale) "Lleva más de ${fees.staleHours} h esperando. Si lo rechazas se te aplicará una penalización de ${eur(fees.stalePenalty)} en el pago final."
+            text = { Text(if (stale && fees.stalePenalty > 0) "Lleva más de ${fees.staleHours} h esperando. Si lo rechazas se te aplicará una penalización de ${eur(fees.stalePenalty)} en el pago final."
                           else "Dejará de aparecerte en la lista y otro repartidor podrá aceptarlo.") },
             confirmButton = { TextButton({
                 rejecting = null
@@ -235,6 +235,10 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 Text(if (o.isPaid) "Ya pagado (${PayMethod.of(o.paymentMethod).label}) · ${eur(o.total)}" else "Cobrar: ${eur(o.total)} · ${PayMethod.of(o.paymentMethod).label}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 ScheduleBadge(o.scheduledDate, o.scheduledSlot)
+                if (o.hasCold) Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.small, modifier = Modifier.padding(vertical = 4.dp)) {
+                    Text("❄ Lleva refrigerados o congelados: usa bolsa isotérmica y no rompas la cadena de frío.", Modifier.padding(8.dp),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                }
                 o.notes?.let { Text("Nota: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary) }
                 Spacer(Modifier.height(6.dp))
                 o.items.forEach { i ->
@@ -257,6 +261,7 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 }
                 if (o.status == "en_camino") Text("📍 Tu ubicación se comparte con el cliente hasta que marques «entregado».",
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (o.status == "comprando" || (o.status == "en_camino" && o.ticketPath == null)) TicketSection(o) { onChanged() }
                 next?.let { (st, label) ->
                     Spacer(Modifier.height(10.dp))
                     BigButton(label, {
@@ -272,7 +277,7 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                             } catch (e: ApiException) { err = e.message }
                             busy = false
                         }
-                    }, loading = busy, icon = Icons.Filled.ArrowForward)
+                    }, loading = busy, icon = Icons.Filled.ArrowForward, enabled = st != "en_camino" || o.ticketTotal != null)
                 }
             }
         }
@@ -303,6 +308,15 @@ private fun DriverSettingsPanel(vm: AppViewModel) {
                 Switch(on, { save(upd(it)) })
             }
         }
+        SectionTitle("Cobros con tarjeta")
+        val ctxP = androidx.compose.ui.platform.LocalContext.current
+        Text("Para recibir tu parte de los pedidos pagados con tarjeta, conecta tu cuenta de cobro (Stripe). Es gratis y la verificación la hace Stripe.",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        var stripeMsg by remember { mutableStateOf<String?>(null) }
+        OutlinedButton({ scope.launch { try { val u = Locator.repo.connectStripe(); if (u != null) ctxP.openUrl(u) else stripeMsg = "Tu cuenta de cobro ya está lista ✓" } catch (e: ApiException) { stripeMsg = e.message } } }) {
+            Icon(Icons.Filled.AccountBalance, null); Spacer(Modifier.width(6.dp)); Text("Configurar cobros")
+        }
+        stripeMsg?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         SectionTitle("Pueblos donde repartes")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             towns.forEach { t ->
@@ -353,7 +367,7 @@ private fun DriverEarningsScreen() {
                 }
             }
             item {
-                Text("Las penalizaciones se aplican si un pedido de tus pueblos lleva más de 48 h sin aceptar mientras estás disponible, o si lo rechazas pasado ese tiempo.",
+                Text("Eres independiente: aceptas los pedidos que quieras. Los pagos con tarjeta te llegan a tu cuenta de Stripe; el efectivo lo cobras en la entrega.",
                     Modifier.padding(top = 16.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

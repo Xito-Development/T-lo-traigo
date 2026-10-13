@@ -1,6 +1,5 @@
-• Repartidores: avisos de pedidos nuevos en el móvil mientras están disponibles.
-• Repartidores: botón «Ruta» con navegación GPS y ubicación compartida con el cliente solo durante el reparto.
-• Clientes: ven a qué distancia está su repartidor cuando el pedido va en camino.
-• Ficha de producto con IVA desglosado, alérgenos e ingredientes; productos +18 con confirmación de edad.
-• Confirmación del pedido en dos pasos y botón «Confirmar pedido con obligación de pago».
-• Condicio
+• Pasarela de pago con Stripe: reserva del importe máximo, cobro del importe real del ticket y reparto al repartidor (Stripe Connect).
+• Cancelación con reembolso (sin tarifa de servicio y gestión una vez aceptado) y solicitud de reembolso tras la entrega.
+• Precios orientativos: foto del ticket obligatoria, importe máximo y tarifa de gestión variable.
+• «Lista fácil»: elige pan, leche, fruta… y concreta tipo, formato, marca y cantidad.
+• Bienvenida al registrarse: para quién

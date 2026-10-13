@@ -42,6 +42,11 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
 
         AppearanceSection(s) { f -> vm.updateSettings(f) }
         ToggleRow("Modo fácil", "Botones y letras más grandes, lectura en voz alta", s.senior, Icons.Filled.Elderly) { v -> vm.updateSettings { it.copy(senior = v) } }
+        var consent by remember { mutableStateOf(es.unocerobits.tlotraigo.data.Analytics.consent) }
+        ToggleRow("Estadísticas y errores", "Enviar datos anónimos de uso para mejorar la app", consent, Icons.Filled.Insights) { v ->
+            es.unocerobits.tlotraigo.data.Analytics.consent = v; consent = v
+            vm.viewModelScopeLaunch { Locator.repo.saveUsage(null, v) }
+        }
         ToggleRow("Leer en voz alta", "Botón de altavoz junto a los productos", s.speak, Icons.Filled.RecordVoiceOver) { v -> vm.updateSettings { it.copy(speak = v) } }
         Text("Tamaño de letra", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
         val steps = listOf(1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme")
@@ -77,6 +82,12 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         if (about) AboutDialog({ about = false }, vm)
         if (askDelete) DeleteAccountDialog(vm) { askDelete = false }
         BigButton("Llamar al teléfono de ayuda", { ctx.dial(BuildConfig.SUPPORT_PHONE) }, tonal = true, icon = Icons.Filled.Call)
+        Spacer(Modifier.height(10.dp))
+        var complaint by remember { mutableStateOf(false) }
+        var cmsg by remember { mutableStateOf<String?>(null) }
+        if (complaint) ComplaintDialog(vm, null) { m -> complaint = false; cmsg = m }
+        BigButton("Hoja de reclamaciones", { complaint = true }, tonal = true, icon = Icons.Filled.Feedback)
+        cmsg?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
         Spacer(Modifier.height(10.dp))
         BigButton("Acerca de, créditos y privacidad", { about = true }, tonal = true, icon = Icons.Filled.Info)
         Spacer(Modifier.height(10.dp))

@@ -103,7 +103,7 @@ object Updater {
     }
 
     fun install(ctx: Context, file: File) {
-        val uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${ctx.packageName}.updates", file) else Uri.fromFile(file)
+        val uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", file) else Uri.fromFile(file)
         ctx.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
     }

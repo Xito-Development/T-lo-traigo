@@ -38,6 +38,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     val lines by vm.cart.lines.collectAsState()
     val me by vm.profile.collectAsState()
     val scope = rememberCoroutineScope()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
 
     var seniors by remember { mutableStateOf<List<Profile>>(emptyList()) }
     var target by remember(me) { mutableStateOf(me) }
@@ -100,11 +101,14 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
             val t = target ?: error("Sin cliente")
             val id = Locator.repo.createOrder(t.id, lines.values.first().product.supermarketId,
                 lines.mapValues { it.value.qty }, method.db, address, notes, date?.toString(), if (date == null) null else slot, adultOk)
-            if (method != PayMethod.CASH) payingMsg = "Procesando pago con ${method.label} (simulado)…"
-            when (val r = Payments.provider(method).pay(id, total)) {
-                is PayResult.Failed -> err = "Pedido creado, pero el pago falló: ${r.reason}. Podrás pagar al recibirlo."
-                PayResult.Paid -> runCatching { Locator.repo.mockMarkPaid(id) }
-                PayResult.Deferred -> {}
+            when (method) {
+                PayMethod.CARD -> {   // Pasarela Stripe: se autoriza el máximo y se cobra lo real del ticket
+                    payingMsg = "Abriendo el pago seguro…"
+                    try { Locator.repo.cardCheckoutUrl(id)?.let { ctx.openUrl(it) } }
+                    catch (e: ApiException) { err = "Pedido hecho, pero no se pudo abrir el pago: ${e.message}" }
+                }
+                PayMethod.BIZUM -> { payingMsg = "Procesando Bizum (simulado)…"; if (Payments.provider(method).pay(id, total) == PayResult.Paid) runCatching { Locator.repo.mockMarkPaid(id) } }
+                PayMethod.CASH -> {}
             }
             payingMsg = null; vm.cart.clear(); onPlaced(id)
         } catch (e: Exception) { err = e.message; payingMsg = null }
@@ -143,6 +147,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(l.product.name, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        l.detail?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2) }
                         Text(eur(l.total), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
                     }
                     QtyStepper(l.qty, { vm.cart.remove(l.product) }, { vm.cart.add(l.product) })
@@ -205,13 +210,19 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     SummaryLine("Productos (precio del súper)", q.subtotal)
                     SummaryLine("   de los que IVA", q.productsVat, muted = true)
                     SummaryLine("Servicio del repartidor (${q.servicePct.toInt()} %)", q.service)
+                    SummaryLine("Gestión del pedido (${q.gestionPct.toInt()} %)", q.gestion)
                     if (q.itemsFee > 0) SummaryLine("Por cantidad (${q.units - q.freeItems} uds. más de ${q.freeItems})", q.itemsFee)
                     SummaryLine("Envío a ${q.town}", q.deliveryBase)
                     SummaryLine("Distancia (${q.distanceKm.toInt()} km)", q.distanceFee)
                     if (q.expressFee > 0) SummaryLine("Entrega en el día", q.expressFee)
                     SummaryLine("   IVA del servicio (21 %)", q.feesVat, muted = true)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                    SummaryLine("Total (IVA incluido)", q.total, strong = true)
+                    SummaryLine("Total estimado (IVA incluido)", q.total, strong = true)
+                    Surface(Modifier.fillMaxWidth().padding(top = 8.dp), color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
+                        Text("Los precios de los productos son orientativos. El repartidor hará una foto al ticket del súper y pagarás lo real. " +
+                            "Como máximo ${eur(q.maxTotal)} (un ${q.marginPct.toInt()} % más en productos); si se pasara, te llamará antes.",
+                            Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
                 }
                 ErrorText(err)
                 Spacer(Modifier.height(24.dp))
@@ -255,9 +266,9 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     if (payConfirm) AlertDialog(
         onDismissRequest = { payConfirm = false },
         icon = { Icon(if (method == PayMethod.CARD) Icons.Filled.CreditCard else Icons.Filled.PhoneAndroid, null) },
-        title = { Text("¿Pagar ${eur(total)}?") },
-        text = { Text("Se cobrará ${eur(total)} con ${method.label}. Si el repartidor no puede completar la compra, se te devolverá lo que falte.") },
-        confirmButton = { Button({ payConfirm = false; placeOrder() }) { Text("Sí, pagar ${eur(total)}") } },
+        title = { Text("¿Pagar con ${method.label}?") },
+        text = { Text("Se reservará en tu tarjeta un máximo de ${eur(quote?.maxTotal ?: total)} y solo se cobrará el importe real del ticket más las tarifas. Se abrirá la página de pago seguro de Stripe.") },
+        confirmButton = { Button({ payConfirm = false; placeOrder() }) { Text("Sí, continuar al pago") } },
         dismissButton = { TextButton({ payConfirm = false }) { Text("No, volver") } },
     )
     payingMsg?.let { msg ->

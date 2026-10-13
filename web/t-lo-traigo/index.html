@@ -340,17 +340,18 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
     <div class="wrap prices-grid">
       <div class="rv l">
         <h2 data-k="precios.titulo">Precios claros, sin sorpresas</h2>
-        <p data-k="precios.texto">Pagas lo mismo que en el supermercado más un servicio para el repartidor. Antes de pedir ves el desglose completo: productos con su IVA, el servicio según la cantidad, el envío según la distancia a tu pueblo y, si lo quieres para hoy, un pequeño suplemento.</p>
+        <p data-k="precios.texto">Los precios son orientativos: el repartidor hace una foto del ticket y pagas lo que marque el súper, más el servicio, la gestión y el envío, con un máximo que ves antes de pedir. Antes de pedir ves el desglose completo: productos con su IVA, el servicio según la cantidad, el envío según la distancia a tu pueblo y, si lo quieres para hoy, un pequeño suplemento.</p>
       </div>
       <div class="ticket" id="ticket" aria-label="Ejemplo de ticket">
         <h3 data-k="ticket.titulo">Ejemplo: Valderas, entrega hoy</h3>
         <div class="line"><span><span data-k="ticket.l1">12 productos del súper</span><br><small>IVA incluido</small></span><span data-k="ticket.v1">26,28 €</span></div>
         <div class="line"><span data-k="ticket.l2">Servicio del repartidor (10 %)</span><span data-k="ticket.v2">2,63 €</span></div>
+        <div class="line"><span data-k="ticket.l2b">Gestión del pedido (5 %)</span><span data-k="ticket.v2b">1,31 €</span></div>
         <div class="line"><span data-k="ticket.l3">Por cantidad (2 uds. más de 10)</span><span data-k="ticket.v3">0,20 €</span></div>
         <div class="line"><span data-k="ticket.l4">Envío</span><span data-k="ticket.v4">1,50 €</span></div>
         <div class="line"><span data-k="ticket.l5">Distancia (13 km)</span><span data-k="ticket.v5">0,52 €</span></div>
         <div class="line"><span data-k="ticket.l6">Entrega en el día</span><span data-k="ticket.v6">1,50 €</span></div>
-        <div class="line total"><span>Total</span><span data-k="ticket.total" id="total">32,63 €</span></div>
+        <div class="line total"><span>Total</span><span data-k="ticket.total" id="total">33,94 €</span></div>
         <p class="note" data-k="ticket.nota">Importes de ejemplo. Las tarifas pueden variar según el pueblo.</p>
       </div>
     </div>
@@ -400,14 +401,6 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
     </div>
   </section>
 
-  <section class="wrap" aria-label="Publicidad" style="padding:2rem 0">
-    <a class="ad rv" href="mailto:info@unocerobits.com?subject=Anuncio%20en%20T%20lo%20traigo">
-      <span class="ad-tag">Publicidad</span>
-      <strong data-k="ad.titulo">¡TU ANUNCIO AQUÍ!</strong>
-      <span data-k="ad.texto">Contacta con info@unocerobits.com</span>
-    </a>
-  </section>
-
   <section class="mist get" id="descargar">
     <div class="wrap">
       <h2 class="rv" data-k="descargar.titulo">Descárgala gratis</h2>
@@ -433,7 +426,7 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
         </div>
       </div>
       <div><h3>Contacto</h3><p><a href="mailto:info@unocerobits.com">info@unocerobits.com</a><br><a href="https://unocerobits.com">unocerobits.com</a></p></div>
-      <div><h3>Legal</h3><p><a href="aviso-legal.html">Aviso legal</a><br><a href="condiciones.html">Condiciones de uso</a><br><a href="repartidores.html">Condiciones para repartidores</a><br><a href="privacidad.html">Privacidad</a> · <a href="privacidad.html#eliminar">Eliminar cuenta</a><br><small>Esta web no usa cookies.</small></p></div>
+      <div><h3>Legal</h3><p><a href="aviso-legal.html">Aviso legal</a><br><a href="condiciones.html">Condiciones de uso</a><br><a href="repartidores.html">Condiciones para repartidores</a><br><a href="privacidad.html">Privacidad</a> · <a href="privacidad.html#eliminar">Eliminar cuenta</a><br><a href="politica-cookies.html">Cookies</a> · <a href="#" id="cookieCfg">Configurar cookies</a> · <a href="reclamaciones.html">Reclamaciones</a></p></div>
     </div>
     <p class="legal">© 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.</p>
   </div>
@@ -644,6 +637,36 @@ body.editing [data-k].dirty{outline-color:var(--turquesa)}
     $('#editInfo').textContent = 'Cambios deshechos';
   });
   $('#eExit').addEventListener('click', stopEdit);
+})();
+</script>
+<div id="ck" role="dialog" aria-live="polite" aria-label="Cookies" style="position:fixed;left:1rem;right:1rem;bottom:1rem;z-index:45;max-width:640px;margin:auto;background:#fff;color:#1C2624;border-radius:18px;box-shadow:0 20px 50px -15px rgba(0,0,0,.45);padding:1.2rem 1.3rem;display:none">
+  <strong style="font:800 1.2rem 'Baloo 2',sans-serif;color:#1F4D3F">¿Nos dejas contar las visitas?</strong>
+  <p style="margin:.4rem 0 .9rem;font-size:1rem">Usamos una cookie analítica propia (sin terceros) para saber cuántas personas visitan la web y detectar errores. Los datos se guardan en la UE. <a href="politica-cookies.html">Más información</a>.</p>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn btn-main" id="ckYes" type="button">Aceptar</button><button class="btn btn-ink" id="ckNo" type="button">Rechazar</button></div>
+</div>
+<script>
+/* Analítica propia con consentimiento previo (LSSI art. 22.2). Rechazar es tan fácil como aceptar. */
+(function () {
+  var SB = 'https://qqqudthqgpojbipsevna.supabase.co', KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxcXVkdGhxZ3BvamJpcHNldm5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NDIxODUsImV4cCI6MjEwNzAxODE4NX0.GDqWTmFMgu_DX7oZ3YGcf1HHgT7-FIOJ7n8ctjRUc-w', box = document.getElementById('ck');
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function send(ev) {
+    if (get('tlt_consent') !== 'si') return;
+    var vid = get('tlt_vid'); if (!vid) { vid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)); set('tlt_vid', vid); }
+    ev.source = 'web'; ev.visitor = vid;
+    fetch(SB + '/rest/v1/rpc/track', { method: 'POST', keepalive: true, headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_events: [ev] }) }).catch(function () {});
+  }
+  function start() {
+    send({ kind: 'view', name: location.pathname.split('/').pop() || 'inicio', detail: { ref: document.referrer ? new URL(document.referrer).hostname : null } });
+    window.addEventListener('error', function (e) { send({ kind: 'error', name: String(e.message).slice(0, 110), detail: { src: e.filename, line: e.lineno } }); });
+    window.addEventListener('unhandledrejection', function (e) { send({ kind: 'error', name: 'promesa: ' + String(e.reason).slice(0, 100) }); });
+    document.querySelectorAll('a.dl').forEach(function (a) { a.addEventListener('click', function () { send({ kind: 'event', name: 'descarga_apk' }); }); });
+  }
+  function ask() { box.style.display = 'block'; }
+  document.getElementById('ckYes').onclick = function () { set('tlt_consent', 'si'); set('tlt_consent_date', new Date().toISOString()); box.style.display = 'none'; start(); };
+  document.getElementById('ckNo').onclick = function () { set('tlt_consent', 'no'); set('tlt_consent_date', new Date().toISOString()); try { localStorage.removeItem('tlt_vid'); } catch (e) {} box.style.display = 'none'; };
+  var cfg = document.getElementById('cookieCfg'); if (cfg) cfg.onclick = function (e) { e.preventDefault(); ask(); };
+  var c = get('tlt_consent'); if (c === 'si') start(); else if (c !== 'no') ask();
 })();
 </script>
 </body>

@@ -19,3 +19,25 @@ Marco: Gravedad (1-5) × Probabilidad (1-5). 🟢 1-4 · 🟡 5-9 · 🟠 10-16 
 | 13 | Accesibilidad | Ley 11/2023 / RD 193/2023 | 2×2=4 | 🟢 | Diseño accesible (microempresas exentas) | — |
 
 **Escalar antes de abrir al público:** 1 y 2 (abogado laboralista y asesoría de pagos). Completar los `[completar]` de aviso legal, privacidad y condiciones.
+
+## Actualización octubre 2026 (v0.5)
+| Riesgo | Cambio aplicado | Nivel ahora |
+|---|---|---|
+| 1. Falsos autónomos | Sin penalizaciones económicas; aceptación libre; cobro directo vía Stripe Connect; requisitos de alta en RETA | 🟠 (sigue requiriendo abogado: la plataforma fija las tarifas) |
+| 2. Servicios de pago | Stripe Checkout + Connect: el dinero no pasa por la plataforma | 🟢 |
+| 3. Alérgenos | Rellenados para los 22 productos (genéricos) y en la «lista fácil» se indica revisar el envase | 🟡 (verificar por marca) |
+| 4. Facturación | Factura por pedido: suplidos (compra en el súper) + servicio con IVA 21 %, numeración correlativa y huella encadenada (preparada para Verifactu, obligatorio en 2027 según RDL 15/2025) | 🟡 (asesoría fiscal) |
+| 5. Geolocalización | Solo con entrega en curso («en reparto») | 🟢 |
+| 9. Reclamaciones | Hoja de reclamaciones en app y web, numerada, plazo de respuesta 10 días hábiles | 🟢 |
+| 10. Cadena de frío | Aviso al repartidor en pedidos con refrigerados/congelados | 🟢 |
+| 11. Publicidad | Eliminada | — |
+| Precios orientativos | Importe máximo informado antes de pedir, foto del ticket y cobro del importe real (arts. 60 y 97 TRLGDCU: forma de cálculo del precio) | 🟡 |
+
+### Otros riesgos a revisar
+- **Tarifa de gestión** y no reembolso del servicio: deben estar en las condiciones y no ser desproporcionados (cláusulas abusivas, arts. 82-91 TRLGDCU). Por eso, si nadie ha aceptado el pedido, se devuelve todo.
+- **Consumidores vulnerables** (personas mayores; Ley 4/2022): información clara, atención telefónica y no presionar compras.
+- **Pedidos por familiares**: el familiar actúa en nombre del mayor; conviene que el mayor dé su consentimiento (código de vinculación).
+- **Marcas y precios de supermercados**: no usar logos ni copiar catálogos sin permiso; los precios se presentan como orientativos.
+- **Estadísticas/cookies**: consentimiento previo y rechazo igual de fácil (guía AEPD de cookies 2023); registro de actividades de tratamiento.
+- **Seguro de responsabilidad civil** de la plataforma y de los repartidores.
+- **Prevención de riesgos** (LPRL, coordinación de actividades) aunque sean autónomos.

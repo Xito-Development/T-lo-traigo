@@ -1,14 +1,15 @@
 package es.unocerobits.tlotraigo.data
 
 import kotlinx.serialization.json.*
+import es.unocerobits.tlotraigo.Locator
 import java.net.URLEncoder
 
 class Repository(val api: SupabaseApi) {
     private inline fun <reified T> parse(s: String): T = api.json.decodeFromString(s)
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
-    private val orderSel = "select=*,order_items(*),customer:profiles!orders_customer_id_fkey(full_name,phone)," +
+    private val orderSel = "select=*,order_items(*,products(cold_chain),needs(cold_chain)),customer:profiles!orders_customer_id_fkey(full_name,phone)," +
         "driver:profiles!orders_driver_id_fkey(full_name,phone),order_reviews(order_id)"
-    private val productCols = "id,supermarket_id,category_id,name,brand,unit,price,image_url,vat_rate,icon,active,ean,allergens,ingredients,age_restricted"
+    private val productCols = "id,supermarket_id,category_id,name,brand,unit,price,image_url,vat_rate,icon,active,ean,allergens,ingredients,age_restricted,cold_chain"
 
     // Catálogo
     suspend fun towns(): List<Town> = parse(api.rest("GET", "towns?active=eq.true&order=name"))
@@ -24,8 +25,8 @@ class Repository(val api: SupabaseApi) {
     }
 
     suspend fun productsByIds(ids: Collection<Long>): List<Product> =
-        if (ids.isEmpty()) emptyList()
-        else parse(api.rest("GET", "products?active=eq.true&id=in.(${ids.joinToString(",")})"))
+        ids.filter { it > 0 }.let { pos -> if (pos.isEmpty()) emptyList()
+        else parse(api.rest("GET", "products?select=$productCols&active=eq.true&id=in.(${pos.joinToString(",")})")) }
 
     // Perfil y familia
     suspend fun myProfile(): Profile? = parse<List<Profile>>(api.rest("GET", "profiles?id=eq.${api.uid}")).firstOrNull()
@@ -48,7 +49,16 @@ class Repository(val api: SupabaseApi) {
     suspend fun paymentMethods(townId: Long): List<String> =
         api.json.decodeFromString<List<String>?>(api.rpc("payment_methods_for_town", buildJsonObject { put("p_town", townId) })) ?: emptyList()
 
-    private fun itemsJson(lines: Map<Long, Int>) = buildJsonArray { lines.forEach { (id, q) -> addJsonObject { put("product_id", id); put("qty", q) } } }
+    /** Líneas de la cesta: productos (id > 0) o artículos del pedido guiado (id < 0, con need y detalle). */
+    private fun itemsJson(lines: Map<Long, Int>) = buildJsonArray {
+        lines.forEach { (id, q) ->
+            val l = Locator.cart.lines.value[id]
+            addJsonObject {
+                if (l?.needId != null) { put("need_id", l.needId); put("detail", l.detail) } else put("product_id", id)
+                put("qty", q)
+            }
+        }
+    }
 
     /** Desglose de precios calculado en servidor (misma fórmula que al crear el pedido). */
     suspend fun quote(customer: String, supermarket: Long, lines: Map<Long, Int>, date: String?): Quote =
@@ -62,7 +72,7 @@ class Repository(val api: SupabaseApi) {
             put("p_customer", customer); put("p_supermarket", supermarket); put("p_payment", method)
             put("p_address", address); put("p_notes", notes?.takeIf { it.isNotBlank() })
             put("p_date", date); put("p_slot", slot); put("p_adult", adult)
-            putJsonArray("p_items") { lines.forEach { (id, q) -> addJsonObject { put("product_id", id); put("qty", q) } } }
+            put("p_items", itemsJson(lines))
         }
         return api.rpc("create_order", args).trim().toLong()
     }
@@ -195,4 +205,40 @@ class Repository(val api: SupabaseApi) {
 
     /** Elimina la cuenta (requisito de Google Play/App Store). Los pedidos se anonimizan. */
     suspend fun deleteMyAccount() { api.rpc("delete_my_account") }
+
+    // --- Pedido guiado, ticket, pagos, reembolsos, facturas, reclamaciones y estadísticas
+    suspend fun needs(): List<Need> = parse(api.rest("GET", "needs?active=eq.true&order=sort"))
+    suspend fun cardCheckoutUrl(orderId: Long): String? =
+        api.function("pagos", buildJsonObject { put("action", "checkout"); put("order_id", orderId) })["url"]?.jsonPrimitive?.contentOrNull
+    suspend fun captureCard(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "capture"); put("order_id", orderId) }) } }
+    suspend fun refundCard(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "refund"); put("order_id", orderId) }) } }
+    suspend fun connectStripe(): String? = api.function("pagos", buildJsonObject { put("action", "connect") })["url"]?.jsonPrimitive?.contentOrNull
+    suspend fun uploadTicket(orderId: Long, bytes: ByteArray): String {
+        val path = "$orderId/${java.util.UUID.randomUUID()}.jpg"; api.upload("tickets", path, bytes, "image/jpeg"); return path
+    }
+    suspend fun setTicket(orderId: Long, path: String, total: Double): JsonObject =
+        api.json.parseToJsonElement(api.rpc("set_ticket", buildJsonObject { put("p_order", orderId); put("p_path", path); put("p_total", total) })).jsonObject
+    suspend fun ticketUrl(path: String) = api.signedUrl("tickets", path)
+    suspend fun requestRefund(orderId: Long, reason: String, amount: Double?) {
+        api.rpc("request_refund", buildJsonObject { put("p_order", orderId); put("p_reason", reason); put("p_amount", amount) })
+    }
+    suspend fun myRefunds(orderId: Long): List<RefundRequest> = parse(api.rest("GET", "refund_requests?order_id=eq.$orderId&order=created_at.desc"))
+    suspend fun refundRequests(): List<RefundRequest> = parse(api.rest("GET", "refund_requests?order=status.desc,created_at.desc&limit=100"))
+    suspend fun resolveRefund(id: Long, approve: Boolean, amount: Double?, note: String?) {
+        val r = api.json.parseToJsonElement(api.rpc("resolve_refund", buildJsonObject { put("p_id", id); put("p_approve", approve); put("p_amount", amount); put("p_note", note) })).jsonObject
+        r["order_id"]?.jsonPrimitive?.longOrNull?.let { if (approve) refundCard(it) }
+    }
+    suspend fun invoice(orderId: Long): Invoice? = parse<List<Invoice>>(api.rest("GET", "invoices?order_id=eq.$orderId")).firstOrNull()
+    suspend fun company(): CompanyInfo? = parse<List<CompanyInfo>>(api.rest("GET", "company_info?id=eq.1")).firstOrNull()
+    suspend fun saveCompany(c: CompanyInfo) { api.rest("PATCH", "company_info?id=eq.1", api.json.encodeToString(CompanyInfo.serializer(), c)) }
+    suspend fun submitComplaint(orderId: Long?, name: String, contact: String, subject: String, body: String): String =
+        api.json.parseToJsonElement(api.rpc("submit_complaint", buildJsonObject {
+            put("p_order", orderId); put("p_name", name); put("p_contact", contact); put("p_subject", subject); put("p_body", body) })).jsonPrimitive.content
+    suspend fun complaints(): List<Complaint> = parse(api.rest("GET", "complaints?order=created_at.desc&limit=100"))
+    suspend fun answerComplaint(id: Long, text: String) { api.rpc("answer_complaint", buildJsonObject { put("p_id", id); put("p_response", text) }) }
+    suspend fun analytics(days: Int): AnalyticsSummary = parse(api.rpc("analytics_summary", buildJsonObject { put("p_days", days) }))
+    suspend fun track(events: kotlinx.serialization.json.JsonArray) { api.rpc("track", buildJsonObject { put("p_events", events) }) }
+    suspend fun saveUsage(usage: String?, consent: Boolean?) {
+        api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { usage?.let { put("usage", it) }; consent?.let { put("analytics_consent", it) } }.toString())
+    }
 }

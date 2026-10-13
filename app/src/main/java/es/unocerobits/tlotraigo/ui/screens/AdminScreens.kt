@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,7 +39,8 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 private enum class ASec(val label: String, val superOnly: Boolean = false) {
-    PRODUCTOS("Productos"), TARIFAS("Tarifas"), OPINIONES("Opiniones"),
+    PRODUCTOS("Productos"), TARIFAS("Tarifas"), ESTADISTICAS("Estadísticas"), REEMBOLSOS("Reembolsos"),
+    RECLAMACIONES("Reclamaciones"), OPINIONES("Opiniones"), EMPRESA("Facturación", true),
     REPARTIDORES("Repartidores", true), USUARIOS("Usuarios", true)
 }
 
@@ -62,6 +64,10 @@ fun AdminHome(vm: AppViewModel, onEditProduct: (Long?) -> Unit) {
                 ASec.PRODUCTOS -> AdminProducts(onEditProduct)
                 ASec.TARIFAS -> AdminFees()
                 ASec.OPINIONES -> AdminReviews()
+                ASec.ESTADISTICAS -> AdminStats()
+                ASec.REEMBOLSOS -> AdminRefunds()
+                ASec.RECLAMACIONES -> AdminComplaints()
+                ASec.EMPRESA -> AdminCompany()
                 ASec.REPARTIDORES -> AdminDrivers(vm)
                 ASec.USUARIOS -> AdminUsers()
             }
@@ -516,5 +522,123 @@ private fun AdminUsers() {
                 },
             )
         }
+    }
+}
+
+// ---------------- Estadísticas y errores ----------------
+@Composable
+private fun AdminStats() {
+    var days by remember { mutableIntStateOf(30) }
+    var a by remember { mutableStateOf<AnalyticsSummary?>(null) }
+    var err by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(days) { try { a = Locator.repo.analytics(days); err = null } catch (e: ApiException) { err = e.message } }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(7, 30, 90).forEach { d -> FilterChip(days == d, { days = d }, { Text("$d días") }) } }
+            ErrorText(err)
+        }
+        val x = a
+        if (x == null) item { Loading() } else {
+            item {
+                Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf("Visitas web" to x.daily.sumOf { it.web }, "Pantallas app" to x.daily.sumOf { it.app },
+                        "Visitantes web" to (x.visitors["web"] ?: 0), "Usuarios app" to (x.visitors["app"] ?: 0)).forEach { (l, v) ->
+                        Card(Modifier.weight(1f)) { Column(Modifier.padding(10.dp)) { Text("$v", style = MaterialTheme.typography.headlineSmall); Text(l, style = MaterialTheme.typography.labelSmall) } }
+                    }
+                }
+                val max = (x.daily.maxOfOrNull { it.web + it.app } ?: 1).coerceAtLeast(1)
+                Text("Por día (verde: web · mostaza: app)", style = MaterialTheme.typography.titleSmall)
+                Row(Modifier.fillMaxWidth().height(120.dp).padding(top = 6.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    x.daily.takeLast(45).forEach { d ->
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.Bottom) {
+                            Box(Modifier.fillMaxWidth().height((110f * d.app / max).dp).background(MaterialTheme.colorScheme.secondary))
+                            Box(Modifier.fillMaxWidth().height((110f * d.web / max).dp).background(MaterialTheme.colorScheme.primary))
+                        }
+                    }
+                }
+                SectionTitle("Lo más visto")
+            }
+            items(x.top) { t -> ListItem(headlineContent = { Text(t.name) }, supportingContent = { Text(t.source) }, trailingContent = { Text("${t.n}") }) }
+            item { SectionTitle("Errores recientes (${x.errors.size})") }
+            items(x.errors) { e -> ListItem(headlineContent = { Text("${e.source} · ${e.name}") },
+                supportingContent = { Text("${prettyDate(e.ts)} · ${e.version ?: ""}\n${e.detail?.toString()?.take(300) ?: ""}", style = MaterialTheme.typography.bodySmall) },
+                leadingContent = { Icon(Icons.Filled.BugReport, null, tint = MaterialTheme.colorScheme.error) }) }
+        }
+    }
+}
+
+// ---------------- Reembolsos ----------------
+@Composable
+private fun AdminRefunds() {
+    val scope = rememberCoroutineScope()
+    var list by remember { mutableStateOf<List<RefundRequest>?>(null) }
+    var reload by remember { mutableIntStateOf(0) }
+    var err by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(reload) { try { list = Locator.repo.refundRequests() } catch (e: ApiException) { err = e.message; list = emptyList() } }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+        item { ErrorText(err); Text("La tarifa de servicio y gestión no se reembolsa. Si se pagó con tarjeta, la devolución se hace sola en Stripe al aprobar.", style = MaterialTheme.typography.bodySmall) }
+        val l = list
+        if (l == null) item { Loading() } else if (l.isEmpty()) item { Message(Icons.Filled.CurrencyExchange, "Sin solicitudes de reembolso") }
+        else items(l, key = { it.id }) { r ->
+            var amt by remember(r.id) { mutableStateOf(r.amount?.let { fmtNum(it) } ?: "") }
+            Card(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+                Column(Modifier.padding(14.dp)) {
+                    Text("Pedido nº ${r.orderId} · ${r.status}", style = MaterialTheme.typography.titleMedium)
+                    Text(r.reason, style = MaterialTheme.typography.bodyMedium)
+                    Text(prettyDate(r.createdAt), style = MaterialTheme.typography.bodySmall)
+                    if (r.status == "pendiente") Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                        OutlinedTextField(amt, { amt = it }, Modifier.weight(1f), label = { Text("Importe") }, suffix = { Text("€") }, singleLine = true)
+                        OutlinedButton({ scope.launch { runCatching { Locator.repo.resolveRefund(r.id, false, null, null) }; reload++ } }) { Text("Rechazar") }
+                        Button({ scope.launch { try { Locator.repo.resolveRefund(r.id, true, parseNum(amt), null); reload++ } catch (e: ApiException) { err = e.message } } }) { Text("Aprobar") }
+                    } else r.amount?.let { Text("Devuelto: ${eur(it)}", color = MaterialTheme.colorScheme.primary) }
+                }
+            }
+        }
+    }
+}
+
+// ---------------- Reclamaciones ----------------
+@Composable
+private fun AdminComplaints() {
+    val scope = rememberCoroutineScope()
+    var list by remember { mutableStateOf<List<Complaint>?>(null) }
+    var reload by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reload) { list = runCatching { Locator.repo.complaints() }.getOrDefault(emptyList()) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+        item { Text("Plazo de respuesta: 10 días hábiles. Guarda las respuestas: pueden pedirlas los servicios de consumo.", style = MaterialTheme.typography.bodySmall) }
+        val l = list
+        if (l == null) item { Loading() } else if (l.isEmpty()) item { Message(Icons.Filled.Feedback, "No hay reclamaciones") }
+        else items(l, key = { it.id }) { c ->
+            var ans by remember(c.id) { mutableStateOf(c.response.orEmpty()) }
+            Card(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+                Column(Modifier.padding(14.dp)) {
+                    Text("${c.number} · ${c.status}", style = MaterialTheme.typography.titleMedium)
+                    Text("${c.fullName} · ${c.contact}${c.orderId?.let { " · pedido nº $it" } ?: ""}", style = MaterialTheme.typography.bodySmall)
+                    Text(c.subject, style = MaterialTheme.typography.titleSmall); Text(c.body, style = MaterialTheme.typography.bodyMedium)
+                    OutlinedTextField(ans, { ans = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Respuesta") }, minLines = 2)
+                    Button({ scope.launch { runCatching { Locator.repo.answerComplaint(c.id, ans) }; reload++ } }, enabled = ans.isNotBlank()) { Text("Guardar respuesta") }
+                }
+            }
+        }
+    }
+}
+
+// ---------------- Datos de facturación ----------------
+@Composable
+private fun AdminCompany() {
+    val scope = rememberCoroutineScope()
+    var c by remember { mutableStateOf<CompanyInfo?>(null) }
+    var msg by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { c = runCatching { Locator.repo.company() }.getOrNull() }
+    val x = c ?: return Loading()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Text("Datos del emisor de las facturas (obligatorios por el Reglamento de facturación, RD 1619/2012).", style = MaterialTheme.typography.bodyMedium)
+        listOf("Nombre o razón social" to x.name, "NIF" to x.nif, "Domicilio fiscal" to x.address, "Correo" to x.email, "Serie de facturas" to x.series).forEachIndexed { i, (l, v) ->
+            OutlinedTextField(v, { nv -> c = when (i) { 0 -> x.copy(name = nv); 1 -> x.copy(nif = nv.uppercase()); 2 -> x.copy(address = nv); 3 -> x.copy(email = nv); else -> x.copy(series = nv.uppercase()) } },
+                Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text(l) }, singleLine = true, shape = MaterialTheme.shapes.medium)
+        }
+        Spacer(Modifier.height(12.dp))
+        BigButton("Guardar", { scope.launch { msg = try { Locator.repo.saveCompany(x); "Guardado" } catch (e: ApiException) { e.message } } }, icon = Icons.Filled.Save)
+        msg?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
     }
 }

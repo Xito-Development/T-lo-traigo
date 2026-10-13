@@ -39,7 +39,7 @@ private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit) {
+fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit, onNeeds: () -> Unit = {}) {
     val profile by vm.profile.collectAsState()
     val cartLines by vm.cart.lines.collectAsState()
     val senior = LocalSenior.current
@@ -85,7 +85,22 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit) {
                 )
             }
         }
-        item { AdBanner(Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) }
+        item {
+            Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp).clickable(onClick = onNeeds), shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primary)) {
+                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Checklist, null, Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Haz tu lista fácil", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
+                        Text("Pan, leche, fruta… y dinos cómo lo quieres", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onPrimary)
+                }
+            }
+            Text("Precios orientativos: pagarás lo que marque el ticket del súper.", Modifier.padding(horizontal = 22.dp),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         lastOrder?.let { lo ->
             item {
                 Card(
@@ -177,7 +192,7 @@ private fun ProductRow(p: Product, qty: Int, senior: Boolean, modifier: Modifier
                 p.brand?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(eur(p.price), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-                    Text(" $unitLabel · IVA incl.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(" $unitLabel aprox.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Column(horizontalAlignment = Alignment.End) {

@@ -1,0 +1,334 @@
+package es.unocerobits.tlotraigo.ui.screens
+
+import android.content.Context
+import android.content.Intent
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
+import es.unocerobits.tlotraigo.AppViewModel
+import es.unocerobits.tlotraigo.Locator
+import es.unocerobits.tlotraigo.data.*
+import es.unocerobits.tlotraigo.ui.components.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+
+// =================== Bienvenida (onboarding) ===================
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun OnboardingWizard(vm: AppViewModel) {
+    val p by vm.profile.collectAsState()
+    val s by vm.settings.collectAsState()
+    val driver = p?.isDriver == true
+    var step by rememberSaveable { mutableIntStateOf(if (driver) 1 else 0) }
+    var usage by rememberSaveable { mutableStateOf(p?.usage ?: "propio") }
+    val scope = rememberCoroutineScope()
+    val total = 5
+    Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(24.dp)) {
+        Wordmark(width = 170.dp)
+        LinearProgressIndicator({ (step + 1f) / total }, Modifier.fillMaxWidth().padding(vertical = 16.dp))
+        AnimatedContent(step, transitionSpec = { (slideInHorizontally { it / 3 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 3 } + fadeOut()) }, label = "ob") { st ->
+            Column {
+                when (st) {
+                    0 -> {
+                        Text("¿Quién va a usar T lo traigo?", style = MaterialTheme.typography.headlineMedium)
+                        Spacer(Modifier.height(12.dp))
+                        ChoiceRow("Hago mi propia compra", "Pido para mi casa", usage == "propio", icon = Icons.Filled.Person) { usage = "propio" }
+                        ChoiceRow("Pido para un familiar", "Soy hijo, hija o familiar de alguien mayor", usage == "familiar", icon = Icons.Filled.FamilyRestroom) { usage = "familiar" }
+                        ChoiceRow("Un familiar pedirá por mí", "Mi hijo o hija me ayudará desde su móvil", usage == "asistido", icon = Icons.Filled.Elderly) { usage = "asistido" }
+                        Spacer(Modifier.height(16.dp))
+                        BigButton("Siguiente", { step = 1 }, icon = Icons.Filled.ArrowForward)
+                    }
+                    1 -> {
+                        Text("Ajusta cómo se ve", style = MaterialTheme.typography.headlineMedium)
+                        Text("Podrás cambiarlo cuando quieras en Ajustes.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Tamaño de letra", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme").forEach { (v, l) ->
+                                FilterChip(kotlin.math.abs(s.textScale - v) < .01f, { vm.updateSettings { it.copy(textScale = v) } }, { Text(l) })
+                            }
+                        }
+                        ToggleRow("Modo fácil", "Botones y letras más grandes", s.senior, Icons.Filled.Elderly) { v -> vm.updateSettings { it.copy(senior = v) } }
+                        ToggleRow("Leer en voz alta", "Botón de altavoz en los productos", s.speak, Icons.Filled.RecordVoiceOver) { v -> vm.updateSettings { it.copy(speak = v) } }
+                        ToggleRow("Alto contraste", "Máxima legibilidad", s.highContrast, Icons.Filled.Contrast) { v -> vm.updateSettings { it.copy(highContrast = v) } }
+                        Surface(Modifier.fillMaxWidth().padding(top = 12.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = MaterialTheme.shapes.medium) {
+                            Text("Así se verán los textos de la app.", Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        BigButton("Siguiente", { step = 2 }, icon = Icons.Filled.ArrowForward)
+                    }
+                    2 -> {
+                        Text("¿Nos ayudas a mejorar?", style = MaterialTheme.typography.headlineMedium)
+                        Text("Si aceptas, enviaremos datos anónimos de uso (qué pantallas se abren) y de errores para arreglarlos antes. " +
+                            "Se guardan en la Unión Europea, no se comparten con nadie y puedes cambiarlo en Ajustes.", style = MaterialTheme.typography.bodyLarge)
+                        Spacer(Modifier.height(16.dp))
+                        BigButton("Sí, acepto", { Analytics.consent = true; scope.launch { runCatching { Locator.repo.saveUsage(usage, true) } }; step = 3 }, icon = Icons.Filled.Check)
+                        Spacer(Modifier.height(8.dp))
+                        BigButton("No, gracias", { Analytics.consent = false; scope.launch { runCatching { Locator.repo.saveUsage(usage, false) } }; step = 3 }, tonal = true)
+                    }
+                    3 -> {
+                        ProfileForm(vm, if (driver) "¿Dónde vives y repartes?" else if (usage == "familiar") "Tus datos" else "¿Dónde te llevamos la compra?", "Guardar y continuar") {
+                            if (usage == "propio" || driver) vm.start() else step = 4
+                        }
+                        if (usage == "familiar") Text("Después podrás vincular a tu familiar para pedir a su casa.", Modifier.padding(top = 8.dp),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    else -> FamilyStep(vm, usage) { vm.start() }
+                }
+            }
+        }
+        if (step > 0 && !(driver && step == 1)) TextButton({ step -= 1 }, Modifier.align(Alignment.CenterHorizontally)) { Text("Atrás") }
+    }
+}
+
+@Composable
+private fun FamilyStep(vm: AppViewModel, usage: String, onDone: () -> Unit) {
+    val p by vm.profile.collectAsState()
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var code by remember { mutableStateOf("") }
+    var err by remember { mutableStateOf<String?>(null) }
+    var ok by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { vm.refreshProfile() }
+    if (usage == "asistido") {
+        Text("Dale este código a tu familiar", style = MaterialTheme.typography.headlineMedium)
+        Text(p?.linkCode ?: "…", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 12.dp))
+        Text("Con él podrá hacerte los pedidos desde su móvil. Sirve una sola vez.", style = MaterialTheme.typography.bodyLarge)
+        TextButton({ ctx.share("Mi código de T lo traigo es ${p?.linkCode}. Descarga la app: https://tlotraigo.unocerobits.com") }) { Text("Enviar el código") }
+    } else {
+        Text("Vincula a tu familiar", style = MaterialTheme.typography.headlineMedium)
+        Text("Pídele el código de 6 cifras que aparece en su app (Ajustes → Familia).", style = MaterialTheme.typography.bodyLarge)
+        OutlinedTextField(code, { code = it.uppercase().take(6) }, Modifier.fillMaxWidth().padding(top = 12.dp), label = { Text("Código") }, singleLine = true, shape = MaterialTheme.shapes.medium)
+        ErrorText(err)
+        if (ok) Text("¡Vinculado! Ya puedes pedir para tu familiar.", color = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(8.dp))
+        BigButton("Vincular", { scope.launch { try { Locator.repo.linkSenior(code); ok = true; err = null } catch (e: ApiException) { err = e.message } } },
+            enabled = code.length == 6 && !ok, icon = Icons.Filled.Link)
+    }
+    Spacer(Modifier.height(12.dp))
+    BigButton(if (usage == "asistido" || ok) "Empezar" else "Lo haré más tarde", onDone, tonal = !(usage == "asistido" || ok), icon = Icons.Filled.Check)
+}
+
+// =================== Lista fácil (pedido guiado) ===================
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
+    var needs by remember { mutableStateOf<List<Need>?>(null) }
+    var sel by remember { mutableStateOf<Need?>(null) }
+    val lines by vm.cart.lines.collectAsState()
+    LaunchedEffect(Unit) { needs = runCatching { Locator.repo.needs() }.getOrDefault(emptyList()) }
+    Scaffold(topBar = { TopAppBar({ Text("Lista fácil") }, navigationIcon = { IconButton(onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }) },
+        bottomBar = { if (lines.isNotEmpty()) Surface(tonalElevation = 6.dp) { Box(Modifier.navigationBarsPadding().padding(16.dp)) {
+            BigButton("Ver mi cesta (${productos(lines.values.sumOf { it.qty })})", onCart, icon = Icons.Filled.ShoppingCart) } } }) { pad ->
+        Column(Modifier.padding(pad)) {
+            Text("Toca lo que necesites y dinos cómo lo quieres. Los precios son orientativos: pagarás lo que marque el ticket del súper.",
+                Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val n = needs
+            if (n == null) Loading()
+            else LazyVerticalGrid(GridCells.Adaptive(150.dp), contentPadding = PaddingValues(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(n, key = { it.id }) { need ->
+                    val inCart = lines.values.filter { it.needId == need.id }.sumOf { it.qty }
+                    Surface(Modifier.clip(MaterialTheme.shapes.large).clickable { sel = need }, shape = MaterialTheme.shapes.large,
+                        color = if (inCart > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
+                        Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(AppIcons.vector(need.icon), null, Modifier.size(44.dp), tint = MaterialTheme.colorScheme.primary)
+                            Text(need.name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                            Text("≈ ${eur(need.estPrice)} / ${need.unitLabel}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (inCart > 0) Text("En la cesta: $inCart", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    sel?.let { NeedDialog(it, { d, q -> vm.cart.addNeed(it, d, q); sel = null }) { sel = null } }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun NeedDialog(n: Need, onAdd: (String, Int) -> Unit, onDismiss: () -> Unit) {
+    val picks = remember { mutableStateMapOf<String, String>() }
+    var brand by remember { mutableStateOf("Cualquiera") }
+    var note by remember { mutableStateOf("") }
+    var qty by remember { mutableIntStateOf(1) }
+    AlertDialog(onDismissRequest = onDismiss, icon = { Icon(AppIcons.vector(n.icon), null) }, title = { Text(n.name) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                n.options.forEach { o ->
+                    Text(o.t, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { o.v.forEach { v -> FilterChip(picks[o.t] == v, { picks[o.t] = v }, { Text(v) }) } }
+                }
+                Text("Marca", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf("Cualquiera", "La más barata", "Marca blanca", "La de siempre").forEach { v -> FilterChip(brand == v, { brand = v }, { Text(v) }) } }
+                OutlinedTextField(note, { note = it.take(120) }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text("¿Algo más? (opcional)") },
+                    placeholder = { Text("Ej.: marca Pascual, que no esté muy maduro") }, shape = MaterialTheme.shapes.medium)
+                Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Cantidad", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    QtyStepper(qty, { if (qty > 1) qty-- }, { qty++ })
+                }
+                Text("Precio orientativo: ${eur(n.estPrice * qty)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        confirmButton = {
+            Button({ onAdd((n.options.mapNotNull { picks[it.t] } + listOfNotNull(brand.takeIf { it != "Cualquiera" }, note.trim().ifBlank { null })).joinToString(" · "), qty) },
+                enabled = n.options.all { picks[it.t] != null }) { Text("Añadir a la cesta") }
+        },
+        dismissButton = { TextButton(onDismiss) { Text("Cancelar") } })
+}
+
+// =================== Ticket de compra (repartidor) ===================
+@Composable
+fun TicketSection(o: Order, onSaved: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var file by remember { mutableStateOf<File?>(null) }
+    var shot by remember { mutableStateOf<Uri?>(null) }
+    var total by remember { mutableStateOf(o.ticketTotal?.let { fmtNum(it) } ?: "") }
+    var busy by remember { mutableStateOf(false) }
+    var msg by remember { mutableStateOf<String?>(null) }
+    var err by remember { mutableStateOf<String?>(null) }
+    val cam = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) shot = file?.let { Uri.fromFile(it) } }
+    fun takePhoto() {
+        val dir = File(ctx.cacheDir, "tickets").apply { mkdirs() }
+        val f = File(dir, "ticket_${o.id}.jpg"); file = f
+        cam.launch(FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f))
+    }
+    Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(14.dp)) {
+            Text("🧾 Ticket de compra (obligatorio)", style = MaterialTheme.typography.titleMedium)
+            Text("Haz una foto al ticket y escribe el total. El cliente pagará lo real (máx. ${eur(o.maxTotal ?: o.total)}).", style = MaterialTheme.typography.bodySmall)
+            shot?.let { AsyncImage(it, null, Modifier.fillMaxWidth().height(160.dp).padding(top = 8.dp).clip(MaterialTheme.shapes.small), contentScale = ContentScale.Crop) }
+            if (o.ticketPath != null && shot == null) Text("✓ Ticket guardado: ${eur(o.ticketTotal ?: 0.0)}", color = MaterialTheme.colorScheme.primary)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                OutlinedButton({ takePhoto() }) { Icon(Icons.Filled.PhotoCamera, null); Spacer(Modifier.width(6.dp)); Text(if (shot == null) "Foto" else "Repetir") }
+                Spacer(Modifier.width(8.dp))
+                OutlinedTextField(total, { total = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(7) }, Modifier.weight(1f), label = { Text("Total ticket") },
+                    suffix = { Text("€") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+            }
+            ErrorText(err)
+            msg?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
+            Spacer(Modifier.height(6.dp))
+            BigButton("Guardar ticket", {
+                scope.launch {
+                    busy = true; err = null; msg = null
+                    try {
+                        val uri = shot ?: throw ApiException("Haz primero la foto del ticket")
+                        val bytes = withContext(Dispatchers.IO) { ImageUtil.prepare(ctx, uri, 1600) }
+                        val path = Locator.repo.uploadTicket(o.id, bytes)
+                        val r = Locator.repo.setTicket(o.id, path, parseNum(total) ?: throw ApiException("Escribe el total del ticket"))
+                        if (r["over_max"]?.toString() == "true") msg = "El total supera el máximo autorizado. Llama al cliente antes de salir y confirma con él."
+                        if (o.paymentMethod == "tarjeta") Locator.repo.captureCard(o.id)
+                        onSaved()
+                    } catch (e: ApiException) { err = e.message }
+                    busy = false
+                }
+            }, enabled = shot != null && parseNum(total) != null, loading = busy, icon = Icons.Filled.Save)
+        }
+    }
+}
+
+// =================== Factura en PDF ===================
+object InvoicePdf {
+    fun share(ctx: Context, inv: Invoice, o: Order) {
+        val doc = PdfDocument(); val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create()); val c = page.canvas
+        val p = Paint().apply { textSize = 11f; isAntiAlias = true }; val b = Paint(p).apply { typeface = Typeface.DEFAULT_BOLD }
+        val h = Paint(b).apply { textSize = 20f; color = android.graphics.Color.rgb(46, 107, 87) }
+        var y = 60f; fun line(t: String, paint: Paint = p, x: Float = 50f, dy: Float = 16f) { c.drawText(t, x, y, paint); y += dy }
+        line("FACTURA", h, dy = 26f); line("Nº ${inv.number}", b); line("Fecha: ${prettyDate(inv.issuedAt)}"); y += 10
+        line("Emisor", b); line(inv.issuer["name"] ?: ""); line("NIF: ${inv.issuer["nif"]}"); line(inv.issuer["address"] ?: ""); line(inv.issuer["email"] ?: ""); y += 10
+        line("Cliente", b); line(inv.customerName ?: ""); line(inv.customerAddress ?: ""); line("Pedido nº ${o.id}"); y += 14
+        fun row(a: String, v: String, paint: Paint = p) { c.drawText(a, 50f, y, paint); c.drawText(v, 470f, y, paint); y += 18 }
+        row("Concepto", "Importe", b)
+        row("Compra en supermercado por cuenta del cliente (suplido*)", eur(inv.suplidos))
+        row("Servicio de compra, gestión y entrega — base imponible", eur(inv.base))
+        row("IVA ${inv.vatRate.toInt()} % del servicio", eur(inv.vat))
+        y += 6; row("TOTAL", eur(inv.total), b)
+        if (o.refundAmount > 0) row("Reembolsado", "−" + eur(o.refundAmount))
+        y += 16
+        listOf("* Importe pagado al supermercado en nombre del cliente (art. 78.Tres.3º Ley 37/1992 del IVA):",
+            "  no forma parte de la base imponible. El ticket del supermercado está disponible en la app.",
+            "Huella de registro: ${inv.hash.take(32)}…").forEach { line(it, Paint(p).apply { textSize = 9f }, dy = 13f) }
+        doc.finishPage(page)
+        val dir = File(ctx.cacheDir, "facturas").apply { mkdirs() }
+        val f = File(dir, "Factura_${inv.number}.pdf"); f.outputStream().use { doc.writeTo(it) }; doc.close()
+        val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f)
+        ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/pdf").putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Factura ${inv.number}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}
+
+// =================== Reembolso y reclamación ===================
+@Composable
+fun RefundDialog(o: Order, onDone: (String?) -> Unit) {
+    val scope = rememberCoroutineScope()
+    var reason by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("") }
+    var err by remember { mutableStateOf<String?>(null) }
+    val max = (o.amount - o.serviceFee - o.gestionFee - o.refundAmount).coerceAtLeast(0.0)
+    AlertDialog(onDismissRequest = { onDone(null) }, icon = { Icon(Icons.Filled.CurrencyExchange, null) }, title = { Text("Solicitar reembolso") },
+        text = { Column {
+            Text("Cuéntanos qué ha pasado (producto en mal estado, que faltaba…). La tarifa de servicio y gestión no se reembolsa. Máximo: ${eur(max)}.", style = MaterialTheme.typography.bodyMedium)
+            OutlinedTextField(reason, { reason = it.take(1000) }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text("Motivo") }, minLines = 3)
+            OutlinedTextField(amount, { amount = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(7) }, Modifier.fillMaxWidth().padding(top = 8.dp),
+                label = { Text("Importe (opcional)") }, suffix = { Text("€") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+            ErrorText(err)
+        } },
+        confirmButton = { Button({ scope.launch { try { Locator.repo.requestRefund(o.id, reason, parseNum(amount)); onDone("Solicitud enviada. Te responderemos en un máximo de 7 días.") } catch (e: ApiException) { err = e.message } } },
+            enabled = reason.trim().length >= 3) { Text("Enviar") } },
+        dismissButton = { TextButton({ onDone(null) }) { Text("Cancelar") } })
+}
+
+@Composable
+fun ComplaintDialog(vm: AppViewModel, orderId: Long?, onDone: (String?) -> Unit) {
+    val p by vm.profile.collectAsState()
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf(p?.fullName.orEmpty()) }
+    var contact by remember { mutableStateOf(p?.phone.orEmpty()) }
+    var subject by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
+    var err by remember { mutableStateOf<String?>(null) }
+    AlertDialog(onDismissRequest = { onDone(null) }, icon = { Icon(Icons.Filled.Feedback, null) }, title = { Text("Hoja de reclamaciones") },
+        text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+            Text("Recibirás un número de reclamación y te responderemos en un plazo máximo de 10 días hábiles. También puedes usar la hoja oficial de la Junta de Castilla y León.", style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Nombre y apellidos") }, singleLine = true)
+            OutlinedTextField(contact, { contact = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Teléfono o correo") }, singleLine = true)
+            OutlinedTextField(subject, { subject = it.take(120) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Asunto") }, singleLine = true)
+            OutlinedTextField(body, { body = it.take(4000) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Hechos y lo que solicitas") }, minLines = 4)
+            ErrorText(err)
+        } },
+        confirmButton = { Button({ scope.launch { try { val n = Locator.repo.submitComplaint(orderId, name, contact, subject, body); onDone("Reclamación registrada con el número $n.") } catch (e: ApiException) { err = e.message } } },
+            enabled = name.isNotBlank() && contact.isNotBlank() && subject.isNotBlank() && body.length >= 10) { Text("Presentar") } },
+        dismissButton = { TextButton({ onDone(null) }) { Text("Cancelar") } })
+}

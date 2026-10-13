@@ -2,6 +2,19 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.5.1] - 2026-10-13
+### Añadido
+- Pasarela de pago con Stripe: reserva del importe máximo, cobro del importe real del ticket y reparto al repartidor (Stripe Connect).
+- Cancelación con reembolso (sin tarifa de servicio y gestión una vez aceptado) y solicitud de reembolso tras la entrega.
+- Precios orientativos: foto del ticket obligatoria, importe máximo y tarifa de gestión variable.
+- «Lista fácil»: elige pan, leche, fruta… y concreta tipo, formato, marca y cantidad.
+- Bienvenida al registrarse: para quién es la app, ajustes de accesibilidad, estadísticas y vínculo familiar.
+- Facturas en PDF por pedido, hojas de reclamaciones y estadísticas/errores propios con consentimiento (web y app).
+- Aviso de cadena de frío al repartidor; alérgenos rellenados.
+### Cambiado
+- Sin penalizaciones a repartidores. No se puede cancelar cuando el repartidor ya está en el súper o en reparto.
+- Quitado el espacio publicitario.
+
 ## [0.5.0] - 2026-10-13
 ### Añadido
 - Repartidores: avisos de pedidos nuevos en el móvil mientras están disponibles.

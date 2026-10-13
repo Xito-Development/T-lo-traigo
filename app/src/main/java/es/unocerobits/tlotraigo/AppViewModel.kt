@@ -17,7 +17,7 @@ sealed interface Boot {
 }
 
 /** Versión de las condiciones/privacidad vigentes. Al cambiarla, todos deben volver a aceptarlas. */
-const val TERMS_VERSION = "2026-10"
+const val TERMS_VERSION = "2026-10-2"
 
 class AppViewModel : ViewModel() {
     private val repo = Locator.repo
@@ -48,6 +48,7 @@ class AppViewModel : ViewModel() {
         _update.value = u
         if (manual) _updateMsg.value = if (u == null) "Ya tienes la última versión (${es.unocerobits.tlotraigo.BuildConfig.VERSION_NAME})." else null
     }
+    fun viewModelScopeLaunch(block: suspend () -> Unit) = viewModelScope.launch { runCatching { block() } }
     fun dismissUpdate() { _update.value = null }
     fun clearUpdateMsg() { _updateMsg.value = null }
 

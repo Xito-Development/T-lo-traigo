@@ -36,6 +36,7 @@ data class Product(
     val allergens: String? = null,
     val ingredients: String? = null,
     @SerialName("age_restricted") val ageRestricted: Boolean = false,
+    @SerialName("cold_chain") val coldChain: Boolean = false,
 ) {
     /** Precio sin IVA (los precios del súper son PVP con IVA incluido). */
     val basePrice get() = price / (1 + vatRate / 100)
@@ -53,6 +54,8 @@ data class Profile(
     @SerialName("senior_mode") val seniorMode: Boolean = true,
     @SerialName("link_code") val linkCode: String? = null,
     @SerialName("terms_version") val termsVersion: String? = null,
+    val usage: String? = null,
+    @SerialName("analytics_consent") val analyticsConsent: Boolean? = null,
 ) {
     val firstName get() = fullName.trim().substringBefore(' ').ifBlank { "" }
     val isDriver get() = role == "repartidor"
@@ -98,6 +101,10 @@ data class Quote(
     @SerialName("distance_fee") val distanceFee: Double = 0.0,
     @SerialName("express_fee") val expressFee: Double = 0.0,
     @SerialName("fees_vat") val feesVat: Double = 0.0,
+    val gestion: Double = 0.0,
+    @SerialName("gestion_pct") val gestionPct: Double = 5.0,
+    @SerialName("max_total") val maxTotal: Double = 0.0,
+    @SerialName("margin_pct") val marginPct: Double = 15.0,
     val total: Double = 0.0,
     val town: String = "",
 )
@@ -114,6 +121,50 @@ data class Review(
 
 @Serializable
 data class DriverLocation(val lat: Double, val lng: Double, @SerialName("updated_at") val updatedAt: String)
+
+@Serializable
+data class Cold(@SerialName("cold_chain") val coldChain: Boolean = false)
+
+@Serializable
+data class NeedOption(val t: String, val v: List<String>)
+
+/** Artículo genérico del pedido guiado (pan, leche…) con precio orientativo. */
+@Serializable
+data class Need(
+    val id: Long, val name: String, val icon: String, @SerialName("est_price") val estPrice: Double,
+    @SerialName("unit_label") val unitLabel: String = "ud", @SerialName("vat_rate") val vatRate: Double = 10.0,
+    val options: List<NeedOption> = emptyList(), @SerialName("cold_chain") val coldChain: Boolean = false,
+)
+
+@Serializable
+data class Invoice(
+    val number: String, @SerialName("issued_at") val issuedAt: String, val issuer: Map<String, String> = emptyMap(),
+    @SerialName("customer_name") val customerName: String? = null, @SerialName("customer_address") val customerAddress: String? = null,
+    val suplidos: Double, val base: Double, @SerialName("vat_rate") val vatRate: Double, val vat: Double, val total: Double,
+    val hash: String = "", @SerialName("order_id") val orderId: Long = 0,
+)
+
+@Serializable
+data class RefundRequest(val id: Long, @SerialName("order_id") val orderId: Long, val reason: String, val amount: Double? = null,
+    val status: String, val note: String? = null, @SerialName("created_at") val createdAt: String)
+
+@Serializable
+data class Complaint(val id: Long, val number: String? = null, @SerialName("full_name") val fullName: String, val contact: String,
+    val subject: String, val body: String, val status: String, val response: String? = null, @SerialName("created_at") val createdAt: String,
+    @SerialName("order_id") val orderId: Long? = null)
+
+@Serializable
+data class CompanyInfo(val name: String, val nif: String, val address: String, val email: String, val series: String = "TLT")
+
+@Serializable
+data class DayCount(val day: String, val web: Int = 0, val app: Int = 0)
+@Serializable
+data class TopItem(val name: String, val source: String, val n: Int)
+@Serializable
+data class ErrorItem(val ts: String, val source: String, val name: String, val version: String? = null, val detail: kotlinx.serialization.json.JsonElement? = null)
+@Serializable
+data class AnalyticsSummary(val daily: List<DayCount> = emptyList(), val visitors: Map<String, Int> = emptyMap(),
+    val top: List<TopItem> = emptyList(), val errors: List<ErrorItem> = emptyList())
 
 @Serializable
 data class Rating(val rating: Double? = null, val count: Int = 0)
@@ -158,6 +209,10 @@ data class AdminUser(
 data class OrderItem(
     val id: Long,
     @SerialName("product_id") val productId: Long? = null,
+    @SerialName("need_id") val needId: Long? = null,
+    val detail: String? = null,
+    val products: Cold? = null,
+    val needs: Cold? = null,
     val name: String,
     @SerialName("unit_price") val unitPrice: Double,
     val qty: Int,
@@ -189,6 +244,13 @@ data class Order(
     @SerialName("is_test") val isTest: Boolean = false,
     val driver: PersonLite? = null,
     @SerialName("express_fee") val expressFee: Double = 0.0,
+    @SerialName("gestion_fee") val gestionFee: Double = 0.0,
+    @SerialName("max_total") val maxTotal: Double? = null,
+    @SerialName("ticket_path") val ticketPath: String? = null,
+    @SerialName("ticket_total") val ticketTotal: Double? = null,
+    @SerialName("final_total") val finalTotal: Double? = null,
+    @SerialName("ticket_over_max") val ticketOverMax: Boolean = false,
+    @SerialName("refund_amount") val refundAmount: Double = 0.0,
     @SerialName("scheduled_date") val scheduledDate: String? = null,
     @SerialName("scheduled_slot") val scheduledSlot: String? = null,
     @SerialName("order_reviews") val reviewRaw: JsonElement? = null,
@@ -196,6 +258,9 @@ data class Order(
     val hasReview get() = reviewRaw is JsonObject || (reviewRaw is JsonArray && reviewRaw.isNotEmpty())
     val isFinal get() = status == "entregado" || status == "cancelado"
     val isPaid get() = paymentStatus == "pagado"
+    val amount get() = finalTotal ?: total
+    val canCancel get() = status == "pendiente" || status == "aceptado"
+    val hasCold get() = items.any { it.products?.coldChain == true || it.needs?.coldChain == true }
     val driverEarnings get() = serviceFee + deliveryFee + expressFee
 }
 
@@ -213,8 +278,8 @@ data class DriverSettings(
 enum class OrderStatus(val db: String, val label: String, val clientText: String) {
     PENDIENTE("pendiente", "Recibido", "Esperando a que un repartidor lo acepte"),
     ACEPTADO("aceptado", "Aceptado", "Un repartidor se encarga de tu pedido"),
-    COMPRANDO("comprando", "Comprando", "Están haciendo tu compra en el súper"),
-    EN_CAMINO("en_camino", "En camino", "Tu compra va hacia tu casa"),
+    COMPRANDO("comprando", "En el súper", "El repartidor está haciendo tu compra"),
+    EN_CAMINO("en_camino", "En reparto", "Tu compra va hacia tu casa"),
     ENTREGADO("entregado", "Entregado", "Pedido entregado. ¡Que aproveche!"),
     CANCELADO("cancelado", "Cancelado", "Este pedido se canceló");
 
