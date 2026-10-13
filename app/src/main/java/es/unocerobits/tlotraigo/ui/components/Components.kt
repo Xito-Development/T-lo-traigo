@@ -240,26 +240,4 @@ fun Wordmark(modifier: Modifier = Modifier, width: Dp = 220.dp, text: androidx.c
 
 fun Context.openUrl(url: String) = safeStart(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
-/** Espacio publicitario identificado como tal (LSSI-CE art. 20). */
-@Composable
-fun AdBanner(modifier: Modifier = Modifier) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    Surface(
-        modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
-            .clickable { ctx.safeStartPublic(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:info@unocerobits.com?subject=Anuncio%20en%20T%20lo%20traigo"))) },
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = .4f)),
-    ) {
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Campaign, null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.onTertiaryContainer)
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text("¡TU ANUNCIO AQUÍ!", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
-                Text("Contacta con info@unocerobits.com", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
-            }
-            Text("Publicidad", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = .7f))
-        }
-    }
-}
 fun Context.safeStartPublic(i: Intent) = safeStart(i)

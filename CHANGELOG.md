@@ -2,6 +2,13 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.5.4] - 2026-10-13
+### Añadido
+- Correos de la app con diseño nuevo (código de verificación, contraseña, acceso, cambio de correo, invitación y seguridad), enviados desde tlotraigo@unocerobits.com.
+- Contacto de soporte (support@tlotraigo.unocerobits.com) y de Xito Development (xito@unocerobits.com) en la app y en la web.
+### Cambiado
+- Política de privacidad: Brevo como servicio de envío de correos.
+
 ## [0.5.3] - 2026-10-13
 ### Añadido
 - Dirección paso a paso: destinatario, teléfono, pueblo (código postal y provincia), calle y número, piso e indicaciones.

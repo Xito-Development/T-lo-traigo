@@ -325,7 +325,7 @@ fun VerifyScreen(vm: AppViewModel, email: String, mode: String, onBack: () -> Un
                                 } catch (e: ApiException) { err = e.message }
                             }
                         }, enabled = cooldown == 0) { Text(if (cooldown > 0) "Reenviar código en $cooldown s" else "Reenviar código") }
-                        Text("¿No te llega? Mira en la carpeta de correo no deseado.", style = MaterialTheme.typography.bodySmall,
+                        Text("Llega desde tlotraigo@unocerobits.com. ¿No te llega? Mira en correo no deseado o escribe a support@tlotraigo.unocerobits.com.", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                     } else {
                         Text("Elige tu nueva contraseña", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)

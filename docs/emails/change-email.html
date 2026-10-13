@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
+<title>Confirma tu nuevo correo</title></head>
+<body style="margin:0;padding:0;background:#F3F7F4;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Confirma tu nuevo correo en T lo traigo</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F7F4;">
+<tr><td align="center" style="padding:28px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:20px;overflow:hidden;font-family:'Atkinson Hyperlegible',Verdana,Arial,sans-serif;color:#1C2624;">
+  <tr><td align="center" style="background:#2E6B57;padding:28px 24px 22px;">
+    <img src="https://tlotraigo.unocerobits.com/email/logo.png" width="72" height="72" alt="" style="display:block;border:0;border-radius:50%;margin:0 auto 12px;border:3px solid #FFF8EC;">
+    <img src="https://tlotraigo.unocerobits.com/email/wordmark.png" width="200" alt="T lo traigo" style="display:block;border:0;margin:0 auto;max-width:200px;height:auto;">
+    <p style="margin:10px 0 0;font-size:14px;color:#CDE8DD;">La compra del súper, en la puerta de casa</p>
+  </td></tr>
+  <tr><td style="padding:32px 32px 8px;">
+    <h1 style="margin:0 0 12px;font-size:26px;line-height:1.2;color:#1F4D3F;">Confirma tu nuevo correo</h1>
+    <p style="margin:0 0 20px;font-size:17px;line-height:1.6;">Has pedido cambiar el correo de tu cuenta de <strong>{{ .Email }}</strong> a <strong>{{ .NewEmail }}</strong>. Escribe este código en la app para confirmarlo:</p>
+  </td></tr>
+  <tr><td style="padding:0 32px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF6E0;border:2px dashed #DE9A2A;border-radius:16px;">
+  <tr><td align="center" style="padding:20px 12px;">
+    <p style="margin:0 0 6px;font-size:13px;font-weight:bold;letter-spacing:1px;color:#7A5300;text-transform:uppercase;">Código de confirmación</p>
+    <p style="margin:0;font-family:'Courier New',monospace;font-size:38px;font-weight:bold;letter-spacing:10px;color:#1F4D3F;">{{ .Token }}</p>
+    <p style="margin:8px 0 0;font-size:13px;color:#7A5300;">Caduca en 1 hora</p>
+  </td></tr></table></td></tr>
+  <tr><td style="padding:20px 32px 8px;font-size:15px;line-height:1.6;color:#4F5D59;">Si prefieres, también puedes confirmar pulsando aquí:<br><br><table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr><td style="background:#F2B544;border-radius:14px;">
+  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:16px 30px;font-size:17px;font-weight:bold;color:#1B2428;text-decoration:none;">Confirmar el nuevo correo</a></td></tr></table></td></tr>
+  <tr><td style="padding:8px 32px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F7F4;border-radius:14px;">
+      <tr><td style="padding:14px 18px;font-size:14px;line-height:1.5;color:#4F5D59;">
+        🔒 Si no has pedido este cambio, escríbenos cuanto antes a soporte.<br>Nunca te pediremos tu contraseña ni los datos de tu tarjeta por correo.
+      </td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="background:#17382E;padding:22px 24px;font-size:13px;line-height:1.7;color:#B9C7C2;">
+    ¿Necesitas ayuda? <a href="mailto:support@tlotraigo.unocerobits.com" style="color:#F2B544;text-decoration:none;font-weight:bold;">support@tlotraigo.unocerobits.com</a><br>
+    <a href="https://tlotraigo.unocerobits.com" style="color:#FFFFFF;text-decoration:none;">tlotraigo.unocerobits.com</a> ·
+    <a href="https://tlotraigo.unocerobits.com/privacidad.html" style="color:#FFFFFF;text-decoration:none;">Privacidad</a> ·
+    <a href="https://tlotraigo.unocerobits.com/aviso-legal.html" style="color:#FFFFFF;text-decoration:none;">Aviso legal</a><br>
+    T lo traigo · UNOCEROBITS y Xito Development · León (España)<br>
+    <span style="color:#7E918B;">Correo automático enviado a {{ .Email }}. No respondas a este mensaje.</span>
+  </td></tr>
+</table></td></tr></table></body></html>

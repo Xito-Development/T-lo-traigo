@@ -4,7 +4,7 @@
 
 App Android para que las personas mayores de los pueblos de León (o sus familiares) pidan la compra del supermercado y un vecino repartidor se la lleve a casa.
 
-Desarrollada por **Xito Development** y **UNOCEROBITS** · Repositorio: [Xito-Development/T-lo-traigo](https://github.com/Xito-Development/T-lo-traigo) · info@unocerobits.com · [unocerobits.com](https://tlotraigo.unocerobits.com/)
+Desarrollada por **Xito Development** (xito@unocerobits.com) y **UNOCEROBITS** (info@unocerobits.com) · Soporte: support@tlotraigo.unocerobits.com · · Repositorio: [Xito-Development/T-lo-traigo](https://github.com/Xito-Development/T-lo-traigo) · info@unocerobits.com · [unocerobits.com](https://tlotraigo.unocerobits.com/)
 
 ## Stack
 - **Android**: Kotlin 2.0, Jetpack Compose (Material 3), `minSdk` 21 (Android 5.0), `targetSdk` 36 (Android 16).

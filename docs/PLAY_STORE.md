@@ -43,5 +43,8 @@ Vídeo para la declaración: grabar el flujo «Estoy disponible → aviso → ac
 | Ubicación precisa (solo repartidores en reparto) | Sí | Con el cliente del pedido, por acción del usuario | Funcionamiento | No (para repartir) |
 Cifrado en tránsito: sí (HTTPS). Eliminación: sí, desde la app y por correo.
 
+## Ficha
+Correo de contacto de la ficha: **support@tlotraigo.unocerobits.com** · Web: https://tlotraigo.unocerobits.com · Privacidad: https://tlotraigo.unocerobits.com/privacidad.html
+
 ## Revisión
 Facilitar a Google una cuenta de pruebas de cliente (no la del superadministrador).

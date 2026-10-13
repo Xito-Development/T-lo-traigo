@@ -1,5 +1,3 @@
-• Dirección paso a paso: destinatario, teléfono, pueblo (código postal y provincia), calle y número, piso e indicaciones.
-• Lista fácil: buscador, «Lo de siempre», más artículos (zumos, conservas, congelados, mascotas, bebé…) y «Otra cosa» con texto libre.
-• Resumen de la cesta con el desglose de cada producto.
-• El repartidor puede apuntar el precio real de cada producto; el cliente y la factura muestran si salió más caro (▲) o más barato (▼).
-• Factura visible en la app, co
+• Correos de la app con diseño nuevo (código de verificación, contraseña, acceso, cambio de correo, invitación y seguridad), enviados desde tlotraigo@unocerobits.com.
+• Contacto de soporte (support@tlotraigo.unocerobits.com) y de Xito Development (xito@unocerobits.com) en la app y en la web.
+• Política de privacidad: Brevo como servicio de envío de correos.

@@ -435,7 +435,7 @@ fun ComplaintDialog(vm: AppViewModel, orderId: Long?, onDone: (String?) -> Unit)
     var err by remember { mutableStateOf<String?>(null) }
     AlertDialog(onDismissRequest = { onDone(null) }, icon = { Icon(Icons.Filled.Feedback, null) }, title = { Text("Hoja de reclamaciones") },
         text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-            Text("Recibirás un número de reclamación y te responderemos en un plazo máximo de 10 días hábiles. También puedes usar la hoja oficial de la Junta de Castilla y León.", style = MaterialTheme.typography.bodySmall)
+            Text("Recibirás un número de reclamación y te responderemos en un plazo máximo de 10 días hábiles. También puedes escribir a support@tlotraigo.unocerobits.com o usar la hoja oficial de la Junta de Castilla y León.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Nombre y apellidos") }, singleLine = true)
             OutlinedTextField(contact, { contact = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Teléfono o correo") }, singleLine = true)
             OutlinedTextField(subject, { subject = it.take(120) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Asunto") }, singleLine = true)

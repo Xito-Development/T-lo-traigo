@@ -32,6 +32,7 @@ android {
         buildConfigField("String", "SUPABASE_KEY", "\"$supabaseKey\"")
         buildConfigField("String", "SUPPORT_PHONE", "\"+34600000000\"")
         buildConfigField("String", "CONTACT_EMAIL", "\"info@unocerobits.com\"")
+        buildConfigField("String", "SUPPORT_EMAIL", "\"support@tlotraigo.unocerobits.com\"")
         buildConfigField("String", "WEB_URL", "\"https://tlotraigo.unocerobits.com/\"")
         buildConfigField("String", "RELEASES_API", "\"https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/latest\"")
         buildConfigField("String", "PRIVACY_URL", "\"https://tlotraigo.unocerobits.com/privacidad.html\"")
