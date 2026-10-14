@@ -2,6 +2,24 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.2] - 2026-10-14
+- El administrador de la entidad recibe avisos de reclamaciones y cambios de pedidos.
+- Web: preguntas frecuentes e imagen para compartir en WhatsApp y redes.
+### Cambiado / ### Corregido
+- Doble margen superior en la pestaña «Mi entidad».
+- El botón «Atrás» de un administrador de entidad volvía a «Comprar» en lugar de a su panel.
+- En pedidos ajenos, la entidad ya no ve botones de pagar, propina ni reembolso; en el chat escribe como administración. y líneas '- ') serán las notas de la próxima versión. publicar.bat lo vacía al publicar. -->
+### Añadido
+- Mi entidad → Reclamaciones: la entidad ve y responde las hojas de reclamaciones de sus pedidos.
+- La pantalla de compra muestra los días y el horario de reparto de la entidad; en la cesta solo se pueden elegir días con reparto.
+- Web: sección «Para ayuntamientos y entidades», declaración de accesibilidad y política de privacidad ampliada (entidades, Bizum y plazos de conservación).
+### Cambiado
+- La foto del ticket es siempre obligatoria (base de la trazabilidad).
+- Condiciones actualizadas: hay que volver a aceptarlas.
+- Los administradores no ven botones de cliente (editar, cancelar, reclamar) en pedidos ajenos.
+### Corregido
+- Formas de pago, chat y tickets visibles para el administrador de la entidad en sus pedidos.
+
 ## [0.6.1] - 2026-10-14
 ### Añadido
 - Formas de pago por entidad: efectivo, Bizum al repartidor y Bizum a la entidad.

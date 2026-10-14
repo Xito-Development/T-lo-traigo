@@ -202,6 +202,8 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
     }) { pad ->
         val o = order
         Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+            val viewer = vm.profile.collectAsState().value
+            val customerView = viewer == null || !(viewer.isGestor || viewer.isAdmin) || o?.customerId == viewer.id || o?.placedBy == viewer.id
             ErrorText(err)
             if (o == null) { Loading(); return@Column }
             Text(prettyDate(o.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -219,9 +221,9 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
                     Icon(Icons.Filled.Forum, null); Spacer(Modifier.width(8.dp)); Text("Chat con el repartidor")
                 }
             }
-            if (!o.isFinal) ClaimSection(o) { scope.launch { order = Locator.repo.order(id) } }
+            if (!o.isFinal && (vm.profile.collectAsState().value?.let { !(it.isGestor || it.isAdmin) || o.customerId == it.id || o.placedBy == it.id } != false)) ClaimSection(o) { scope.launch { order = Locator.repo.order(id) } }
             if (o.awaitingPayment) Spacer(Modifier.height(4.dp))
-            if (o.status == "entregado" && o.driverId != null && !o.freeService) TipCard(o) { scope.launch { order = Locator.repo.order(id) } }
+            if (o.status == "entregado" && o.driverId != null && !o.freeService && customerView) TipCard(o) { scope.launch { order = Locator.repo.order(id) } }
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
             ItemsWithDiff(o)
@@ -239,7 +241,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             Text("Entrega: ${o.address}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(24.dp))
             o.ticketPath?.let { TicketView(o) }
-            if (o.awaitingPayment) PayNowCard(o) { scope.launch { order = Locator.repo.order(id) } }
+            if (o.awaitingPayment && customerView) PayNowCard(o) { scope.launch { order = Locator.repo.order(id) } }
             else if (o.paymentMethod == "bizum" && o.clientPaidAt != null && !o.isPaid) Text("📲 Bizum enviado. Falta que ${o.bizumName ?: "lo"} confirme el cobro.",
                 style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(bottom = 8.dp))
             val me = vm.profile.collectAsState().value
@@ -248,8 +250,10 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
                 Modifier.fillMaxWidth().padding(bottom = 8.dp)) { Icon(Icons.Filled.DoneAll, null); Spacer(Modifier.width(6.dp)); Text("Marcar como cobrado (${eur(o.amount)})") }
             else if (o.ticketTotal != null && !o.isFinal) Text(if (o.isPaid) "✓ Pagado: ${eur(o.amount)}" else "✓ Pagarás ${eur(o.amount)} en efectivo al recibirlo",
                 style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
-            if (o.canCancel) { BigButton("Editar pedido", { showEdit = true }, tonal = true, icon = Icons.Filled.EditNote); Spacer(Modifier.height(10.dp)) }
-            if (o.canCancel) BigButton("Cancelar pedido", { askCancel = true }, tonal = true, icon = Icons.Filled.Close)
+            val meP = vm.profile.collectAsState().value
+            val asCustomer = meP == null || !(meP.isGestor || meP.isAdmin) || o.customerId == meP.id || o.placedBy == meP.id
+            if (o.canCancel && asCustomer) { BigButton("Editar pedido", { showEdit = true }, tonal = true, icon = Icons.Filled.EditNote); Spacer(Modifier.height(10.dp)) }
+            if (o.canCancel && asCustomer) BigButton("Cancelar pedido", { askCancel = true }, tonal = true, icon = Icons.Filled.Close)
             else if (!o.isFinal) Text("El repartidor ya está en el súper o de camino: ya no se puede cancelar. Si hay un problema, llama al teléfono de ayuda.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (o.status == "entregado") {
@@ -257,7 +261,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
                     invoice = if (o.freeService) null else Locator.repo.invoice(id)
                     if (invoice == null) ReceiptPdf.open(ctx, o) } }, tonal = true, icon = Icons.Filled.Receipt)
                 Spacer(Modifier.height(10.dp))
-                BigButton("Solicitar reembolso", { showRefund = true }, tonal = true, icon = Icons.Filled.CurrencyExchange)
+                if (customerView) BigButton("Solicitar reembolso", { showRefund = true }, tonal = true, icon = Icons.Filled.CurrencyExchange)
             }
             if (o.refundAmount > 0) Text("Reembolso: ${eur(o.refundAmount)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             info?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary) }

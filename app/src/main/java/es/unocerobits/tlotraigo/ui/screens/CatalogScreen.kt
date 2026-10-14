@@ -242,12 +242,20 @@ private fun OrgWelcome(vm: AppViewModel) {
     var org by remember { mutableStateOf<Organization?>(null) }
     LaunchedEffect(orgId) { org = runCatching { Locator.repo.organization(orgId) }.getOrNull() }
     val o = org ?: return
-    if (o.welcomeMessage.isNullOrBlank() && o.publicPhone.isNullOrBlank() && o.acceptingOrders) return
+
+    val bc = o.brandColor?.let { brand(it) }
     Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp), colors = CardDefaults.cardColors(
-        if (o.acceptingOrders) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.errorContainer)) {
+        if (!o.acceptingOrders) MaterialTheme.colorScheme.errorContainer else bc ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+        if (!o.acceptingOrders) MaterialTheme.colorScheme.onErrorContainer else if (bc != null) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurface)) {
         Column(Modifier.padding(14.dp)) {
-            Text(o.name, style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                o.logoUrl?.let { coil.compose.AsyncImage(it, null, Modifier.size(44.dp).clip(MaterialTheme.shapes.small)); Spacer(Modifier.width(10.dp)) }
+                Column { Text("Servicio de", style = MaterialTheme.typography.labelMedium); Text(o.name, style = MaterialTheme.typography.titleMedium) }
+            }
             if (!o.acceptingOrders) Text("Ahora mismo no se aceptan pedidos.", style = MaterialTheme.typography.bodyMedium)
+            val days = listOf("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+            Text("Reparto: ${if (o.deliveryDays.size == 7) "todos los días" else o.deliveryDays.sorted().joinToString(", ") { days[it - 1] }} · de ${o.openHour}:00 a ${o.closeHour}:00",
+                style = MaterialTheme.typography.bodySmall)
             o.welcomeMessage?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             o.publicPhone?.takeIf { it.isNotBlank() }?.let { p -> TextButton({ ctx.dial(p) }) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Llamar: $p") } }
         }

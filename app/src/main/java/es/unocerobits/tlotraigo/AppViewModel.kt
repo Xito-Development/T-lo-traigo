@@ -17,7 +17,7 @@ sealed interface Boot {
 }
 
 /** Versión de las condiciones/privacidad vigentes. Al cambiarla, todos deben volver a aceptarlas. */
-const val TERMS_VERSION = "2026-10-2"
+const val TERMS_VERSION = "2026-10-3"
 
 class AppViewModel : ViewModel() {
     private val repo = Locator.repo

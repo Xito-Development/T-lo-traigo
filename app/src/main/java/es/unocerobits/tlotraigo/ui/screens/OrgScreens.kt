@@ -25,6 +25,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 
+/** Colores de marca disponibles para las entidades (contraste suficiente con texto blanco). */
+val brandColors = listOf("#2E6B57", "#1F5F8B", "#7A3E9D", "#B23A48", "#C4661F", "#3C5A14", "#37474F", "#00796B")
+fun brand(hex: String) = runCatching { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(androidx.compose.ui.graphics.Color(0xFF2E6B57))
+
 /** ¿El usuario actual es superadministrador? (para mostrar los ajustes de suscripción) */
 val LocalIsSuper = staticCompositionLocalOf { false }
 
@@ -118,7 +122,7 @@ fun AdminOrgs(vm: AppViewModel, onOpen: (Long) -> Unit) {
 // =================== Panel de la entidad (administrador de localidad) ===================
 private enum class OTab(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     RESUMEN("Resumen", Icons.Filled.Dashboard), PEDIDOS("Pedidos", Icons.Filled.ReceiptLong), REPARTIDORES("Repartidores", Icons.Filled.DeliveryDining),
-    ZONAS("Pueblos", Icons.Filled.Map), INVITAR("Invitar", Icons.Filled.PersonAdd), INFORME("Informe", Icons.Filled.Assessment), AJUSTES("Ajustes", Icons.Filled.Tune)
+    ZONAS("Pueblos", Icons.Filled.Map), RECLAMACIONES("Reclamaciones", Icons.Filled.Feedback), INVITAR("Invitar", Icons.Filled.PersonAdd), INFORME("Informe", Icons.Filled.Assessment), AJUSTES("Ajustes", Icons.Filled.Tune)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -130,7 +134,11 @@ fun OrgPanel(vm: AppViewModel, orgId: Long, onBack: (() -> Unit)? = null, onOrde
     var reload by remember { mutableIntStateOf(0) }
     LaunchedEffect(orgId, reload) { while (true) { org = runCatching { Locator.repo.organization(orgId) }.getOrNull(); ov = runCatching { Locator.repo.orgOverview(orgId) }.getOrNull(); delay(30_000) } }
     Column(Modifier.fillMaxSize()) {
-        TopAppBar({ Text(org?.name ?: "Mi entidad", maxLines = 1) }, navigationIcon = { onBack?.let { IconButton(it) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } } })
+        TopAppBar({ Text(org?.name ?: "Mi entidad", maxLines = 1) }, navigationIcon = { onBack?.let { IconButton(it) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } } },
+            windowInsets = if (onBack == null) WindowInsets(0) else TopAppBarDefaults.windowInsets,
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = org?.brandColor?.let { brand(it) } ?: MaterialTheme.colorScheme.surface,
+                titleContentColor = if (org?.brandColor != null) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurface,
+                navigationIconContentColor = if (org?.brandColor != null) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurface))
         ScrollableTabRow(tab.ordinal, edgePadding = 8.dp) { OTab.entries.forEach { t -> Tab(tab == t, { tab = t }, text = { Text(t.label) }, icon = { Icon(t.icon, null) }) } }
         val o = org; val v = ov
         if (o == null || v == null) { Loading(); return@Column }
@@ -143,6 +151,7 @@ fun OrgPanel(vm: AppViewModel, orgId: Long, onBack: (() -> Unit)? = null, onOrde
             OTab.ZONAS -> OrgTowns(o, v) { reload++ }
             OTab.INVITAR -> OrgInvites(o)
             OTab.INFORME -> OrgReportTab(o)
+            OTab.RECLAMACIONES -> OrgComplaints()
             OTab.AJUSTES -> OrgSettings(o) { reload++ }
         }
     }
@@ -299,9 +308,21 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
         OutlinedTextField(x.publicPhone.orEmpty(), { x = x.copy(publicPhone = it) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Teléfono de atención (lo ven los usuarios)") }, singleLine = true)
         OutlinedTextField(x.welcomeMessage.orEmpty(), { x = x.copy(welcomeMessage = it.take(300)) }, Modifier.fillMaxWidth().padding(top = 6.dp),
             label = { Text("Mensaje para los usuarios") }, placeholder = { Text("Ej.: Servicio municipal gratuito para mayores de 65 años") }, minLines = 2)
+        SectionTitle("Imagen de la entidad")
+        Text("Color y logo que verán tus usuarios en la pantalla de compra.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+            (listOf(null) + brandColors).forEach { c ->
+                Surface(Modifier.size(40.dp).clickable { x = x.copy(brandColor = c) }, shape = androidx.compose.foundation.shape.CircleShape,
+                    color = c?.let { brand(it) } ?: MaterialTheme.colorScheme.surfaceContainerHighest,
+                    border = if (x.brandColor == c) androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface) else null) {
+                    if (c == null) Box(contentAlignment = Alignment.Center) { Text("—") }
+                }
+            }
+        }
+        OutlinedTextField(x.logoUrl.orEmpty(), { x = x.copy(logoUrl = it.trim()) }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text("Enlace del logo (https://…, opcional)") }, singleLine = true)
+        x.logoUrl?.takeIf { it.startsWith("https://") }?.let { coil.compose.AsyncImage(it, "Logo", Modifier.padding(top = 6.dp).size(64.dp)) }
         SectionTitle("Pedidos")
         sw("Aceptar pedidos", "Desactívalo para pausar el servicio (vacaciones, festivos…)", x.acceptingOrders) { x = x.copy(acceptingOrders = it) }
-        sw("Foto del ticket obligatoria", "El repartidor no puede salir sin subir el ticket", x.requireTicket) { x = x.copy(requireTicket = it) }
         NumField("Máximo de artículos por pedido", x.maxItems.toString(), "uds", Modifier.fillMaxWidth()) { x = x.copy(maxItems = it.filter(Char::isDigit).toIntOrNull() ?: x.maxItems) }
         SectionTitle("Horario y días de reparto")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -337,8 +358,9 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
                 msg = try {
                     Locator.repo.updateOrganization(o.id, buildJsonObject {
                         put("name", x.name); put("public_phone", x.publicPhone.orEmpty()); put("welcome_message", x.welcomeMessage.orEmpty())
-                        put("accepting_orders", x.acceptingOrders); put("require_ticket", x.requireTicket); put("allow_cash", x.allowCash); put("show_prices", x.showPrices)
+                        put("accepting_orders", x.acceptingOrders); put("allow_cash", x.allowCash); put("show_prices", x.showPrices)
                         put("max_items", x.maxItems); put("products_payment", x.productsPayment)
+                        put("brand_color", x.brandColor.orEmpty()); put("logo_url", x.logoUrl?.takeIf { it.startsWith("https://") }.orEmpty())
                         put("allow_bizum_driver", x.allowBizumDriver); put("allow_bizum_org", x.allowBizumOrg)
                         put("bizum_org_phone", x.bizumOrgPhone.orEmpty()); put("bizum_org_name", x.bizumOrgName.orEmpty())
                         if (isSuper) { put("fees_mode", x.feesMode); put("price_month", x.priceMonth); put("plan", x.plan); put("billing_email", x.billingEmail.orEmpty())
@@ -440,5 +462,29 @@ object ReportExport {
         doc.finishPage(page)
         val f = java.io.File(java.io.File(ctx.cacheDir, "facturas").apply { mkdirs() }, "Informe_${r.month}.pdf"); f.outputStream().use { doc.writeTo(it) }; doc.close()
         share(ctx, f, "application/pdf", true)
+    }
+}
+
+/** Hojas de reclamaciones de los pedidos de la entidad (la entidad es quien presta el servicio y debe responder). */
+@Composable
+private fun OrgComplaints() {
+    val scope = rememberCoroutineScope()
+    var list by remember { mutableStateOf<List<Complaint>?>(null) }
+    var reload by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reload) { while (true) { list = runCatching { Locator.repo.complaints() }.getOrDefault(list ?: emptyList()); delay(30_000) } }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+        item { Text("Responde en un máximo de 10 días hábiles. La respuesta queda registrada.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        val l = list
+        if (l == null) item { Loading() } else if (l.isEmpty()) item { Message(Icons.Filled.Feedback, "No hay reclamaciones") }
+        else items(l, key = { it.id }) { c ->
+            var ans by remember(c.id) { mutableStateOf(c.response.orEmpty()) }
+            Card(Modifier.fillMaxWidth().padding(vertical = 5.dp)) { Column(Modifier.padding(14.dp)) {
+                Text("${c.number} · ${c.status}", style = MaterialTheme.typography.titleMedium)
+                Text("${c.fullName} · ${c.contact}${c.orderId?.let { " · pedido nº $it" } ?: ""} · ${prettyDate(c.createdAt)}", style = MaterialTheme.typography.bodySmall)
+                Text(c.subject, style = MaterialTheme.typography.titleSmall); Text(c.body)
+                OutlinedTextField(ans, { ans = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Respuesta") }, minLines = 2)
+                Button({ scope.launch { runCatching { Locator.repo.answerComplaint(c.id, ans) }; reload++ } }, enabled = ans.isNotBlank()) { Text("Guardar respuesta") }
+            } }
+        }
     }
 }

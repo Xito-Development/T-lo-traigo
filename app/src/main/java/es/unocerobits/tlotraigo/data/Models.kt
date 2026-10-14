@@ -168,6 +168,7 @@ data class Organization(
     @SerialName("price_month") val priceMonth: Double = 0.0, @SerialName("billing_email") val billingEmail: String? = null,
     @SerialName("allow_bizum_driver") val allowBizumDriver: Boolean = true, @SerialName("allow_bizum_org") val allowBizumOrg: Boolean = false,
     @SerialName("bizum_org_phone") val bizumOrgPhone: String? = null, @SerialName("bizum_org_name") val bizumOrgName: String? = null,
+    @SerialName("brand_color") val brandColor: String? = null, @SerialName("logo_url") val logoUrl: String? = null,
 )
 @Serializable
 data class ReportCount(val town: String? = null, val driver: String? = null, val n: Int = 0, val delivered: Int = 0)

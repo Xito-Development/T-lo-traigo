@@ -53,6 +53,9 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     var notice by remember { mutableStateOf<String?>(null) }
     var confirm by remember { mutableStateOf(false) }
     var cardOn by remember { mutableStateOf(false) }
+    // Días de reparto de la entidad del pueblo (los demás días no se pueden elegir)
+    var orgDays by remember { mutableStateOf<List<Int>?>(null) }
+    LaunchedEffect(target?.orgId) { orgDays = target?.orgId?.let { runCatching { Locator.repo.organization(it)?.deliveryDays }.getOrNull() } }
     LaunchedEffect(Unit) { cardOn = runCatching { Locator.repo.fees().cardEnabled }.getOrDefault(false); if (!cardOn && method == PayMethod.CARD) method = PayMethod.CASH }
     LaunchedEffect(quote?.allowCash, quote?.allowBizum) { if (quote?.allowCash == false && quote?.allowBizum == true) method = PayMethod.BIZUM }
     var payConfirm by remember { mutableStateOf(false) }
@@ -161,7 +164,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     items((0L..14L).toList()) { d ->
                         val day = today.plusDays(d)
                         val label = when (d) { 0L -> "Hoy"; 1L -> "Mañana"; else -> day.format(chipFmt).replaceFirstChar { it.uppercase() } }
-                        FilterChip(date == day, { date = day; if (slot == null) slot = "manana" }, { Text(label) })
+                        val open = day.dayOfWeek.value in (orgDays ?: (1..7).toList())
+                        FilterChip(date == day, { date = day; if (slot == null) slot = "manana" }, { Text(label) }, enabled = open)
                     }
                 }
                 AnimatedVisibility(date != null) {

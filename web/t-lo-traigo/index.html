@@ -11,7 +11,10 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta property="og:title" content="T lo traigo">
 <meta property="og:description" content="La compra del súper, en la puerta de casa. Empezamos en Villaquejida y pueblos de alrededor.">
-<meta property="og:image" content="https://tlotraigo.unocerobits.com/icon-512.png">
+<meta property="og:image" content="https://tlotraigo.unocerobits.com/og-image.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://tlotraigo.unocerobits.com/"><meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tlotraigo.unocerobits.com/">
 <link rel="preload" href="fonts/baloo2-800.woff2" as="font" type="font/woff2" crossorigin>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"MobileApplication","name":"T lo traigo","operatingSystem":"Android 5.0+","applicationCategory":"ShoppingApplication","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"author":[{"@type":"Organization","name":"Xito Development"},{"@type":"Organization","name":"UNOCEROBITS","url":"https://unocerobits.com","email":"info@unocerobits.com"}],"areaServed":"Villaquejida y pueblos de la Vega del Esla, León"}</script>
@@ -257,7 +260,13 @@ img,svg,canvas{max-width:100%}
 :root[data-theme="dark"] a{color:#8FD3B6} :root[data-theme="dark"] .btn-main{color:#1B2428} :root[data-theme="dark"] footer a{color:#fff}
 #themeBtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;width:42px;height:42px;font-size:1.1rem;cursor:pointer;margin-left:1rem}
 #themeBtn:hover{border-color:var(--mostaza)}
+details{background:#fff;border:2px solid var(--linea);border-radius:var(--r);padding:1rem 1.2rem;margin:.7rem 0;max-width:800px}
+details summary{cursor:pointer;font:800 1.15rem var(--f-title);color:var(--pino-hondo);list-style:none}
+details summary::after{content:"+";float:right;transition:transform .3s}
+details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem;color:var(--gris)}
+:root[data-theme="dark"] details{background:#1C2723;border-color:var(--linea)}
 </style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto cuesta para el usuario?", "acceptedAnswer": {"@type": "Answer", "text": "Depende de la entidad de tu pueblo: muchas lo ofrecen gratis y solo pagas lo que marque el ticket del súper. Antes de pedir siempre ves el importe estimado."}}, {"@type": "Question", "name": "¿Cómo se paga la compra?", "acceptedAnswer": {"@type": "Answer", "text": "En efectivo al recibirla o por Bizum desde la app de tu banco, según lo que ofrezca tu entidad. La app no guarda datos bancarios."}}, {"@type": "Question", "name": "¿Y si el precio cambia en el súper?", "acceptedAnswer": {"@type": "Answer", "text": "Los precios son orientativos: el repartidor hace una foto del ticket y pagas el importe real, que ves en la app antes de que salga hacia tu casa."}}, {"@type": "Question", "name": "¿Puede pedir mi hijo o mi hija por mí?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Con el código de seis cifras de tu app, un familiar puede hacer los pedidos desde su móvil y seguirlos."}}, {"@type": "Question", "name": "¿Qué pasa si el pedido no llega?", "acceptedAnswer": {"@type": "Answer", "text": "Desde la app puedes reclamarlo: hay un plazo de 6 horas para entregarlo, y un botón para llamar al 112 si hay una emergencia."}}, {"@type": "Question", "name": "Soy un ayuntamiento o una asociación, ¿cómo empiezo?", "acceptedAnswer": {"@type": "Answer", "text": "Escríbenos a info@unocerobits.com: creamos tu entidad, te enviamos un código y configuras pueblos, repartidores, horarios y formas de pago desde tu panel."}}]}</script>
 </head>
 <body>
 <div id="progress"></div>
@@ -269,6 +278,7 @@ img,svg,canvas{max-width:100%}
       <a href="#mayores">Para mayores</a>
       <a href="#precios">Precios</a>
       <a href="#pueblos">Pueblos</a>
+      <a href="#entidades">Entidades</a>
       <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk" style="padding:.55rem 1.1rem;margin-left:1.5rem">Descargar</a>
       <button id="themeBtn" type="button" aria-label="Cambiar entre modo claro y oscuro">🌙</button>
     </nav>
@@ -428,6 +438,31 @@ img,svg,canvas{max-width:100%}
     </div>
   </section>
 
+  <section class="light" id="entidades">
+    <div class="wrap">
+      <h2 class="rv" data-k="ent.titulo">Para ayuntamientos y entidades</h2>
+      <p class="rv" data-k="ent.texto">T lo traigo es una plataforma que contrata tu entidad (ayuntamiento, asociación, residencia o tienda) para ofrecer a tus mayores un servicio de compra a domicilio con trazabilidad completa. Tú decides los pueblos, los repartidores, el horario, las formas de pago y si es gratuito para el usuario.</p>
+      <ul class="feats st" style="margin-top:1.5rem;color:var(--texto)">
+        <li><div><h3 data-k="ent.f1.t">Trazabilidad y confianza</h3><p data-k="ent.f1.d">Foto del ticket, seguimiento, chat, reclamaciones con plazo de 6 horas y justificante de cada pedido.</p></div></li>
+        <li><div><h3 data-k="ent.f2.t">Panel propio</h3><p data-k="ent.f2.d">Pedidos en directo, repartidores, pueblos, códigos de invitación y ajustes del servicio.</p></div></li>
+        <li><div><h3 data-k="ent.f3.t">Informe mensual</h3><p data-k="ent.f3.d">Pedidos, tiempos, cobros y reclamaciones en PDF y Excel para justificar el servicio.</p></div></li>
+        <li><div><h3 data-k="ent.f4.t">Sin manejar dinero</h3><p data-k="ent.f4.d">Efectivo o Bizum directamente entre usuario, repartidor y entidad. Cuota mensual sencilla.</p></div></li>
+      </ul>
+      <a class="btn btn-ink rv" href="mailto:info@unocerobits.com?subject=Demo%20de%20T%20lo%20traigo%20para%20mi%20entidad" style="margin-top:1.5rem">Solicitar una demostración</a>
+    </div>
+  </section>
+
+  <section class="mist" id="faq">
+    <div class="wrap"><h2 class="rv">Preguntas frecuentes</h2>
+<details class="rv"><summary>¿Cuánto cuesta para el usuario?</summary><p>Depende de la entidad de tu pueblo: muchas lo ofrecen gratis y solo pagas lo que marque el ticket del súper. Antes de pedir siempre ves el importe estimado.</p></details>
+<details class="rv"><summary>¿Cómo se paga la compra?</summary><p>En efectivo al recibirla o por Bizum desde la app de tu banco, según lo que ofrezca tu entidad. La app no guarda datos bancarios.</p></details>
+<details class="rv"><summary>¿Y si el precio cambia en el súper?</summary><p>Los precios son orientativos: el repartidor hace una foto del ticket y pagas el importe real, que ves en la app antes de que salga hacia tu casa.</p></details>
+<details class="rv"><summary>¿Puede pedir mi hijo o mi hija por mí?</summary><p>Sí. Con el código de seis cifras de tu app, un familiar puede hacer los pedidos desde su móvil y seguirlos.</p></details>
+<details class="rv"><summary>¿Qué pasa si el pedido no llega?</summary><p>Desde la app puedes reclamarlo: hay un plazo de 6 horas para entregarlo, y un botón para llamar al 112 si hay una emergencia.</p></details>
+<details class="rv"><summary>Soy un ayuntamiento o una asociación, ¿cómo empiezo?</summary><p>Escríbenos a info@unocerobits.com: creamos tu entidad, te enviamos un código y configuras pueblos, repartidores, horarios y formas de pago desde tu panel.</p></details>
+    </div>
+  </section>
+
   <section class="mist get" id="descargar">
     <div class="wrap">
       <h2 class="rv" data-k="descargar.titulo">Descárgala gratis</h2>
@@ -453,7 +488,7 @@ img,svg,canvas{max-width:100%}
         </div>
       </div>
       <div><h3>Contacto</h3><p><a href="mailto:info@unocerobits.com">info@unocerobits.com</a><br>Soporte: <a href="mailto:support@tlotraigo.unocerobits.com">support@tlotraigo.unocerobits.com</a><br>Xito Development: <a href="mailto:xito@unocerobits.com">xito@unocerobits.com</a><br><a href="https://unocerobits.com">unocerobits.com</a></p></div>
-      <div><h3>Legal</h3><p><a href="aviso-legal.html">Aviso legal</a><br><a href="condiciones.html">Condiciones de uso</a><br><a href="repartidores.html">Condiciones para repartidores</a><br><a href="privacidad.html">Privacidad</a> · <a href="privacidad.html#eliminar">Eliminar cuenta</a><br><a href="politica-cookies.html">Cookies</a> · <a href="#" id="cookieCfg">Configurar cookies</a> · <a href="reclamaciones.html">Reclamaciones</a></p></div>
+      <div><h3>Legal</h3><p><a href="aviso-legal.html">Aviso legal</a><br><a href="condiciones.html">Condiciones de uso</a><br><a href="repartidores.html">Condiciones para repartidores</a><br><a href="privacidad.html">Privacidad</a> · <a href="privacidad.html#eliminar">Eliminar cuenta</a><br><a href="accesibilidad.html">Accesibilidad</a><br><a href="politica-cookies.html">Cookies</a> · <a href="#" id="cookieCfg">Configurar cookies</a> · <a href="reclamaciones.html">Reclamaciones</a></p></div>
     </div>
     <p class="legal">© 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.</p>
   </div>

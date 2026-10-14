@@ -1,6 +1,5 @@
-• Formas de pago por entidad: efectivo, Bizum al repartidor y Bizum a la entidad.
-• Con Bizum, el usuario ve importe, número y concepto con botones para copiar y confirma el envío; el repartidor o la entidad confirma el cobro.
-• Número de Bizum del repartidor en sus Ajustes.
-• Estado del cobro en cada pedido y en el informe mensual (cobrado en efectivo, por Bizum y pendiente), también en el Excel.
-• Botón «Marcar como cobrado» para administradores de la entidad.
-• Al marcar u
+• El administrador de la entidad recibe avisos de reclamaciones y cambios de pedidos.
+• Web: preguntas frecuentes e imagen para compartir en WhatsApp y redes.
+• Doble margen superior en la pestaña «Mi entidad».
+• El botón «Atrás» de un administrador de entidad volvía a «Comprar» en lugar de a su panel.
+• En pedidos ajenos, la entidad ya no ve botones de pagar, propina ni reembolso; en el chat escribe como administración. y líneas '- ') serán las notas de la próxima versión. p

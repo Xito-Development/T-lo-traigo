@@ -42,7 +42,7 @@ val LocalOpenChat = staticCompositionLocalOf<(Long) -> Unit> { {} }
 @Composable
 fun ChatScreen(vm: AppViewModel, orderId: Long, onBack: () -> Unit) {
     val me = vm.profile.collectAsState().value
-    val myRole = if (me?.isDriver == true || vm.driverView.collectAsState().value) "repartidor" else "cliente"
+    val myRole = when { me?.isDriver == true || vm.driverView.collectAsState().value -> "repartidor"; me?.isGestor == true || me?.isAdmin == true -> "admin"; else -> "cliente" }
     var msgs by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
     var text by remember { mutableStateOf("") }
     var err by remember { mutableStateOf<String?>(null) }

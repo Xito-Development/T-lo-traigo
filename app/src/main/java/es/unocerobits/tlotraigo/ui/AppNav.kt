@@ -105,7 +105,8 @@ private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> 
     val isAdmin = prof?.isAdmin == true
     val isGestor = prof?.isGestor == true
     var tab by rememberSaveable { mutableStateOf(if (isGestor) Tab.ENTIDAD else Tab.COMPRAR) }
-    BackHandler(tab != Tab.COMPRAR) { tab = Tab.COMPRAR }
+    val home = if (isGestor) Tab.ENTIDAD else Tab.COMPRAR
+    BackHandler(tab != home) { tab = home }
     val lines by vm.cart.lines.collectAsState()
     val count = lines.values.sumOf { it.qty }
     val total = lines.values.sumOf { it.total }
