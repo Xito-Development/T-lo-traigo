@@ -2,6 +2,19 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.0] - 2026-10-14
+### Añadido
+- Entidades (modelo de suscripción): el superadministrador crea entidades (ayuntamientos, asociaciones, tiendas) y envía un código a su administrador.
+- Panel «Mi entidad» para el administrador de localidad: aceptar o pausar pedidos, pueblos, repartidores, códigos de invitación, horario, días y reglas del servicio.
+- Códigos de invitación para administradores, repartidores y usuarios (en Ajustes, en la bienvenida o con el enlace de la web).
+- Mensaje y teléfono de la entidad en la pantalla de compra.
+- Servicio «gratis para el usuario» por entidad: sin tarifas ni propinas; la compra la paga el usuario en efectivo o la gestiona la entidad.
+- Informe mensual de la entidad (totales, pueblos, repartidores, tiempos y reclamaciones) en PDF y Excel (CSV).
+- Justificante en PDF de cada pedido en los servicios gratuitos.
+- Suscripción de cada entidad (plan, cuota, «pagada hasta»), con desactivación automática a los 7 días de vencer.
+### Cambiado
+- El horario, los días de reparto, el ticket obligatorio y el máximo de artículos los decide cada entidad.
+
 ## [0.5.5] - 2026-10-13
 ### Añadido
 - Lista fácil: escribe o dicta por voz tu lista («2 litros de leche, pan y 6 huevos») y se añade sola a la cesta.

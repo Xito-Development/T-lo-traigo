@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         es.unocerobits.tlotraigo.data.ChatNotifier.start(this)
         intent?.getLongExtra("chat", 0L)?.takeIf { it > 0 }?.let { vm.openChat.value = it }
+        intent?.data?.takeIf { it.host == "unirse" }?.getQueryParameter("c")?.let { vm.inviteCode.value = it }
         setContent {
             val settings by vm.settings.collectAsState()
             val dark = settings.mode.isDark(isSystemInDarkTheme())
@@ -59,5 +60,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         intent.getLongExtra("chat", 0L).takeIf { it > 0 }?.let { vm.openChat.value = it }
+        intent.data?.takeIf { it.host == "unirse" }?.getQueryParameter("c")?.let { vm.inviteCode.value = it }
     }
 }

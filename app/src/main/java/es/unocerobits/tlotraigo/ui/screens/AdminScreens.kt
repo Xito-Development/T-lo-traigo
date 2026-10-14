@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 private enum class ASec(val label: String, val superOnly: Boolean = false) {
-    PRODUCTOS("Productos"), LISTA("Lista fácil"), TARIFAS("Tarifas"), ESTADISTICAS("Estadísticas"), REEMBOLSOS("Reembolsos"),
+    ENTIDADES("Entidades", true), PRODUCTOS("Productos"), LISTA("Lista fácil"), TARIFAS("Tarifas"), ESTADISTICAS("Estadísticas"), REEMBOLSOS("Reembolsos"),
     RECLAMACIONES("Reclamaciones"), OPINIONES("Opiniones"), EMPRESA("Facturación", true),
     REPARTIDORES("Repartidores", true), USUARIOS("Usuarios", true)
 }
@@ -65,6 +65,7 @@ fun AdminHome(vm: AppViewModel, onEditProduct: (Long?) -> Unit) {
                 ASec.TARIFAS -> AdminFees()
                 ASec.OPINIONES -> AdminReviews()
                 ASec.LISTA -> AdminNeeds()
+                ASec.ENTIDADES -> AdminOrgs(vm, LocalOpenOrg.current)
                 ASec.ESTADISTICAS -> AdminStats()
                 ASec.REEMBOLSOS -> AdminRefunds()
                 ASec.RECLAMACIONES -> AdminComplaints()
@@ -280,7 +281,7 @@ private fun BreakRow(label: String, v: Double, strong: Boolean = false) = Row(Mo
 
 // ---------------- Tarifas ----------------
 @Composable
-private fun NumField(label: String, value: String, suffix: String, modifier: Modifier = Modifier, onChange: (String) -> Unit) =
+fun NumField(label: String, value: String, suffix: String, modifier: Modifier = Modifier, onChange: (String) -> Unit) =
     OutlinedTextField(value, { onChange(it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(8)) }, modifier, label = { Text(label) },
         suffix = { Text(suffix) }, singleLine = true, isError = parseNum(value) == null, shape = MaterialTheme.shapes.medium,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))

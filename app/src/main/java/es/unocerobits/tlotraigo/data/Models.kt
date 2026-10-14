@@ -62,6 +62,7 @@ data class Profile(
     @SerialName("link_code") val linkCode: String? = null,
     @SerialName("terms_version") val termsVersion: String? = null,
     val usage: String? = null,
+    @SerialName("org_id") val orgId: Long? = null,
     @SerialName("recipient_name") val recipientName: String? = null,
     val street: String? = null,
     @SerialName("street_number") val streetNumber: String? = null,
@@ -74,6 +75,7 @@ data class Profile(
     val firstName get() = fullName.trim().substringBefore(' ').ifBlank { "" }
     val isDriver get() = role == "repartidor"
     val isAdmin get() = role == "admin" || role == "superadmin"
+    val isGestor get() = role == "gestor"
     val isSuper get() = role == "superadmin"
 }
 
@@ -129,6 +131,9 @@ data class Quote(
     @SerialName("margin_pct") val marginPct: Double = 15.0,
     val extras: List<QuoteExtra> = emptyList(),
     @SerialName("payout_mode") val payoutMode: String = "gastos",
+    @SerialName("fees_mode") val feesMode: String = "tarifas",
+    @SerialName("products_payment") val productsPayment: String = "efectivo",
+    @SerialName("org_name") val orgName: String? = null,
     @SerialName("extra_total") val extraTotal: Double = 0.0,
     val total: Double = 0.0,
     val town: String = "",
@@ -146,6 +151,39 @@ data class Review(
 
 @Serializable
 data class DriverLocation(val lat: Double, val lng: Double, @SerialName("updated_at") val updatedAt: String)
+
+@Serializable
+data class Organization(
+    val id: Long, val name: String, val kind: String = "otra", @SerialName("contact_name") val contactName: String? = null,
+    @SerialName("contact_email") val contactEmail: String? = null, @SerialName("contact_phone") val contactPhone: String? = null,
+    val active: Boolean = true, val plan: String = "piloto", @SerialName("subscription_until") val subscriptionUntil: String? = null,
+    @SerialName("accepting_orders") val acceptingOrders: Boolean = true, @SerialName("open_hour") val openHour: Int = 9, @SerialName("close_hour") val closeHour: Int = 22,
+    @SerialName("delivery_days") val deliveryDays: List<Int> = listOf(1, 2, 3, 4, 5, 6), @SerialName("welcome_message") val welcomeMessage: String? = null,
+    @SerialName("public_phone") val publicPhone: String? = null, @SerialName("require_ticket") val requireTicket: Boolean = true,
+    @SerialName("allow_cash") val allowCash: Boolean = true, @SerialName("show_prices") val showPrices: Boolean = true,
+    @SerialName("max_items") val maxItems: Int = 60, @SerialName("auto_approve_drivers") val autoApproveDrivers: Boolean = true,
+    @SerialName("fees_mode") val feesMode: String = "gratuito", @SerialName("products_payment") val productsPayment: String = "efectivo",
+    @SerialName("price_month") val priceMonth: Double = 0.0, @SerialName("billing_email") val billingEmail: String? = null,
+)
+@Serializable
+data class ReportCount(val town: String? = null, val driver: String? = null, val n: Int = 0, val delivered: Int = 0)
+@Serializable
+data class ReportRow(val id: Long, val created: String, val town: String = "", val customer: String? = null, val driver: String? = null, val status: String,
+    val items: Int = 0, val ticket: Double? = null, val claimed: Boolean = false, @SerialName("delivered_at") val deliveredAt: String? = null)
+@Serializable
+data class OrgReport(val org: String = "", val month: String = "", val total: Int = 0, val delivered: Int = 0, val cancelled: Int = 0, val claims: Int = 0,
+    @SerialName("avg_hours") val avgHours: Double? = null, val tickets: Double = 0.0, val users: Int = 0,
+    @SerialName("by_town") val byTown: List<ReportCount> = emptyList(), @SerialName("by_driver") val byDriver: List<ReportCount> = emptyList(), val rows: List<ReportRow> = emptyList())
+@Serializable
+data class OrgDriver(val id: String, val name: String = "", val phone: String? = null, val approved: Boolean = false, val available: Boolean = false)
+@Serializable
+data class OrgPerson(val id: String, val name: String = "", val phone: String? = null)
+@Serializable
+data class OrgOverview(val today: Int = 0, val active: Int = 0, @SerialName("month_delivered") val monthDelivered: Int = 0, val claims: Int = 0,
+    val clients: Int = 0, val drivers: List<OrgDriver> = emptyList(), val gestores: List<OrgPerson> = emptyList(), val towns: List<Town> = emptyList())
+@Serializable
+data class OrgInvite(val code: String, val role: String, val note: String? = null, @SerialName("max_uses") val maxUses: Int = 1, val uses: Int = 0,
+    @SerialName("expires_at") val expiresAt: String = "")
 
 @Serializable
 data class Cold(@SerialName("cold_chain") val coldChain: Boolean = false)
@@ -281,6 +319,8 @@ data class Order(
     @SerialName("extra_fee") val extraFee: Double = 0.0,
     @SerialName("driver_payout") val driverPayout: Double? = null,
     @SerialName("tip_amount") val tipAmount: Double = 0.0,
+    @SerialName("free_service") val freeService: Boolean = false,
+    @SerialName("updated_at") val updatedAt: String = "",
     @SerialName("tip_status") val tipStatus: String = "ninguna",
     @SerialName("tip_method") val tipMethod: String? = null,
     @SerialName("claimed_at") val claimedAt: String? = null,

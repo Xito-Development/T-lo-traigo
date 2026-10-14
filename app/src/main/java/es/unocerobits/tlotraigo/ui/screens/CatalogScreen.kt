@@ -85,6 +85,7 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit, onNeeds: () -> Unit 
                 )
             }
         }
+        item { OrgWelcome(vm) }
         item {
             Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp).clickable(onClick = onNeeds), shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primary)) {
@@ -229,6 +230,26 @@ private fun ProductSheet(p: Product, qty: Int, onAdd: () -> Unit, onRemove: () -
             Spacer(Modifier.height(20.dp))
             if (qty > 0) Row(verticalAlignment = Alignment.CenterVertically) { Text("En tu cesta:", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); QtyStepper(qty, onRemove, onAdd) }
             else BigButton("Añadir a la cesta", onAdd, icon = Icons.Filled.AddShoppingCart)
+        }
+    }
+}
+
+/** Mensaje y teléfono de la entidad que presta el servicio en el pueblo del usuario. */
+@Composable
+private fun OrgWelcome(vm: AppViewModel) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val orgId = vm.profile.collectAsState().value?.orgId ?: return
+    var org by remember { mutableStateOf<Organization?>(null) }
+    LaunchedEffect(orgId) { org = runCatching { Locator.repo.organization(orgId) }.getOrNull() }
+    val o = org ?: return
+    if (o.welcomeMessage.isNullOrBlank() && o.publicPhone.isNullOrBlank() && o.acceptingOrders) return
+    Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp), colors = CardDefaults.cardColors(
+        if (o.acceptingOrders) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.errorContainer)) {
+        Column(Modifier.padding(14.dp)) {
+            Text(o.name, style = MaterialTheme.typography.titleMedium)
+            if (!o.acceptingOrders) Text("Ahora mismo no se aceptan pedidos.", style = MaterialTheme.typography.bodyMedium)
+            o.welcomeMessage?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            o.publicPhone?.takeIf { it.isNotBlank() }?.let { p -> TextButton({ ctx.dial(p) }) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Llamar: $p") } }
         }
     }
 }

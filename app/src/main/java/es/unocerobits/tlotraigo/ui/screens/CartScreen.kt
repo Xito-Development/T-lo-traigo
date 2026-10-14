@@ -188,7 +188,11 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
             item {
                 SectionTitle("Forma de pago")
                 val av = methods
-                if (av == null) Loading()
+                if (quote?.productsPayment == "entidad") Text("La compra la gestiona ${quote?.orgName ?: "tu entidad"}: no pagas nada al repartidor.",
+                    style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+                else if (quote?.feesMode == "gratuito") Text("Pagarás solo el importe del ticket del súper, en efectivo, al recibir la compra.",
+                    style = MaterialTheme.typography.bodyLarge)
+                else if (av == null) Loading()
                 else {
                     if (av.isEmpty()) Text("Ahora mismo no hay repartidores activos en tu pueblo. Tu pedido quedará en espera y se pagará en efectivo.",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -219,6 +223,9 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     q.extras.filter { it.amount > 0 }.forEach { SummaryLine(it.name, it.amount) }
                     SummaryLine("   IVA del servicio (21 %)", q.feesVat, muted = true)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                    if (q.feesMode == "gratuito") Surface(Modifier.fillMaxWidth().padding(vertical = 6.dp), color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.medium) {
+                        Text("✓ Servicio gratuito ofrecido por ${q.orgName ?: "tu entidad"}: no pagas tarifas.", Modifier.padding(10.dp), style = MaterialTheme.typography.bodyMedium)
+                    }
                     SummaryLine("Total estimado (IVA incluido)", q.total, strong = true)
                     Surface(Modifier.fillMaxWidth().padding(top = 8.dp), color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
                         Text("Los precios de los productos son orientativos. El repartidor hará una foto al ticket del súper y pagarás lo real. " +
@@ -280,6 +287,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
 
 @Composable
 private fun SummaryLine(label: String, value: Double, strong: Boolean = false, muted: Boolean = false) {
+    if (value == 0.0 && !strong && !muted) return   // las tarifas a 0 no se muestran
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Text(label, Modifier.weight(1f),
             style = if (strong) MaterialTheme.typography.titleMedium else if (muted) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,

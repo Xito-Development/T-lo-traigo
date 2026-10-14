@@ -1,0 +1,24 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condiciones de uso: T lo traigo</title><meta name="theme-color" content="#2E6B57"><link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>@font-face{font-family:"Atkinson Hyperlegible";src:url(fonts/atkinson-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Atkinson Hyperlegible";src:url(fonts/atkinson-700.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"Baloo 2";src:url(fonts/baloo2-800.woff2) format("woff2");font-weight:800}
+body{font:1.08rem/1.65 "Atkinson Hyperlegible",system-ui,sans-serif;color:#1C2624;background:#F3F7F4;margin:0}
+main{max-width:780px;margin:0 auto;padding:2rem 1.25rem 4rem} h1,h2{font-family:"Baloo 2",sans-serif;color:#1F4D3F;line-height:1.1}
+h1{font-size:2.4rem} h2{margin-top:2rem;font-size:1.45rem} a{color:#2E6B57} .todo{background:#FFF1C7;padding:0 .3rem;border-radius:4px}
+.box{background:#fff;border:2px solid #D5E0DA;border-radius:16px;padding:1rem 1.2rem} li{margin:.3rem 0}
+nav{display:flex;gap:1rem;flex-wrap:wrap;font-weight:700}html[data-theme="dark"] body{background:#101715;color:#E3EBE7} html[data-theme="dark"] h1,html[data-theme="dark"] h2{color:#9ED8BE}
+html[data-theme="dark"] a{color:#8FD3B6} html[data-theme="dark"] .box{background:#1C2723;border-color:#2B3A35} html[data-theme="dark"] td,html[data-theme="dark"] th{border-color:#2B3A35}
+html[data-theme="dark"] .todo{background:#5C4100;color:#FFDE9E} html[data-theme="dark"] img[src="wordmark.svg"]{content:url(wordmark-claro.svg)}
+</style><script>(function(){try{var t=localStorage.getItem('tlt_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script></head><body><main>
+<p><a href="./"><img src="wordmark.svg" alt="T lo traigo" style="height:42px"></a></p>
+<h1>Únete a tu servicio</h1>
+<div class="box" style="text-align:center"><p>Tu código de invitación es:</p><p id="code" style="font:800 2.6rem 'Baloo 2',sans-serif;letter-spacing:.2em;color:#2E6B57;margin:.3rem 0">—</p>
+<p><a id="open" href="#" style="display:inline-block;background:#F2B544;color:#1B2428;padding:.8rem 1.4rem;border-radius:14px;font-weight:700;text-decoration:none">Abrir en la app</a></p></div>
+<h2>Si aún no tienes la app</h2><ol>
+<li><a href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">Descarga T lo traigo</a> e instálala.</li>
+<li>Crea tu cuenta.</li>
+<li>Vuelve a esta página y pulsa «Abrir en la app», o ve a <strong>Ajustes → Tengo un código de invitación</strong> y escribe el código.</li></ol>
+<script>var c=(new URLSearchParams(location.search).get('c')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+document.getElementById('code').textContent=c||'—';document.getElementById('open').href='tlotraigo://unirse?c='+c;</script><p style="margin-top:3rem"><nav><a href="aviso-legal.html">Aviso legal</a><a href="condiciones.html">Condiciones de uso</a><a href="repartidores.html">Repartidores</a><a href="privacidad.html">Privacidad</a></nav></p>
+<p style="font-size:.9rem;color:#4F5D59">© 2026 UNOCEROBITS y Xito Development. Este texto es una base de trabajo y debe revisarlo un abogado antes del lanzamiento.</p></main></body></html>

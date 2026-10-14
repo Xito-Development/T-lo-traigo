@@ -221,7 +221,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             }
             if (!o.isFinal) ClaimSection(o) { scope.launch { order = Locator.repo.order(id) } }
             if (o.awaitingPayment) Spacer(Modifier.height(4.dp))
-            if (o.status == "entregado" && o.driverId != null) TipCard(o) { scope.launch { order = Locator.repo.order(id) } }
+            if (o.status == "entregado" && o.driverId != null && !o.freeService) TipCard(o) { scope.launch { order = Locator.repo.order(id) } }
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
             ItemsWithDiff(o)
@@ -247,7 +247,9 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             else if (!o.isFinal) Text("El repartidor ya está en el súper o de camino: ya no se puede cancelar. Si hay un problema, llama al teléfono de ayuda.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (o.status == "entregado") {
-                BigButton("Ver factura", { scope.launch { invoice = Locator.repo.invoice(id); if (invoice == null) err = "La factura aún no está disponible" } }, tonal = true, icon = Icons.Filled.Receipt)
+                BigButton(if (o.freeService) "Justificante del pedido" else "Ver factura", { scope.launch {
+                    invoice = if (o.freeService) null else Locator.repo.invoice(id)
+                    if (invoice == null) ReceiptPdf.open(ctx, o) } }, tonal = true, icon = Icons.Filled.Receipt)
                 Spacer(Modifier.height(10.dp))
                 BigButton("Solicitar reembolso", { showRefund = true }, tonal = true, icon = Icons.Filled.CurrencyExchange)
             }

@@ -67,6 +67,9 @@ fun OnboardingWizard(vm: AppViewModel) {
                         ChoiceRow("Hago mi propia compra", "Pido para mi casa", usage == "propio", icon = Icons.Filled.Person) { usage = "propio" }
                         ChoiceRow("Pido para un familiar", "Soy hijo, hija o familiar de alguien mayor", usage == "familiar", icon = Icons.Filled.FamilyRestroom) { usage = "familiar" }
                         ChoiceRow("Un familiar pedirá por mí", "Mi hijo o hija me ayudará desde su móvil", usage == "asistido", icon = Icons.Filled.Elderly) { usage = "asistido" }
+                        var redeem by remember { mutableStateOf(false) }
+                        if (redeem) RedeemInviteDialog(vm) { redeem = false }
+                        TextButton({ redeem = true }) { Icon(Icons.Filled.VpnKey, null); Spacer(Modifier.width(6.dp)); Text("Tengo un código de una entidad (administro o reparto)") }
                         Spacer(Modifier.height(16.dp))
                         BigButton("Siguiente", { step = 1 }, icon = Icons.Filled.ArrowForward)
                     }
@@ -401,6 +404,33 @@ object InvoicePdf {
         try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         catch (_: android.content.ActivityNotFoundException) { ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/pdf")
             .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Abrir factura").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+    }
+}
+
+/** Justificante del pedido (servicios gratuitos): productos, ticket, fechas y repartidor. Sirve como trazabilidad para la entidad. */
+object ReceiptPdf {
+    fun open(ctx: Context, o: Order) {
+        val doc = PdfDocument(); val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create()); val c = page.canvas
+        val p = Paint().apply { textSize = 10.5f; isAntiAlias = true }; val b = Paint(p).apply { typeface = Typeface.DEFAULT_BOLD }
+        val h = Paint(b).apply { textSize = 20f; color = android.graphics.Color.rgb(46, 107, 87) }; val right = Paint(p).apply { textAlign = Paint.Align.RIGHT }
+        var y = 56f
+        fun line(t: String, paint: Paint = p, dy: Float = 15f) { c.drawText(t.take(95), 48f, y, paint); y += dy }
+        line("JUSTIFICANTE DE PEDIDO", h, 24f); line("Pedido nº ${o.id} · T lo traigo", b, 20f)
+        line("Fecha del pedido: ${prettyDate(o.createdAt)}"); line("Estado: ${OrderStatus.of(o.status).label}${if (o.status == "entregado") " · " + prettyDate(o.updatedAt) else ""}")
+        line("Usuario: ${o.customer?.fullName.orEmpty()}"); line("Dirección: ${o.address}"); line("Repartidor: ${o.driver?.fullName ?: "—"}", dy = 22f)
+        line("Productos", b)
+        o.items.forEach { i -> c.drawText("${i.qty} × ${i.name}${i.detail?.let { " · $it" } ?: ""}".take(80), 48f, y, p)
+            (i.realTotal ?: (i.unitPrice * i.qty)).let { c.drawText(eur(it) + if (i.realTotal == null) " (est.)" else "", 547f, y, right) }; y += 15f }
+        y += 8; line("Importe del ticket del supermercado: ${o.ticketTotal?.let { eur(it) } ?: "—"}", b)
+        if (o.amount > (o.ticketTotal ?: 0.0)) line("Otros importes: ${eur(o.amount - (o.ticketTotal ?: 0.0))}")
+        o.claimedAt?.let { line("Reclamación: ${prettyDate(it)}") }
+        y += 10; line("Documento de trazabilidad generado por la app. El ticket original del supermercado está disponible en el pedido.", Paint(p).apply { textSize = 8.5f })
+        doc.finishPage(page)
+        val dir = File(ctx.cacheDir, "facturas").apply { mkdirs() }; val f = File(dir, "Justificante_pedido_${o.id}.pdf"); f.outputStream().use { doc.writeTo(it) }; doc.close()
+        val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f)
+        runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            .onFailure { ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/pdf").putExtra(Intent.EXTRA_STREAM, uri)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Justificante").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 }
 

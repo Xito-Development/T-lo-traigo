@@ -140,7 +140,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.LocationOn, null, tint = MaterialTheme.colorScheme.secondary)
                             Text(vm.townName(o.townId), Modifier.weight(1f).padding(start = 6.dp), style = MaterialTheme.typography.titleLarge)
-                            Text("+${eur(o.driverEarnings)}", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                            if (!o.freeService) Text("+${eur(o.driverEarnings)}", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                         }
                         Text("${productos(o.items.sumOf { it.qty })} · compra ${eur(o.subtotal)} · ${PayMethod.of(o.paymentMethod).label}", style = MaterialTheme.typography.bodyMedium)
                         ScheduleBadge(o.scheduledDate, o.scheduledSlot)
@@ -269,7 +269,7 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 if (o.status == "en_camino") Text("📍 Tu ubicación se comparte con el cliente hasta que marques «entregado».",
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (o.status == "comprando" && o.ticketPath == null) TicketSection(o) { onChanged() }
-                else if (o.ticketTotal != null) Text("🧾 Ticket guardado: ${eur(o.ticketTotal)} · total cliente ${eur(o.amount)} · ganas ${eur(o.driverEarnings)}" +
+                else if (o.ticketTotal != null) Text("🧾 Ticket guardado: ${eur(o.ticketTotal)} · total cliente ${eur(o.amount)}" + (if (o.freeService) "" else " · ganas ${eur(o.driverEarnings)}") +
                     (if (o.tipStatus == "pagada") " + propina ${eur(o.tipAmount)} 💛" else ""),
                     Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 next?.let { (st, label) ->

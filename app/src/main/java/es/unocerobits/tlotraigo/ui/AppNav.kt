@@ -30,7 +30,7 @@ import es.unocerobits.tlotraigo.ui.screens.*
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     COMPRAR("Comprar", Icons.Filled.Storefront), PEDIDOS("Pedidos", Icons.Filled.ReceiptLong),
-    ADMIN("Admin", Icons.Filled.AdminPanelSettings), AJUSTES("Ajustes", Icons.Filled.Settings)
+    ENTIDAD("Mi entidad", Icons.Filled.Apartment), ADMIN("Admin", Icons.Filled.AdminPanelSettings), AJUSTES("Ajustes", Icons.Filled.Settings)
 }
 
 /** Etiqueta de pestaña que no se parte ni desborda con letra grande. */
@@ -59,7 +59,10 @@ fun AppNav(vm: AppViewModel) {
     LaunchedEffect(chatReq, boot) { val id = chatReq; if (id != null && (boot == Boot.Client || boot == Boot.Driver)) { nav.navigate("chat/$id"); vm.openChat.value = null } }
     val toVerify: (String, String) -> Unit = { email, mode -> nav.navigate("verify/$mode/${Uri.encode(email)}") }
     val spec = tween<IntOffset>(380, easing = EaseOutCubic)
-    CompositionLocalProvider(LocalOpenChat provides { id: Long -> nav.navigate("chat/$id") }) {
+    val invite by vm.inviteCode.collectAsState()
+    if (invite != null && (boot == Boot.Client || boot == Boot.Driver)) RedeemInviteDialog(vm, invite!!) { vm.inviteCode.value = null }
+    CompositionLocalProvider(LocalOpenChat provides { id: Long -> nav.navigate("chat/$id") }, LocalOpenOrg provides { id: Long -> nav.navigate("org/$id") },
+        LocalIsSuper provides (vm.profile.collectAsState().value?.role == "superadmin")) {
     NavHost(
         nav, "splash",
         enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, spec) + fadeIn(tween(300)) },
@@ -74,6 +77,8 @@ fun AppNav(vm: AppViewModel) {
             VerifyScreen(vm, e.arguments?.getString("email").orEmpty(), e.arguments?.getString("mode") ?: "signup") { nav.popBackStack() }
         }
         composable("onboard") { OnboardingWizard(vm) }
+        composable("org/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->
+            OrgPanel(vm, e.arguments?.getLong("id") ?: 0, onBack = { nav.popBackStack() }, onOrder = { nav.navigate("order/$it") }) }
         composable("chat/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e -> ChatScreen(vm, e.arguments?.getLong("id") ?: 0) { nav.popBackStack() } }
         composable("needs") { NeedsScreen(vm, onBack = { nav.popBackStack() }, onCart = { nav.navigate("cart") }) }
         composable("terms") { TermsScreen(vm) }
@@ -96,8 +101,10 @@ fun AppNav(vm: AppViewModel) {
 
 @Composable
 private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> Unit, onDebug: () -> Unit, onEditProduct: (Long?) -> Unit, onNeeds: () -> Unit) {
-    val isAdmin = vm.profile.collectAsState().value?.isAdmin == true
-    var tab by rememberSaveable { mutableStateOf(Tab.COMPRAR) }
+    val prof = vm.profile.collectAsState().value
+    val isAdmin = prof?.isAdmin == true
+    val isGestor = prof?.isGestor == true
+    var tab by rememberSaveable { mutableStateOf(if (isGestor) Tab.ENTIDAD else Tab.COMPRAR) }
     BackHandler(tab != Tab.COMPRAR) { tab = Tab.COMPRAR }
     val lines by vm.cart.lines.collectAsState()
     val count = lines.values.sumOf { it.qty }
@@ -105,7 +112,7 @@ private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                Tab.entries.filter { it != Tab.ADMIN || isAdmin }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, null) }, label = { TabLabel(t.label) }, alwaysShowLabel = true) }
+                Tab.entries.filter { (it != Tab.ADMIN || isAdmin) && (it != Tab.ENTIDAD || isGestor) }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, null) }, label = { TabLabel(t.label) }, alwaysShowLabel = true) }
             }
         },
         floatingActionButton = {
@@ -127,6 +134,7 @@ private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> 
                 Tab.COMPRAR -> CatalogScreen(vm, onCart, onNeeds)
                 Tab.PEDIDOS -> OrdersScreen(onOrder)
                 Tab.ADMIN -> AdminHome(vm, onEditProduct)
+                Tab.ENTIDAD -> prof?.orgId?.let { OrgPanel(vm, it, onOrder = onOrder) } ?: Text("Sin entidad asignada", Modifier.padding(androidx.compose.ui.unit.Dp(24f)))
                 Tab.AJUSTES -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { SettingsScreen(vm, onDebug = onDebug) }
             }
         }

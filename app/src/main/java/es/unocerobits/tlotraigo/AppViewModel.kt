@@ -54,6 +54,8 @@ class AppViewModel : ViewModel() {
 
     /** Pedido cuyo chat se debe abrir (al pulsar una notificación). */
     val openChat = MutableStateFlow<Long?>(null)
+    /** Código de invitación recibido por enlace (tlotraigo://unirse?c=…). */
+    val inviteCode = MutableStateFlow<String?>(null)
 
     private val _driverView = MutableStateFlow(false)
     val driverView: StateFlow<Boolean> = _driverView

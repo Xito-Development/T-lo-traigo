@@ -229,6 +229,34 @@ class Repository(val api: SupabaseApi) {
     suspend fun needs(): List<Need> = parse(api.rest("GET", "needs?active=eq.true&order=sort"))
     suspend fun cardCheckoutUrl(orderId: Long): String? =
         api.function("pagos", buildJsonObject { put("action", "checkout"); put("order_id", orderId) })["url"]?.jsonPrimitive?.contentOrNull
+    // --- Entidades (modelo de suscripción)
+    suspend fun organizations(): List<Organization> = parse(api.rest("GET", "organizations?order=name"))
+    suspend fun organization(id: Long): Organization? = parse<List<Organization>>(api.rest("GET", "organizations?id=eq.$id")).firstOrNull()
+    suspend fun createOrganization(name: String, kind: String, cName: String, cEmail: String, cPhone: String, towns: List<Long>): Pair<Long, String> {
+        val r = api.json.parseToJsonElement(api.rpc("create_organization", buildJsonObject {
+            put("p_name", name); put("p_kind", kind); put("p_contact_name", cName); put("p_contact_email", cEmail); put("p_contact_phone", cPhone)
+            putJsonArray("p_towns") { towns.forEach { add(it) } } })).jsonObject
+        return r["org_id"]!!.jsonPrimitive.long to r["code"]!!.jsonPrimitive.content
+    }
+    suspend fun updateOrganization(id: Long, fields: JsonObject) { api.rpc("update_organization", buildJsonObject { put("p_org", id); put("p", fields) }) }
+    suspend fun orgOverview(id: Long): OrgOverview = parse(api.rpc("org_overview", buildJsonObject { put("p_org", id) }))
+    suspend fun orgSaveTown(org: Long, id: Long?, name: String, cp: String?, fee: Double, km: Double, active: Boolean = true) {
+        api.rpc("org_save_town", buildJsonObject { put("p_org", org); put("p_id", id); put("p_name", name); put("p_cp", cp); put("p_fee", fee); put("p_km", km); put("p_active", active) })
+    }
+    suspend fun orgSetDriver(driver: String, approved: Boolean, remove: Boolean = false) {
+        api.rpc("org_set_driver", buildJsonObject { put("p_driver", driver); put("p_approved", approved); put("p_remove", remove) })
+    }
+    suspend fun createInvite(org: Long, role: String, maxUses: Int, days: Int, note: String?): String =
+        api.json.parseToJsonElement(api.rpc("create_invite", buildJsonObject { put("p_org", org); put("p_role", role); put("p_max_uses", maxUses); put("p_days", days); put("p_note", note) })).jsonPrimitive.content
+    suspend fun invites(org: Long): List<OrgInvite> = parse(api.rest("GET", "org_invites?org_id=eq.$org&order=created_at.desc&limit=30"))
+    suspend fun redeemInvite(code: String): String {
+        val r = api.json.parseToJsonElement(api.rpc("redeem_invite", buildJsonObject { put("p_code", code) })).jsonObject
+        return "Te has unido a ${r["org"]?.jsonPrimitive?.content} como ${when (r["role"]?.jsonPrimitive?.content) { "gestor" -> "administrador/a"; "repartidor" -> "repartidor/a"; else -> "usuario/a" }}."
+    }
+    suspend fun orgReport(org: Long, month: java.time.LocalDate): OrgReport =
+        parse(api.rpc("org_report", buildJsonObject { put("p_org", org); put("p_month", month.withDayOfMonth(1).toString()) }))
+    suspend fun orgOrders(org: Long): List<Order> = parse(api.rest("GET", "orders?$orderSel&org_id=eq.$org&order=created_at.desc&limit=60"))
+
     // --- Chat, edición, reclamación y lista fácil (admin)
     suspend fun messages(orderId: Long): List<ChatMessage> = parse(api.rest("GET", "order_messages?order_id=eq.$orderId&order=id"))
     suspend fun sendMessage(orderId: Long, body: String) { api.rpc("send_message", buildJsonObject { put("p_order", orderId); put("p_body", body) }) }

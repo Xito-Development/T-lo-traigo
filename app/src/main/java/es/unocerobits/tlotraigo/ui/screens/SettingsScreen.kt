@@ -86,6 +86,10 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         var complaint by remember { mutableStateOf(false) }
         var cmsg by remember { mutableStateOf<String?>(null) }
         if (complaint) ComplaintDialog(vm, null) { m -> complaint = false; cmsg = m }
+        var redeem by remember { mutableStateOf(false) }
+        if (redeem) RedeemInviteDialog(vm) { redeem = false }
+        BigButton("Tengo un código de invitación", { redeem = true }, tonal = true, icon = Icons.Filled.VpnKey)
+        Spacer(Modifier.height(10.dp))
         BigButton("Hoja de reclamaciones", { complaint = true }, tonal = true, icon = Icons.Filled.Feedback)
         cmsg?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
         Spacer(Modifier.height(10.dp))

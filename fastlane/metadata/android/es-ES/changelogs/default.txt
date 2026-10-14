@@ -1,5 +1,4 @@
-• Lista fácil: escribe o dicta por voz tu lista («2 litros de leche, pan y 6 huevos») y se añade sola a la cesta.
-• Administración → Lista fácil: crear, editar, ocultar y borrar los artículos básicos (precio, IVA, icono, opciones).
-• Chat en directo entre cliente y repartidor durante el pedido, con mensajes rápidos y notificaciones.
-• Editar el pedido (cantidades, quitar, añadir más y notas) hasta que el repartidor llega al súper.
-• Reclamar un pedido no recibido: plazo de 6 
+• Entidades (modelo de suscripción): el superadministrador crea entidades (ayuntamientos, asociaciones, tiendas) y envía un código a su administrador.
+• Panel «Mi entidad» para el administrador de localidad: aceptar o pausar pedidos, pueblos, repartidores, códigos de invitación, horario, días y reglas del servicio.
+• Códigos de invitación para administradores, repartidores y usuarios (en Ajustes, en la bienvenida o con el enlace de la web).
+• Mensaje y teléfono de la entidad 
