@@ -2,6 +2,12 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.3] - 2026-10-14
+### Añadido
+- Versión de Google Play: las actualizaciones se descargan e instalan desde la tienda (In-App Updates); «Valorar en Google Play» en Acerca de.
+- Versión de GitHub: opción de pasarse a Google Play cuando esté publicada.
+- Web: cuando la app esté en Google Play, «Descargar» lleva a la tienda y ofrece la alternativa del APK de GitHub (se configura desde el modo edición).
+
 ## [0.6.2] - 2026-10-14
 - El administrador de la entidad recibe avisos de reclamaciones y cambios de pedidos.
 - Web: preguntas frecuentes e imagen para compartir en WhatsApp y redes.

@@ -265,6 +265,8 @@ details summary{cursor:pointer;font:800 1.15rem var(--f-title);color:var(--pino-
 details summary::after{content:"+";float:right;transition:transform .3s}
 details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem;color:var(--gris)}
 :root[data-theme="dark"] details{background:#1C2723;border-color:var(--linea)}
+.edit-only{display:none;margin-top:1rem;font-size:.95rem} body.editing .edit-only{display:block}
+.edit-only [data-k]{display:inline-block;min-width:16rem;background:rgba(242,181,68,.12);padding:.2rem .4rem}
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto cuesta para el usuario?", "acceptedAnswer": {"@type": "Answer", "text": "Depende de la entidad de tu pueblo: muchas lo ofrecen gratis y solo pagas lo que marque el ticket del súper. Antes de pedir siempre ves el importe estimado."}}, {"@type": "Question", "name": "¿Cómo se paga la compra?", "acceptedAnswer": {"@type": "Answer", "text": "En efectivo al recibirla o por Bizum desde la app de tu banco, según lo que ofrezca tu entidad. La app no guarda datos bancarios."}}, {"@type": "Question", "name": "¿Y si el precio cambia en el súper?", "acceptedAnswer": {"@type": "Answer", "text": "Los precios son orientativos: el repartidor hace una foto del ticket y pagas el importe real, que ves en la app antes de que salga hacia tu casa."}}, {"@type": "Question", "name": "¿Puede pedir mi hijo o mi hija por mí?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Con el código de seis cifras de tu app, un familiar puede hacer los pedidos desde su móvil y seguirlos."}}, {"@type": "Question", "name": "¿Qué pasa si el pedido no llega?", "acceptedAnswer": {"@type": "Answer", "text": "Desde la app puedes reclamarlo: hay un plazo de 6 horas para entregarlo, y un botón para llamar al 112 si hay una emergencia."}}, {"@type": "Question", "name": "Soy un ayuntamiento o una asociación, ¿cómo empiezo?", "acceptedAnswer": {"@type": "Answer", "text": "Escríbenos a info@unocerobits.com: creamos tu entidad, te enviamos un código y configuras pueblos, repartidores, horarios y formas de pago desde tu panel."}}]}</script>
 </head>
@@ -471,7 +473,9 @@ details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem
         <a class="btn btn-main dl" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">Descargar para Android (APK)</a>
         <a class="btn btn-ink" href="mailto:info@unocerobits.com?subject=T%20lo%20traigo">Escríbenos</a>
       </div>
+      <p class="alt-apk" hidden style="margin-top:1rem"><a id="apkAlt" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">¿No tienes Google Play? Descarga el APK desde GitHub</a></p>
       <span id="dlInfo"></span>
+      <p class="edit-only">Enlace de Google Play (déjalo vacío hasta que esté publicada): <span data-k="config.play_url"></span></p>
     </div>
   </section>
 </main>
@@ -534,17 +538,28 @@ details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem
   var original = {}; $$('[data-k]').forEach(function (el) { original[el.dataset.k] = getVal(el); });
   fetch(SB + '/rest/v1/site_content?select=key,value', { headers: { apikey: KEY } })
     .then(function (r) { return r.ok ? r.json() : []; })
-    .then(function (rows) { rows.forEach(function (row) { var el = $('[data-k="' + row.key + '"]'); if (el) { setVal(el, row.value); original[row.key] = row.value; } }); })
-    .catch(function () {});
+    .then(function (rows) { rows.forEach(function (row) { var el = $('[data-k="' + row.key + '"]'); if (el) { setVal(el, row.value); original[row.key] = row.value; } }); applyDownload(); })
+    .catch(function () { applyDownload(); });
 
-  /* ---------- Descarga directa del último APK ---------- */
+  /* ---------- Descarga: Google Play (si ya está publicada) con alternativa del APK de GitHub ---------- */
+  function applyDownload() {
+    var el = $('[data-k="config.play_url"]'), play = el ? el.textContent.trim() : '';
+    if (!/^https:\/\/play\.google\.com\//.test(play)) return;
+    $$('a.dl').forEach(function (l) {
+      l.href = play; l.removeAttribute('download'); l.target = '_blank'; l.rel = 'noopener';
+      if (!l.closest('nav')) l.textContent = 'Descargar en Google Play';
+    });
+    $$('.alt-apk').forEach(function (e) { e.hidden = false; });
+  }
+  /* ---------- APK directo (GitHub) ---------- */
   fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (rel) {
       if (!rel) return;
       var a = (rel.assets || []).filter(function (x) { return x.name === 'TLoTraigo.apk'; })[0] || (rel.assets || []).filter(function (x) { return /\.apk$/.test(x.name); })[0];
       if (!a) return;
-      $$('a.dl').forEach(function (l) { l.href = a.browser_download_url; l.setAttribute('download', ''); });
+      $$('a.dl').forEach(function (l) { if (!/play\.google/.test(l.href)) { l.href = a.browser_download_url; l.setAttribute('download', ''); } });
+      var alt = $('#apkAlt'); if (alt) alt.href = a.browser_download_url;
       var mb = (a.size / 1048576).toFixed(1).replace('.', ',');
       $('#dlInfo').textContent = 'Versión ' + rel.tag_name.replace(/^v/, '') + ' · ' + mb + ' MB · publicada el ' + new Date(rel.published_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     }).catch(function () {});

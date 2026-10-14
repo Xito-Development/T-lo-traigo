@@ -48,3 +48,14 @@ Correo de contacto de la ficha: **support@tlotraigo.unocerobits.com** · Web: ht
 
 ## Revisión
 Facilitar a Google una cuenta de pruebas de cliente (no la del superadministrador).
+
+
+## Al publicar en Google Play (actualizaciones)
+1. En `app/build.gradle.kts` cambia `PLAY_PUBLISHED` a `true` y publica una versión nueva.
+2. En la web: 15 toques en el logo → modo edición → en «Descargar» rellena el enlace de Google Play
+   `https://play.google.com/store/apps/details?id=es.unocerobits.tlotraigo` → Guardar. Los botones irán a Play y aparecerá
+   «¿No tienes Google Play? Descarga el APK desde GitHub».
+3. La versión de Play se actualiza desde la tienda (In-App Updates: descarga en segundo plano e instala). Para forzar una
+   actualización urgente, súbela en Play Console con **prioridad 4 o 5**.
+4. Quien tenga la versión de GitHub sigue actualizándose desde GitHub; puede pasarse a Play desinstalando antes la app
+   (las firmas de GitHub y de Play son distintas si usas la firma de apps de Google Play).

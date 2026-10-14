@@ -1,5 +1,3 @@
-• El administrador de la entidad recibe avisos de reclamaciones y cambios de pedidos.
-• Web: preguntas frecuentes e imagen para compartir en WhatsApp y redes.
-• Doble margen superior en la pestaña «Mi entidad».
-• El botón «Atrás» de un administrador de entidad volvía a «Comprar» en lugar de a su panel.
-• En pedidos ajenos, la entidad ya no ve botones de pagar, propina ni reembolso; en el chat escribe como administración. y líneas '- ') serán las notas de la próxima versión. p
+• Versión de Google Play: las actualizaciones se descargan e instalan desde la tienda (In-App Updates); «Valorar en Google Play» en Acerca de.
+• Versión de GitHub: opción de pasarse a Google Play cuando esté publicada.
+• Web: cuando la app esté en Google Play, «Descargar» lleva a la tienda y ofrece la alternativa del APK de GitHub (se configura desde el modo edición).

@@ -92,6 +92,8 @@ fun UpdateDialog(info: UpdateInfo, onDismiss: () -> Unit) {
                                 Spacer(Modifier.height(16.dp))
                                 BigButton("Actualizar ahora" + if (info.size > 0) " (${"%.1f".format(info.size / 1048576f)} MB)" else "", { startDownload() }, icon = Icons.Filled.Download)
                                 TextButton(onDismiss) { Text("Más tarde") }
+                                if (BuildConfig.PLAY_PUBLISHED) TextButton({ runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(BuildConfig.PLAY_URL))
+                                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }) { Text("Prefiero Google Play (antes desinstala esta versión)") }
                             }
                             Paso.Bajando::class -> {
                                 Text("Descargando…", style = MaterialTheme.typography.headlineSmall)

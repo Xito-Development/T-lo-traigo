@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         es.unocerobits.tlotraigo.data.ChatNotifier.start(this)
+        es.unocerobits.tlotraigo.store.StoreUpdates.check(this)   // Google Play: actualizar desde la tienda
         intent?.getLongExtra("chat", 0L)?.takeIf { it > 0 }?.let { vm.openChat.value = it }
         intent?.data?.takeIf { it.host == "unirse" }?.getQueryParameter("c")?.let { vm.inviteCode.value = it }
         setContent {
@@ -61,5 +62,10 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         intent.getLongExtra("chat", 0L).takeIf { it > 0 }?.let { vm.openChat.value = it }
         intent.data?.takeIf { it.host == "unirse" }?.getQueryParameter("c")?.let { vm.inviteCode.value = it }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        es.unocerobits.tlotraigo.store.StoreUpdates.check(this)   // completa una actualización ya descargada
     }
 }

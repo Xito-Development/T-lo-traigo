@@ -34,6 +34,9 @@ android {
         buildConfigField("String", "CONTACT_EMAIL", "\"info@unocerobits.com\"")
         buildConfigField("String", "SUPPORT_EMAIL", "\"support@tlotraigo.unocerobits.com\"")
         buildConfigField("String", "WEB_URL", "\"https://tlotraigo.unocerobits.com/\"")
+        // Cambiar a true cuando la app esté publicada en Google Play
+        buildConfigField("Boolean", "PLAY_PUBLISHED", "false")
+        buildConfigField("String", "PLAY_URL", "\"https://play.google.com/store/apps/details?id=es.unocerobits.tlotraigo\"")
         buildConfigField("String", "RELEASES_API", "\"https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/latest\"")
         buildConfigField("String", "PRIVACY_URL", "\"https://tlotraigo.unocerobits.com/privacidad.html\"")
     }
@@ -83,6 +86,8 @@ android {
 }
 
 dependencies {
+    // Solo en la versión de Google Play: actualizaciones desde la tienda (In-App Updates)
+    "playImplementation"("com.google.android.play:app-update-ktx:2.1.0")
     // Versiones fijadas: últimas compatibles con minSdk 21.
     val bom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(bom)
