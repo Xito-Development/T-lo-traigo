@@ -268,6 +268,14 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 }
                 if (o.status == "en_camino") Text("📍 Tu ubicación se comparte con el cliente hasta que marques «entregado».",
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (o.ticketTotal != null) Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                    PayBadge(o.paymentMethod); Spacer(Modifier.width(8.dp))
+                    Text(when { o.isPaid -> "✓ Cobrado ${eur(o.amount)}"; o.paymentMethod == "bizum" && o.clientPaidAt != null -> "El cliente dice que ha enviado ${eur(o.amount)}"
+                        o.paymentMethod == "bizum" -> "Esperando el Bizum de ${eur(o.amount)}"; else -> "Cobrar ${eur(o.amount)} en la entrega" },
+                        style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                }
+                if (o.ticketTotal != null && !o.isPaid && o.paymentMethod == "bizum" && o.bizumTo == "repartidor") TextButton({
+                    scope.launch { runCatching { Locator.repo.markCollected(o.id) }; onChanged() } }) { Icon(Icons.Filled.DoneAll, null); Spacer(Modifier.width(6.dp)); Text("He recibido el Bizum") }
                 if (o.status == "comprando" && o.ticketPath == null) TicketSection(o) { onChanged() }
                 else if (o.ticketTotal != null) Text("🧾 Ticket guardado: ${eur(o.ticketTotal)} · total cliente ${eur(o.amount)}" + (if (o.freeService) "" else " · ganas ${eur(o.driverEarnings)}") +
                     (if (o.tipStatus == "pagada") " + propina ${eur(o.tipAmount)} 💛" else ""),
@@ -321,6 +329,16 @@ private fun DriverSettingsPanel(vm: AppViewModel) {
                 Column(Modifier.weight(1f)) { Text(m.label, style = MaterialTheme.typography.titleMedium); Text(m.hint, style = MaterialTheme.typography.bodySmall) }
                 Switch(on, { save(upd(it)) })
             }
+        }
+        SectionTitle("Tu Bizum (opcional)")
+        Text("Si tu entidad lo permite, los clientes te devolverán por Bizum lo que adelantes en el súper.", style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        var bz by remember(s.bizumPhone) { mutableStateOf(s.bizumPhone.orEmpty()) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(bz, { bz = it.filter { c -> c.isDigit() || c == '+' || c == ' ' }.take(16) }, Modifier.weight(1f), label = { Text("Teléfono con Bizum") }, singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone), leadingIcon = { Icon(Icons.Filled.Smartphone, null) })
+            Spacer(Modifier.width(8.dp))
+            Button({ save(s.copy(bizumPhone = bz)) }) { Text("Guardar") }
         }
         SectionTitle("Cobros con tarjeta")
         val ctxP = androidx.compose.ui.platform.LocalContext.current

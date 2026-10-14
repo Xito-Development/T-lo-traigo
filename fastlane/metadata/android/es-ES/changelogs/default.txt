@@ -1,4 +1,6 @@
-• Entidades (modelo de suscripción): el superadministrador crea entidades (ayuntamientos, asociaciones, tiendas) y envía un código a su administrador.
-• Panel «Mi entidad» para el administrador de localidad: aceptar o pausar pedidos, pueblos, repartidores, códigos de invitación, horario, días y reglas del servicio.
-• Códigos de invitación para administradores, repartidores y usuarios (en Ajustes, en la bienvenida o con el enlace de la web).
-• Mensaje y teléfono de la entidad 
+• Formas de pago por entidad: efectivo, Bizum al repartidor y Bizum a la entidad.
+• Con Bizum, el usuario ve importe, número y concepto con botones para copiar y confirma el envío; el repartidor o la entidad confirma el cobro.
+• Número de Bizum del repartidor en sus Ajustes.
+• Estado del cobro en cada pedido y en el informe mensual (cobrado en efectivo, por Bizum y pendiente), también en el Excel.
+• Botón «Marcar como cobrado» para administradores de la entidad.
+• Al marcar u

@@ -2,6 +2,16 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.1] - 2026-10-14
+### Añadido
+- Formas de pago por entidad: efectivo, Bizum al repartidor y Bizum a la entidad.
+- Con Bizum, el usuario ve importe, número y concepto con botones para copiar y confirma el envío; el repartidor o la entidad confirma el cobro.
+- Número de Bizum del repartidor en sus Ajustes.
+- Estado del cobro en cada pedido y en el informe mensual (cobrado en efectivo, por Bizum y pendiente), también en el Excel.
+- Botón «Marcar como cobrado» para administradores de la entidad.
+### Corregido
+- Al marcar un pedido entregado en efectivo queda registrado quién lo cobró y cuándo.
+
 ## [0.6.0] - 2026-10-14
 ### Añadido
 - Entidades (modelo de suscripción): el superadministrador crea entidades (ayuntamientos, asociaciones, tiendas) y envía un código a su administrador.

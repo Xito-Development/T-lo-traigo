@@ -53,7 +53,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     var notice by remember { mutableStateOf<String?>(null) }
     var confirm by remember { mutableStateOf(false) }
     var cardOn by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { cardOn = runCatching { Locator.repo.fees().cardEnabled }.getOrDefault(false); if (!cardOn) method = PayMethod.CASH }
+    LaunchedEffect(Unit) { cardOn = runCatching { Locator.repo.fees().cardEnabled }.getOrDefault(false); if (!cardOn && method == PayMethod.CARD) method = PayMethod.CASH }
+    LaunchedEffect(quote?.allowCash, quote?.allowBizum) { if (quote?.allowCash == false && quote?.allowBizum == true) method = PayMethod.BIZUM }
     var payConfirm by remember { mutableStateOf(false) }
     var adultOk by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -190,16 +191,16 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                 val av = methods
                 if (quote?.productsPayment == "entidad") Text("La compra la gestiona ${quote?.orgName ?: "tu entidad"}: no pagas nada al repartidor.",
                     style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-                else if (quote?.feesMode == "gratuito") Text("Pagarás solo el importe del ticket del súper, en efectivo, al recibir la compra.",
-                    style = MaterialTheme.typography.bodyLarge)
                 else if (av == null) Loading()
                 else {
                     if (av.isEmpty()) Text("Ahora mismo no hay repartidores activos en tu pueblo. Tu pedido quedará en espera y se pagará en efectivo.",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     PayMethod.entries.forEach { m ->
-                        val enabled = when (m) { PayMethod.BIZUM -> false; PayMethod.CARD -> cardOn; PayMethod.CASH -> true }
-                        val icon = when (m) { PayMethod.CASH -> Icons.Filled.Payments; PayMethod.BIZUM -> Icons.Filled.PhoneAndroid; PayMethod.CARD -> Icons.Filled.CreditCard }
-                        ChoiceRow(m.label, if (m == PayMethod.BIZUM || (m == PayMethod.CARD && !cardOn)) "Próximamente" else m.hint, method == m, enabled, icon) { method = m }
+                        val enabled = when (m) { PayMethod.BIZUM -> quote?.allowBizum == true; PayMethod.CARD -> cardOn && quote?.feesMode != "gratuito"; PayMethod.CASH -> quote?.allowCash != false }
+                        if (!enabled && m != PayMethod.CASH) return@forEach   // solo se muestran las formas que ofrece la entidad
+                        val icon = when (m) { PayMethod.CASH -> Icons.Filled.Payments; PayMethod.BIZUM -> Icons.Filled.Smartphone; PayMethod.CARD -> Icons.Filled.CreditCard }
+                        ChoiceRow(m.label, when { m == PayMethod.BIZUM -> "Desde la app de tu banco, cuando el repartidor suba el ticket con el importe real"
+                            m == PayMethod.CASH && !enabled -> "No disponible en este servicio"; m == PayMethod.CASH -> "Al recibir la compra, con el importe del ticket"; else -> m.hint }, method == m, enabled, icon) { method = m }
                     }
                 }
             }

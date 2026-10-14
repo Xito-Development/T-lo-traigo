@@ -302,7 +302,6 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
         SectionTitle("Pedidos")
         sw("Aceptar pedidos", "Desactívalo para pausar el servicio (vacaciones, festivos…)", x.acceptingOrders) { x = x.copy(acceptingOrders = it) }
         sw("Foto del ticket obligatoria", "El repartidor no puede salir sin subir el ticket", x.requireTicket) { x = x.copy(requireTicket = it) }
-        sw("Permitir pago en efectivo", "Si lo desactivas, el servicio no cobra nada al usuario en la entrega", x.allowCash) { x = x.copy(allowCash = it) }
         NumField("Máximo de artículos por pedido", x.maxItems.toString(), "uds", Modifier.fillMaxWidth()) { x = x.copy(maxItems = it.filter(Char::isDigit).toIntOrNull() ?: x.maxItems) }
         SectionTitle("Horario y días de reparto")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -312,7 +311,18 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
             dayNames.forEachIndexed { i, d -> val n = i + 1; FilterChip(n in x.deliveryDays, { x = x.copy(deliveryDays = if (n in x.deliveryDays) x.deliveryDays - n else x.deliveryDays + n) }, { Text(d) }) }
         }
-        SectionTitle("Pago de la compra del súper")
+        SectionTitle("Formas de pago para los usuarios")
+        sw("Efectivo", "El usuario paga el importe del ticket al repartidor al recibir la compra", x.allowCash) { x = x.copy(allowCash = it) }
+        sw("Bizum al repartidor", "El usuario devuelve por Bizum al repartidor lo que adelantó (el repartidor pone su número en Ajustes)", x.allowBizumDriver) { x = x.copy(allowBizumDriver = it) }
+        sw("Bizum a la entidad", "El usuario paga por Bizum a la entidad (necesita Bizum para empresas de su banco)", x.allowBizumOrg) { x = x.copy(allowBizumOrg = it) }
+        if (x.allowBizumOrg) {
+            OutlinedTextField(x.bizumOrgPhone.orEmpty(), { x = x.copy(bizumOrgPhone = it.filter { c -> c.isDigit() || c == '+' }.take(15)) }, Modifier.fillMaxWidth(),
+                label = { Text("Número de Bizum de la entidad") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
+            OutlinedTextField(x.bizumOrgName.orEmpty(), { x = x.copy(bizumOrgName = it) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Nombre que verá el usuario") }, singleLine = true)
+        }
+        if (!x.allowCash && !x.allowBizumDriver && !(x.allowBizumOrg && !x.bizumOrgPhone.isNullOrBlank()) && x.productsPayment != "entidad")
+            Text("⚠️ Activa al menos una forma de pago o los usuarios no podrán pedir.", color = MaterialTheme.colorScheme.error)
+        SectionTitle("Quién paga la compra del súper")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(x.productsPayment == "efectivo", { x = x.copy(productsPayment = "efectivo") }, { Text("El usuario paga el ticket al repartidor") })
             FilterChip(x.productsPayment == "entidad", { x = x.copy(productsPayment = "entidad") }, { Text("La entidad se encarga del pago") })
@@ -329,6 +339,8 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
                         put("name", x.name); put("public_phone", x.publicPhone.orEmpty()); put("welcome_message", x.welcomeMessage.orEmpty())
                         put("accepting_orders", x.acceptingOrders); put("require_ticket", x.requireTicket); put("allow_cash", x.allowCash); put("show_prices", x.showPrices)
                         put("max_items", x.maxItems); put("products_payment", x.productsPayment)
+                        put("allow_bizum_driver", x.allowBizumDriver); put("allow_bizum_org", x.allowBizumOrg)
+                        put("bizum_org_phone", x.bizumOrgPhone.orEmpty()); put("bizum_org_name", x.bizumOrgName.orEmpty())
                         if (isSuper) { put("fees_mode", x.feesMode); put("price_month", x.priceMonth); put("plan", x.plan); put("billing_email", x.billingEmail.orEmpty())
                             put("subscription_until", x.subscriptionUntil.orEmpty()); Unit }
                         put("open_hour", x.openHour); put("close_hour", x.closeHour); put("auto_approve_drivers", x.autoApproveDrivers)
@@ -379,6 +391,10 @@ private fun OrgReportTab(o: Organization) {
             listOf("Cancelados" to "${x.cancelled}", "Reclamados" to "${x.claims}", "Tiempo medio" to (x.avgHours?.let { "${fmtNum(it, 1)} h" } ?: "—")).forEach { (l, v) -> Card(Modifier.weight(1f)) { Column(Modifier.padding(12.dp)) { Text(v, style = MaterialTheme.typography.headlineMedium); Text(l, style = MaterialTheme.typography.labelMedium) } } }
         }
         Text("Compras entregadas (tickets): ${eur(x.tickets)}", Modifier.padding(top = 10.dp), style = MaterialTheme.typography.titleMedium)
+        SectionTitle("Cobros")
+        Row(verticalAlignment = Alignment.CenterVertically) { PayBadge("efectivo"); Spacer(Modifier.width(8.dp)); Text(eur(x.cash), style = MaterialTheme.typography.titleMedium) }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) { PayBadge("bizum"); Spacer(Modifier.width(8.dp)); Text(eur(x.bizum), style = MaterialTheme.typography.titleMedium) }
+        if (x.pending > 0) Text("⚠️ Pendiente de cobro (pedidos entregados): ${eur(x.pending)}", Modifier.padding(top = 6.dp), color = MaterialTheme.colorScheme.error)
         SectionTitle("Por pueblo"); x.byTown.forEach { Text("• ${it.town}: ${it.n} pedidos (${it.delivered} entregados)") }
         SectionTitle("Por repartidor"); x.byDriver.forEach { Text("• ${it.driver}: ${it.n} entregas") }
         Spacer(Modifier.height(16.dp))
@@ -397,9 +413,10 @@ object ReportExport {
             .onFailure { share(ctx, f, mime, false) }
     }
     fun csv(ctx: android.content.Context, r: OrgReport) {
-        val sb = StringBuilder("\uFEFFPedido;Fecha;Pueblo;Usuario;Repartidor;Estado;Artículos;Ticket (€);Reclamado;Entregado\n")
+        val sb = StringBuilder("\uFEFFPedido;Fecha;Pueblo;Usuario;Repartidor;Estado;Artículos;Ticket (€);Total (€);Pago;Cobrado;Reclamado;Entregado\n")
         r.rows.forEach { w -> sb.append(listOf(w.id, w.created, w.town, w.customer.orEmpty(), w.driver.orEmpty(), OrderStatus.of(w.status).label, w.items,
-            w.ticket?.let { fmtNum(it) } ?: "", if (w.claimed) "Sí" else "No", w.deliveredAt.orEmpty()).joinToString(";") { it.toString().replace(";", ",") }).append('\n') }
+            w.ticket?.let { fmtNum(it) } ?: "", w.total?.let { fmtNum(it) } ?: "", when (w.method) { "bizum" -> "Bizum"; "tarjeta" -> "Tarjeta"; else -> "Efectivo" },
+            if (w.paid) "Sí" else "No", if (w.claimed) "Sí" else "No", w.deliveredAt.orEmpty()).joinToString(";") { it.toString().replace(";", ",") }).append('\n') }
         val f = java.io.File(java.io.File(ctx.cacheDir, "facturas").apply { mkdirs() }, "Informe_${r.month}.csv"); f.writeText(sb.toString())
         share(ctx, f, "text/csv", false)
     }
@@ -413,7 +430,8 @@ object ReportExport {
             c.drawText(t.take(100), 48f, y, paint); y += dy }
         line("INFORME MENSUAL · $label", h, 24f); line(r.org, b, 20f)
         line("Pedidos: ${r.total}   Entregados: ${r.delivered}   Cancelados: ${r.cancelled}   Reclamados: ${r.claims}")
-        line("Usuarios atendidos: ${r.users}   Tiempo medio de entrega: ${r.avgHours?.let { fmtNum(it, 1) + " h" } ?: "—"}   Compras: ${eur(r.tickets)}", dy = 22f)
+        line("Usuarios atendidos: ${r.users}   Tiempo medio de entrega: ${r.avgHours?.let { fmtNum(it, 1) + " h" } ?: "—"}   Compras: ${eur(r.tickets)}")
+        line("Cobrado en efectivo: ${eur(r.cash)}   Cobrado por Bizum: ${eur(r.bizum)}   Pendiente de cobro: ${eur(r.pending)}", dy = 22f)
         line("Por pueblo", b); r.byTown.forEach { line("  ${it.town}: ${it.n} pedidos, ${it.delivered} entregados") }
         y += 6; line("Por repartidor", b); r.byDriver.forEach { line("  ${it.driver}: ${it.n} entregas") }
         y += 6; line("Detalle de pedidos", b)

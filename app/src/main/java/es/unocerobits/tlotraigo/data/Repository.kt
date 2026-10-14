@@ -120,6 +120,7 @@ class Repository(val api: SupabaseApi) {
         val body = buildJsonObject {
             put("available", s.available); put("accepts_cash", s.cash); put("accepts_bizum", s.bizum); put("accepts_card", s.card)
             putJsonArray("town_ids") { s.townIds.forEach { add(it) } }
+            put("bizum_phone", s.bizumPhone?.filter { it.isDigit() || it == '+' }?.ifBlank { null })
         }
         api.rest("PATCH", "driver_settings?driver_id=eq.${api.uid}", body.toString())
     }
@@ -291,6 +292,8 @@ class Repository(val api: SupabaseApi) {
     suspend fun tipCheckoutUrl(orderId: Long): String? =
         api.function("pagos", buildJsonObject { put("action", "tip"); put("order_id", orderId) })["url"]?.jsonPrimitive?.contentOrNull
     suspend fun mockTipPaid(orderId: Long) { api.rpc("mock_tip_paid", buildJsonObject { put("p_order", orderId) }) }
+    suspend fun clientMarkPaid(orderId: Long) { api.rpc("client_mark_paid", buildJsonObject { put("p_order", orderId) }) }
+    suspend fun markCollected(orderId: Long, method: String? = null) { api.rpc("mark_collected", buildJsonObject { put("p_order", orderId); put("p_method", method) }) }
     suspend fun confirmCash(orderId: Long) { api.rpc("confirm_cash", buildJsonObject { put("p_order", orderId) }) }
     suspend fun payout(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "payout"); put("order_id", orderId) }) } }
     suspend fun captureCard(orderId: Long) { runCatching { api.function("pagos", buildJsonObject { put("action", "capture"); put("order_id", orderId) }) } }

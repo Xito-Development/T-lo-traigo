@@ -240,6 +240,12 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             Spacer(Modifier.height(24.dp))
             o.ticketPath?.let { TicketView(o) }
             if (o.awaitingPayment) PayNowCard(o) { scope.launch { order = Locator.repo.order(id) } }
+            else if (o.paymentMethod == "bizum" && o.clientPaidAt != null && !o.isPaid) Text("📲 Bizum enviado. Falta que ${o.bizumName ?: "lo"} confirme el cobro.",
+                style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(bottom = 8.dp))
+            val me = vm.profile.collectAsState().value
+            if (o.ticketTotal != null && !o.isPaid && (me?.isGestor == true || me?.isAdmin == true)) OutlinedButton({
+                scope.launch { try { Locator.repo.markCollected(o.id); order = Locator.repo.order(id) } catch (e: ApiException) { err = e.message } } },
+                Modifier.fillMaxWidth().padding(bottom = 8.dp)) { Icon(Icons.Filled.DoneAll, null); Spacer(Modifier.width(6.dp)); Text("Marcar como cobrado (${eur(o.amount)})") }
             else if (o.ticketTotal != null && !o.isFinal) Text(if (o.isPaid) "✓ Pagado: ${eur(o.amount)}" else "✓ Pagarás ${eur(o.amount)} en efectivo al recibirlo",
                 style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
             if (o.canCancel) { BigButton("Editar pedido", { showEdit = true }, tonal = true, icon = Icons.Filled.EditNote); Spacer(Modifier.height(10.dp)) }
@@ -414,6 +420,7 @@ private fun PayNowCard(o: Order, onDone: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var err by remember { mutableStateOf<String?>(null) }
+    if (o.paymentMethod == "bizum") { BizumPayCard(o, onDone); return }
     var demo by remember { mutableStateOf(false) }
     var cardOn by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { runCatching { Locator.repo.fees() }.getOrNull()?.let { demo = it.demoPayments && it.cardEnabled; cardOn = it.cardEnabled } }
@@ -497,6 +504,41 @@ private fun TipCard(o: Order, onDone: () -> Unit) {
             else BigButton(if (a != null) "Le he dado ${eur(a)} en efectivo" else "Apuntar propina en efectivo", {
                 scope.launch { try { Locator.repo.giveTip(o.id, a!!, "efectivo"); onDone() } catch (e: ApiException) { err = e.message } } },
                 enabled = a != null && a >= 0.5, icon = Icons.Filled.Favorite)
+        }
+    }
+}
+
+/** Bizum: importe, a quién y concepto, con botones para copiar. El usuario confirma el envío y el repartidor/entidad confirma el cobro. */
+@Composable
+private fun BizumPayCard(o: Order, onDone: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var err by remember { mutableStateOf<String?>(null) }
+    val clip = androidx.compose.ui.platform.LocalClipboardManager.current
+    var copied by remember { mutableStateOf<String?>(null) }
+    Card(Modifier.fillMaxWidth().padding(vertical = 10.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("¡Tu compra está hecha!", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge); PayBadge("bizum") }
+            Text("Ticket del súper: ${eur(o.ticketTotal ?: 0.0)}" + if (o.amount > (o.ticketTotal ?: 0.0)) " + tarifas ${eur(o.amount - (o.ticketTotal ?: 0.0))}" else "", style = MaterialTheme.typography.bodyMedium)
+            if (o.bizumPhone == null) {
+                Text("El repartidor no tiene Bizum configurado. Paga en efectivo al recibir la compra.", Modifier.padding(vertical = 8.dp), style = MaterialTheme.typography.bodyLarge)
+                BigButton("Pagaré en efectivo", { scope.launch { try { Locator.repo.confirmCash(o.id); onDone() } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.Payments)
+                ErrorText(err); return@Column
+            }
+            Text("Envía por Bizum desde la app de tu banco:", Modifier.padding(top = 10.dp), style = MaterialTheme.typography.titleMedium)
+            @Composable fun copyRow(label: String, value: String, big: Boolean = false) = Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) { Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(value, style = if (big) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium) }
+                TextButton({ clip.setText(androidx.compose.ui.text.AnnotatedString(value)); copied = label }) { Icon(Icons.Filled.ContentCopy, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text(if (copied == label) "Copiado" else "Copiar") }
+            }
+            copyRow("Importe", fmtNum(o.amount) + " €", big = true)
+            copyRow("A (${if (o.bizumTo == "entidad") "entidad" else "repartidor"}: ${o.bizumName.orEmpty()})", o.bizumPhone)
+            copyRow("Concepto", "Pedido ${o.id}")
+            Text("El repartidor saldrá hacia tu casa cuando confirmes que lo has enviado.", style = MaterialTheme.typography.bodySmall)
+            ErrorText(err)
+            Spacer(Modifier.height(8.dp))
+            BigButton("Ya he enviado el Bizum", { scope.launch { try { Locator.repo.clientMarkPaid(o.id); onDone() } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.Send)
+            TextButton({ scope.launch { try { Locator.repo.confirmCash(o.id); onDone() } catch (e: ApiException) { err = e.message } } }) { Text("Prefiero pagar en efectivo al recibirlo") }
         }
     }
 }

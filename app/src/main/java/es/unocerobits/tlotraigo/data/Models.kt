@@ -134,6 +134,8 @@ data class Quote(
     @SerialName("fees_mode") val feesMode: String = "tarifas",
     @SerialName("products_payment") val productsPayment: String = "efectivo",
     @SerialName("org_name") val orgName: String? = null,
+    @SerialName("allow_cash") val allowCash: Boolean = true,
+    @SerialName("allow_bizum") val allowBizum: Boolean = false,
     @SerialName("extra_total") val extraTotal: Double = 0.0,
     val total: Double = 0.0,
     val town: String = "",
@@ -164,15 +166,18 @@ data class Organization(
     @SerialName("max_items") val maxItems: Int = 60, @SerialName("auto_approve_drivers") val autoApproveDrivers: Boolean = true,
     @SerialName("fees_mode") val feesMode: String = "gratuito", @SerialName("products_payment") val productsPayment: String = "efectivo",
     @SerialName("price_month") val priceMonth: Double = 0.0, @SerialName("billing_email") val billingEmail: String? = null,
+    @SerialName("allow_bizum_driver") val allowBizumDriver: Boolean = true, @SerialName("allow_bizum_org") val allowBizumOrg: Boolean = false,
+    @SerialName("bizum_org_phone") val bizumOrgPhone: String? = null, @SerialName("bizum_org_name") val bizumOrgName: String? = null,
 )
 @Serializable
 data class ReportCount(val town: String? = null, val driver: String? = null, val n: Int = 0, val delivered: Int = 0)
 @Serializable
 data class ReportRow(val id: Long, val created: String, val town: String = "", val customer: String? = null, val driver: String? = null, val status: String,
-    val items: Int = 0, val ticket: Double? = null, val claimed: Boolean = false, @SerialName("delivered_at") val deliveredAt: String? = null)
+    val items: Int = 0, val ticket: Double? = null, val total: Double? = null, val method: String? = null, val paid: Boolean = false, val claimed: Boolean = false, @SerialName("delivered_at") val deliveredAt: String? = null)
 @Serializable
 data class OrgReport(val org: String = "", val month: String = "", val total: Int = 0, val delivered: Int = 0, val cancelled: Int = 0, val claims: Int = 0,
     @SerialName("avg_hours") val avgHours: Double? = null, val tickets: Double = 0.0, val users: Int = 0,
+    val cash: Double = 0.0, val bizum: Double = 0.0, val pending: Double = 0.0,
     @SerialName("by_town") val byTown: List<ReportCount> = emptyList(), @SerialName("by_driver") val byDriver: List<ReportCount> = emptyList(), val rows: List<ReportRow> = emptyList())
 @Serializable
 data class OrgDriver(val id: String, val name: String = "", val phone: String? = null, val approved: Boolean = false, val available: Boolean = false)
@@ -258,6 +263,7 @@ data class DriverApplication(
     @SerialName("driver_id") val driverId: String,
     val vehicle: String,
     @SerialName("town_ids") val townIds: List<Long> = emptyList(),
+    
     val availability: String? = null,
     val experience: String? = null,
     val message: String? = null,
@@ -320,6 +326,11 @@ data class Order(
     @SerialName("driver_payout") val driverPayout: Double? = null,
     @SerialName("tip_amount") val tipAmount: Double = 0.0,
     @SerialName("free_service") val freeService: Boolean = false,
+    @SerialName("bizum_to") val bizumTo: String? = null,
+    @SerialName("bizum_phone") val bizumPhone: String? = null,
+    @SerialName("bizum_name") val bizumName: String? = null,
+    @SerialName("client_paid_at") val clientPaidAt: String? = null,
+    @SerialName("paid_at") val paidAt: String? = null,
     @SerialName("updated_at") val updatedAt: String = "",
     @SerialName("tip_status") val tipStatus: String = "ninguna",
     @SerialName("tip_method") val tipMethod: String? = null,
@@ -358,6 +369,7 @@ data class DriverSettings(
     @SerialName("accepts_bizum") val bizum: Boolean = false,
     @SerialName("accepts_card") val card: Boolean = false,
     @SerialName("town_ids") val townIds: List<Long> = emptyList(),
+    @SerialName("bizum_phone") val bizumPhone: String? = null,
     val approved: Boolean = false,
 )
 

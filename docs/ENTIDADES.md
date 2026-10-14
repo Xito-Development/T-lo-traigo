@@ -24,3 +24,9 @@ máximo de artículos; cada gestor solo ve los datos de su entidad.
 - **La compra del súper**: o el usuario paga el ticket en efectivo al repartidor, o «la entidad se encarga del pago» (bonos sociales, cuenta municipal…). La app guarda el ticket y genera un **justificante** de cada pedido.
 - **Repartidores**: los organiza y, si procede, los compensa la entidad (voluntarios o personal propio). La app no les paga nada.
 - **Informe mensual** (pestaña «Informe»): totales, por pueblo, por repartidor, tiempos y reclamaciones; descargable en PDF y en Excel (CSV).
+
+## Efectivo y Bizum
+- La entidad elige en Ajustes: **Efectivo**, **Bizum al repartidor** (el repartidor pone su número en sus Ajustes) y/o **Bizum a la entidad** (número de Bizum para empresas de su banco).
+- Tras el ticket, el usuario ve el importe real. Con Bizum: número, importe y concepto «Pedido N» para copiar → «Ya he enviado el Bizum» → el repartidor puede salir → repartidor o entidad pulsan «Cobrado».
+- Con efectivo: se marca cobrado al entregar. El informe mensual separa efectivo, Bizum y pendiente.
+- La app no se conecta a Bizum ni toca el dinero: el pago se hace desde la app del banco del usuario.

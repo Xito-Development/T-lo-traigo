@@ -241,3 +241,19 @@ fun Wordmark(modifier: Modifier = Modifier, width: Dp = 220.dp, text: androidx.c
 fun Context.openUrl(url: String) = safeStart(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
 fun Context.safeStartPublic(i: Intent) = safeStart(i)
+
+/** Distintivo de la forma de pago con la estética de la app. */
+@Composable
+fun PayBadge(method: String, modifier: Modifier = Modifier) {
+    val (label, icon, bg, fg) = when (method) {
+        "bizum" -> listOf("Bizum", Icons.Filled.Smartphone, androidx.compose.ui.graphics.Color(0xFF0E8A8A), androidx.compose.ui.graphics.Color.White)
+        "tarjeta" -> listOf("Tarjeta", Icons.Filled.CreditCard, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
+        else -> listOf("Efectivo", Icons.Filled.Payments, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+    }
+    Surface(modifier, shape = CircleShape, color = bg as androidx.compose.ui.graphics.Color) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon as androidx.compose.ui.graphics.vector.ImageVector, null, Modifier.size(18.dp), tint = fg as androidx.compose.ui.graphics.Color)
+            Spacer(Modifier.width(6.dp)); Text(label as String, style = MaterialTheme.typography.labelLarge, color = fg)
+        }
+    }
+}
