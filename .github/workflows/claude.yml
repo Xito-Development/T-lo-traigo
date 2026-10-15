@@ -1,0 +1,25 @@
+# Claude Code en GitHub: escribe «@claude …» en una incidencia (issue) o en un PR y Claude trabaja en el repositorio
+# (lee CLAUDE.md para el contexto del proyecto) y abre un PR con los cambios.
+# Requisitos: instalar la app de GitHub de Claude en el repositorio y añadir el secreto ANTHROPIC_API_KEY
+# (o CLAUDE_CODE_OAUTH_TOKEN si usas tu suscripción). Ver docs/CLAUDE_CODE.md.
+name: Claude Code
+on:
+  issue_comment: { types: [created] }
+  pull_request_review_comment: { types: [created] }
+  issues: { types: [opened, assigned] }
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+jobs:
+  claude:
+    if: contains(github.event.comment.body, '@claude') || contains(github.event.issue.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

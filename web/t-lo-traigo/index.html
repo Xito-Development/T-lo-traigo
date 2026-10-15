@@ -121,8 +121,9 @@ nav a:hover{color:var(--mostaza)}
 .rv{opacity:0;transform:translateY(40px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
 .rv.l{transform:translateX(-50px)} .rv.r{transform:translateX(50px)} .rv.z{transform:scale(.85) rotate(-3deg)}
 .rv.on{opacity:1;transform:none}
-h2.rv{transform:none;clip-path:inset(0 100% 0 0);transition:clip-path 1.1s var(--ease),opacity .4s}
-h2.rv.on{clip-path:inset(0 0 0 0)}
+h2.rv{opacity:0;transform:translateY(22px);letter-spacing:.03em;transition:opacity .8s var(--ease),transform .9s var(--spring),letter-spacing 1s var(--ease);position:relative;display:inline-block}
+h2.rv::after{content:"";position:absolute;left:0;bottom:-.18em;height:.14em;width:100%;border-radius:1em;background:linear-gradient(90deg,var(--mustard),var(--hoja));transform:scaleX(0);transform-origin:left;transition:transform 1s var(--ease) .35s}
+h2.rv.on{opacity:1;transform:none;letter-spacing:-.01em}h2.rv.on::after{transform:scaleX(.35)}
 .st > *{opacity:0;transform:translateY(26px) scale(.96);transition:opacity .6s var(--ease),transform .7s var(--spring)}
 .st.on > *{opacity:1;transform:none}
 
@@ -269,6 +270,45 @@ details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem
 :root[data-theme="dark"] details{background:#1C2723;border-color:var(--linea)}
 .edit-only{display:none;margin-top:1rem;font-size:.95rem} body.editing .edit-only{display:block}
 .edit-only [data-k]{display:inline-block;min-width:16rem;background:rgba(242,181,68,.12);padding:.2rem .4rem}
+
+/* ===== Más vida: tarjetas de entidades, cifras, pueblos en movimiento, brillo en botones, inclinación 3D ===== */
+.ent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.1rem;margin-top:1.8rem}
+.ent-card{background:var(--niebla);border:1px solid var(--linea);border-radius:20px;padding:1.4rem 1.3rem;transition:box-shadow .4s,transform .4s var(--spring);transform-style:preserve-3d;will-change:transform}
+.ent-card:hover{box-shadow:0 22px 40px -24px rgba(31,77,63,.55)}
+.ent-card h3{margin:.8rem 0 .35rem;color:var(--pino-hondo)} .ent-card p{color:var(--gris);font-size:1rem}
+.ent-ico{display:inline-grid;place-items:center;width:3rem;height:3rem;border-radius:14px;background:linear-gradient(135deg,var(--pino),var(--hoja));color:#fff;box-shadow:0 10px 20px -12px var(--pino)}
+.ent-ico svg{width:1.5rem;height:1.5rem}
+:root[data-theme="dark"] .ent-card{background:#1C2723;border-color:var(--linea)}
+:root[data-theme="dark"] .stats{background:linear-gradient(120deg,#16352C,#225443)}
+.stats{background:linear-gradient(120deg,#1F4D3F,#2E6B57);color:#fff;padding:3.2rem 0 0;overflow:hidden;position:relative}
+.stats::before,.stats::after{content:"";position:absolute;border-radius:50%;filter:blur(40px);opacity:.35;animation:blob 14s ease-in-out infinite alternate}
+.stats::before{width:340px;height:340px;background:#F2B544;top:-160px;left:-80px}.stats::after{width:300px;height:300px;background:#7BC9A4;bottom:-180px;right:-60px;animation-delay:-6s}
+@keyframes blob{to{transform:translate(120px,60px) scale(1.2)}}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.4rem;position:relative;z-index:1}
+.stat b{display:block;font:800 clamp(2.6rem,6vw,3.8rem)/1 var(--f-title);color:#F2B544;text-shadow:0 6px 24px rgba(0,0,0,.25)} .stat span{color:#E4F1EA}
+.marquee{margin-top:2.6rem;padding:1rem 0;background:rgba(0,0,0,.14);position:relative;z-index:1;mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marquee-track{display:flex;gap:2.4rem;width:max-content;animation:marq 32s linear infinite;font:800 1.25rem var(--f-title);color:rgba(255,255,255,.85)}
+.marquee-track span::before{content:"📍";margin-right:.5rem}
+.marquee:hover .marquee-track{animation-play-state:paused}
+@keyframes marq{to{transform:translateX(-50%)}}
+.btn-main{position:relative;overflow:hidden}
+.btn-main::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:shine 4.5s ease-in-out infinite}
+@keyframes shine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.feats li,.steps li,details,.ticket{transition:transform .4s var(--spring),box-shadow .4s}
+details:hover{transform:translateX(6px)}
+details[open]{box-shadow:0 18px 36px -26px rgba(31,77,63,.6)}
+details p{animation:fadeDown .45s var(--ease)} @keyframes fadeDown{from{opacity:0;transform:translateY(-6px)}}
+/* Barra de desplazamiento con la estética de la marca */
+html{scrollbar-color:var(--pino) transparent;scrollbar-width:thin}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:var(--niebla)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--pino),var(--hoja));border-radius:12px;border:3px solid var(--niebla)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--mustard),var(--mustard-hondo))}
+::-webkit-scrollbar-button{display:none;height:0;width:0}
+:root[data-theme="dark"]{scrollbar-color:#3E7D67 #101715}
+:root[data-theme="dark"] ::-webkit-scrollbar-track{background:#101715}
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb{border-color:#101715}
+@media (prefers-reduced-motion:reduce){.marquee-track,.btn-main::after,.stats::before,.stats::after{animation:none}}
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto cuesta para el usuario?", "acceptedAnswer": {"@type": "Answer", "text": "Depende de la entidad de tu pueblo: muchas lo ofrecen gratis y solo pagas lo que marque el ticket del súper. Antes de pedir siempre ves el importe estimado."}}, {"@type": "Question", "name": "¿Cómo se paga la compra?", "acceptedAnswer": {"@type": "Answer", "text": "En efectivo al recibirla o por Bizum desde la app de tu banco, según lo que ofrezca tu entidad. La app no guarda datos bancarios."}}, {"@type": "Question", "name": "¿Y si el precio cambia en el súper?", "acceptedAnswer": {"@type": "Answer", "text": "Los precios son orientativos: el repartidor hace una foto del ticket y pagas el importe real, que ves en la app antes de que salga hacia tu casa."}}, {"@type": "Question", "name": "¿Puede pedir mi hijo o mi hija por mí?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Con el código de seis cifras de tu app, un familiar puede hacer los pedidos desde su móvil y seguirlos."}}, {"@type": "Question", "name": "¿Qué pasa si el pedido no llega?", "acceptedAnswer": {"@type": "Answer", "text": "Desde la app puedes reclamarlo: hay un plazo de 6 horas para entregarlo, y un botón para llamar al 112 si hay una emergencia."}}, {"@type": "Question", "name": "Soy un ayuntamiento o una asociación, ¿cómo empiezo?", "acceptedAnswer": {"@type": "Answer", "text": "Escríbenos a info@unocerobits.com: creamos tu entidad, te enviamos un código y configuras pueblos, repartidores, horarios y formas de pago desde tu panel."}}]}</script>
 </head>
@@ -442,16 +482,28 @@ details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem
     </div>
   </section>
 
+  <section class="stats" aria-label="T lo traigo en cifras">
+    <div class="wrap stats-grid">
+      <div class="stat rv"><b data-count="8">0</b><span>pueblos en el piloto</span></div>
+      <div class="stat rv"><b data-count="0" data-suffix=" €">0 €</b><span>para el usuario en muchos servicios</span></div>
+      <div class="stat rv"><b data-count="6" data-suffix=" h">0 h</b><span>de plazo si un pedido no llega</span></div>
+      <div class="stat rv"><b data-count="13" data-prefix="9–" data-suffix=" h" data-to="22">9–22 h</b><span>horario de entrega</span></div>
+    </div>
+    <div class="marquee" aria-hidden="true"><div class="marquee-track">
+      <span>Villaquejida</span><span>Villafer</span><span>Cimanes de la Vega</span><span>Villamandos</span><span>Villaornate y Castro</span><span>Campazas</span><span>Valderas</span><span>La Antigua</span>
+      <span>Villaquejida</span><span>Villafer</span><span>Cimanes de la Vega</span><span>Villamandos</span><span>Villaornate y Castro</span><span>Campazas</span><span>Valderas</span><span>La Antigua</span>
+    </div></div>
+  </section>
+
   <section class="light" id="entidades">
     <div class="wrap">
       <h2 class="rv" data-k="ent.titulo">Para ayuntamientos y entidades</h2>
       <p class="rv" data-k="ent.texto">T lo traigo es una plataforma que contrata tu entidad (ayuntamiento, asociación, residencia o tienda) para ofrecer a tus mayores un servicio de compra a domicilio con trazabilidad completa. Tú decides los pueblos, los repartidores, el horario, las formas de pago y si es gratuito para el usuario.</p>
-      <ul class="feats st" style="margin-top:1.5rem;color:var(--texto)">
-        <li><div><h3 data-k="ent.f1.t">Trazabilidad y confianza</h3><p data-k="ent.f1.d">Foto del ticket, seguimiento, chat, reclamaciones con plazo de 6 horas y justificante de cada pedido.</p></div></li>
-        <li><div><h3 data-k="ent.f2.t">Panel propio</h3><p data-k="ent.f2.d">Pedidos en directo, repartidores, pueblos, códigos de invitación y ajustes del servicio.</p></div></li>
-        <li><div><h3 data-k="ent.f3.t">Informe mensual</h3><p data-k="ent.f3.d">Pedidos, tiempos, cobros y reclamaciones en PDF y Excel para justificar el servicio.</p></div></li>
-        <li><div><h3 data-k="ent.f4.t">Sin manejar dinero</h3><p data-k="ent.f4.d">Efectivo o Bizum directamente entre usuario, repartidor y entidad. Cuota mensual sencilla.</p></div></li>
-      </ul>
+      <div class="ent-grid st"><div class="ent-card tilt"><span class="ent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+<h3 data-k="ent.f1.t">Trazabilidad y confianza</h3><p data-k="ent.f1.d">Foto del ticket, seguimiento, chat, reclamaciones con plazo de 6 horas y justificante de cada pedido.</p></div><div class="ent-card tilt"><span class="ent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
+<h3 data-k="ent.f2.t">Panel propio</h3><p data-k="ent.f2.d">Pedidos en directo, repartidores, pueblos, códigos de invitación y ajustes del servicio.</p></div><div class="ent-card tilt"><span class="ent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
+<h3 data-k="ent.f3.t">Informe mensual</h3><p data-k="ent.f3.d">Pedidos, tiempos, cobros y reclamaciones en PDF y Excel para justificar el servicio.</p></div><div class="ent-card tilt"><span class="ent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9.5a3 3 0 0 0-3-1.5c-1.7 0-3 .9-3 2s1.3 1.6 3 2 3 .9 3 2-1.3 2-3 2a3 3 0 0 1-3-1.5M12 6.5v11"/></svg></span>
+<h3 data-k="ent.f4.t">Sin manejar dinero</h3><p data-k="ent.f4.d">Efectivo o Bizum directamente entre usuario, repartidor y entidad. Cuota mensual sencilla.</p></div></div>
       <a class="btn btn-ink rv" href="mailto:info@unocerobits.com?subject=Demo%20de%20T%20lo%20traigo%20para%20mi%20entidad" style="margin-top:1.5rem">Solicitar una demostración</a>
     </div>
   </section>
@@ -751,5 +803,25 @@ details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem
 <script>(function(){var b=document.getElementById('themeBtn'),r=document.documentElement;
 function upd(){b.textContent=r.getAttribute('data-theme')==='dark'?'☀️':'🌙';}
 b.onclick=function(){var t=r.getAttribute('data-theme')==='dark'?'light':'dark';r.setAttribute('data-theme',t);try{localStorage.setItem('tlt_theme',t);}catch(e){}upd();};upd();})();</script>
+<script>
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* Contadores que suben al aparecer */
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) {
+    if (!e.isIntersecting) return; io.unobserve(e.target);
+    var b = e.target, to = +b.dataset.count, pre = b.dataset.prefix || '', suf = b.dataset.suffix || '', end = b.dataset.to;
+    if (reduce || to === 0) { b.textContent = pre + (end || to) + suf; return; }
+    var t0 = null; (function f(t) { if (!t0) t0 = t; var k = Math.min((t - t0) / 1300, 1), v = Math.round((end ? +end - to + to * (1 - Math.pow(1 - k, 3)) : to * (1 - Math.pow(1 - k, 3))));
+      b.textContent = pre + v + suf; if (k < 1) requestAnimationFrame(f); })(performance.now());
+  }); }, { threshold: .5 });
+  document.querySelectorAll('[data-count]').forEach(function (b) { io.observe(b); });
+  /* Inclinación 3D suave al pasar el ratón */
+  if (!reduce && matchMedia('(hover:hover)').matches) document.querySelectorAll('.tilt, .feats li, .chips span, .ticket').forEach(function (el) {
+    el.addEventListener('mousemove', function (ev) { var r = el.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width - .5, y = (ev.clientY - r.top) / r.height - .5;
+      el.style.transform = 'perspective(700px) rotateX(' + (-y * 6) + 'deg) rotateY(' + (x * 8) + 'deg) translateY(-4px)'; });
+    el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+  });
+})();
+</script>
 </body>
 </html>

@@ -2,6 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.6] - 2026-10-15
+### Añadido
+- Web con más vida: franja de cifras animadas, pueblos en movimiento, tarjetas de entidades con iconos e inclinación 3D, brillo en los botones y preguntas que se despliegan con suavidad.
+- Barra de desplazamiento de la web con los colores de la marca (también en modo oscuro).
+- Claude Code en GitHub: escribe «@claude» en una incidencia para encargarle tareas (docs/CLAUDE_CODE.md).
+### Corregido
+- Web: varios títulos no llegaban a aparecer (Así de sencillo, Para mayores, Entidades, Preguntas frecuentes…).
+- Web: el texto de «Para ayuntamientos y entidades» salía palabra a palabra.
+
 ## [0.6.5] - 2026-10-15
 - El repartidor puede cambiar un producto que no hay por otro, o quitarlo; el cliente recibe un aviso en el chat y lo ve en su pedido y en el correo.
 - Correos de las compras: resumen al hacer el pedido y factura o justificante al entregarlo (se puede desactivar en Ajustes).
