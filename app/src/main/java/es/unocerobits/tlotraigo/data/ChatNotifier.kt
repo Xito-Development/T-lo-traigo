@@ -27,14 +27,38 @@ object ChatNotifier {
             .createNotificationChannel(NotificationChannel(CH, "Mensajes del pedido", NotificationManager.IMPORTANCE_HIGH))
         job = CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             var first = true
+            val prefs = app.getSharedPreferences("avisos", Context.MODE_PRIVATE)
+            var orgId: Long? = null; var tick = 0
             while (isActive) {
                 if (Locator.api.session != null) runCatching {
                     val list = Locator.repo.unread()
                     list.filter { it.id !in notified && it.orderId != openChatOrder }.forEach { m -> if (!first) notify(app, m) }
                     notified.addAll(list.map { it.id }); first = false
+                    // Avisos de la entidad (días sin reparto, verificación…), cada minuto
+                    if (tick++ % 5 == 0) {
+                        if (orgId == null) orgId = Locator.repo.myProfile()?.orgId
+                        orgId?.let { oid ->
+                            val last = prefs.getLong("ultimo_$oid", -1L)
+                            val news = Locator.repo.orgNotices(oid, maxOf(last, 0L))
+                            if (last >= 0) news.sortedBy { it.id }.forEach { notifyNotice(app, it) }
+                            news.maxOfOrNull { it.id }?.let { prefs.edit().putLong("ultimo_$oid", it).apply() } ?: if (last < 0) prefs.edit().putLong("ultimo_$oid", 0L).apply() else Unit
+                        }
+                    }
                 }
                 delay(12_000)
             }
+        }
+    }
+
+    private fun notifyNotice(ctx: Context, n: OrgNotice) {
+        val nm = NotificationManagerCompat.from(ctx); if (!nm.areNotificationsEnabled()) return
+        val pi = PendingIntent.getActivity(ctx, 6000, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0))
+        runCatching {
+            @Suppress("MissingPermission")
+            nm.notify(6000 + (n.id % 1000).toInt(), NotificationCompat.Builder(ctx, CH).setSmallIcon(R.drawable.ic_launcher_monochrome)
+                .setContentTitle("Aviso de tu servicio").setContentText(n.body).setStyle(NotificationCompat.BigTextStyle().bigText(n.body))
+                .setAutoCancel(true).setContentIntent(pi).build())
         }
     }
 

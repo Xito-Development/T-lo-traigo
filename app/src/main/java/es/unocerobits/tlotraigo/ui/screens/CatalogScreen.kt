@@ -86,6 +86,7 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit, onNeeds: () -> Unit 
             }
         }
         item { OrgWelcome(vm) }
+        item { val openList = LocalOpenList.current; ListsRow(vm) { id -> openList(id, emptyList()) } }
         item {
             Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp).clickable(onClick = onNeeds), shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primary)) {
@@ -240,7 +241,15 @@ private fun OrgWelcome(vm: AppViewModel) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val orgId = vm.profile.collectAsState().value?.orgId ?: return
     var org by remember { mutableStateOf<Organization?>(null) }
-    LaunchedEffect(orgId) { org = runCatching { Locator.repo.organization(orgId) }.getOrNull() }
+    var notices by remember { mutableStateOf<List<OrgNotice>>(emptyList()) }
+    LaunchedEffect(orgId) {
+        org = runCatching { Locator.repo.organization(orgId) }.getOrNull()
+        val weekAgo = java.time.OffsetDateTime.now().minusDays(7)
+        notices = runCatching { Locator.repo.orgNotices(orgId) }.getOrDefault(emptyList()).filter { runCatching { java.time.OffsetDateTime.parse(it.createdAt).isAfter(weekAgo) }.getOrDefault(false) }.take(3)
+    }
+    notices.forEach { n -> Surface(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 3.dp), shape = MaterialTheme.shapes.medium,
+        color = if (n.kind == "cierre") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer) {
+        Text(n.body, Modifier.padding(12.dp), style = MaterialTheme.typography.bodyMedium) } }
     val o = org ?: return
 
     val bc = o.brandColor?.let { brand(it) }
@@ -256,6 +265,8 @@ private fun OrgWelcome(vm: AppViewModel) {
             val days = listOf("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
             Text("Reparto: ${if (o.deliveryDays.size == 7) "todos los días" else o.deliveryDays.sorted().joinToString(", ") { days[it - 1] }} · de ${o.openHour}:00 a ${o.closeHour}:00",
                 style = MaterialTheme.typography.bodySmall)
+            o.closedDates.filter { it >= java.time.LocalDate.now().toString() }.sorted().take(3).takeIf { it.isNotEmpty() }?.let { cd ->
+                Text("Sin reparto: " + cd.joinToString(", ") { prettyDay(it) }, style = MaterialTheme.typography.bodySmall) }
             o.welcomeMessage?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             o.publicPhone?.takeIf { it.isNotBlank() }?.let { p -> TextButton({ ctx.dial(p) }) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Llamar: $p") } }
         }

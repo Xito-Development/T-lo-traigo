@@ -52,7 +52,7 @@ class DriverService : Service() {
     private val listener = object : LocationListener {
         override fun onLocationChanged(l: Location) {
             val id = tracking ?: return
-            if (System.currentTimeMillis() - lastSent < 12_000) return
+            if (System.currentTimeMillis() - lastSent < 8_000) return
             lastSent = System.currentTimeMillis()
             scope.launch { runCatching { Locator.repo.updateLocation(id, l.latitude, l.longitude, l.accuracy) } }
         }
@@ -65,8 +65,8 @@ class DriverService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         channels()
-        foreground(false)
-        if (job == null) job = scope.launch { loop() }
+        foreground(tracking != null)
+        if (job == null) job = scope.launch { loop() } else scope.launch { runCatching { tick(false) } }   // al salir a repartir: comprobar ya
         return START_STICKY
     }
 
@@ -95,21 +95,28 @@ class DriverService : Service() {
         } else startForeground(ID_FG, n)
     }
 
+    private var first = true
+    /** Una comprobación: pedidos nuevos (si está disponible) y pedido en camino (siempre, aunque no esté disponible). Devuelve false si debe pararse. */
+    private suspend fun tick(notify: Boolean = true): Boolean {
+        if (Locator.api.session == null) return false
+        val available = Locator.repo.driverSettings()?.available == true
+        val enCamino = Locator.repo.myDeliveries().firstOrNull { it.status == "en_camino" }?.id
+        if (enCamino != tracking) setTracking(enCamino)
+        if (available && notify) {
+            val pend = Locator.repo.pendingOrders()
+            val nuevos = pend.filter { it.id !in seen }
+            if (nuevos.isNotEmpty()) notifyOrders(nuevos, first)
+            seen.addAll(pend.map { it.id }); first = false
+        }
+        return available || enCamino != null
+    }
+
     private suspend fun loop() {
-        var first = true
         runCatching { towns = Locator.repo.towns().associate { it.id to it.name } }
         while (currentCoroutineContext().isActive) {
-            if (Locator.api.session == null) { stopSelf(); return }
-            try {
-                if (Locator.repo.driverSettings()?.available != true) { stopSelf(); return }
-                val pend = Locator.repo.pendingOrders()
-                val nuevos = pend.filter { it.id !in seen }
-                if (nuevos.isNotEmpty()) notifyOrders(nuevos, first)
-                seen.addAll(pend.map { it.id }); first = false
-                val enCamino = Locator.repo.myDeliveries().firstOrNull { it.status == "en_camino" }?.id
-                if (enCamino != tracking) setTracking(enCamino)
-            } catch (_: Exception) { /* sin conexión: se reintenta */ }
-            delay(45_000)
+            val keep = try { tick() } catch (_: Exception) { true }   // sin conexión: se reintenta
+            if (!keep) { stopSelf(); return }
+            delay(if (tracking != null) 15_000 else 45_000)
         }
     }
 
@@ -133,8 +140,12 @@ class DriverService : Service() {
         runCatching { lm.removeUpdates(listener) }
         tracking = orderId
         if (orderId != null && hasLocation(this)) {
+            lastSent = 0L
+            // Envía ya la última posición conocida (el GPS puede tardar en dar la primera)
+            listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+                .mapNotNull { runCatching { lm.getLastKnownLocation(it) }.getOrNull() }.maxByOrNull { it.time }?.let { listener.onLocationChanged(it) }
             for (p in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER))
-                if (runCatching { lm.isProviderEnabled(p) }.getOrDefault(false)) runCatching { lm.requestLocationUpdates(p, 15_000L, 20f, listener) }
+                if (runCatching { lm.isProviderEnabled(p) }.getOrDefault(false)) runCatching { lm.requestLocationUpdates(p, 10_000L, 0f, listener) }
             foreground(true)
         } else foreground(false)
     }

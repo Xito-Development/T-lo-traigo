@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https://qqqudthqgpojbipsevna.supabase.co https://api.github.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'">
+<title>T lo traigo Control</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header id="titlebar"><div class="tb-brand"><img src="logo.png" alt=""><span>T lo traigo <b>Control</b></span></div>
+  <div class="tb-drag"></div><div id="tbStatus" class="tb-status"><i></i><span>Comprobando…</span></div>
+  <button class="tb-btn" data-w="min" aria-label="Minimizar">&#xE921;</button><button class="tb-btn" data-w="max" aria-label="Maximizar">&#xE922;</button><button class="tb-btn close" data-w="close" aria-label="Cerrar">&#xE8BB;</button></header>
+
+<!-- Arranque animado -->
+<section id="splash" class="screen show">
+  <svg class="bag" viewBox="0 0 108 108" aria-hidden="true">
+    <circle class="ring r1" cx="54" cy="56" r="40"/><circle class="ring r2" cx="54" cy="56" r="40"/>
+    <g class="drop"><path class="leaf l1" d="M66 50 C64 42 66 37 71 34 C73 39 72 45 66 50Z"/><path class="leaf l2" d="M68 50 C70 43 75 40 81 40 C80 46 75 50 68 50Z"/>
+    <path d="M40 51 C40 39 56 39 56 51" class="handle"/><path class="body" d="M31 50 H81 V78 Q81 84 75 84 H37 Q31 84 31 78Z"/><path class="band" d="M31 50H81V55H31Z"/>
+    <path class="house" d="M56 58 L69 68 H65.5 V80 H46.5 V68 H43Z"/></g>
+    <g class="trail"><line x1="12" y1="62" x2="26" y2="62"/><line x1="15" y1="69" x2="26" y2="69"/><line x1="18" y1="76" x2="26" y2="76"/></g>
+  </svg>
+  <svg class="wordmark" viewBox="0 330 4600 1240" aria-label="T lo traigo"><g transform="translate(40 40)"><path class="wm" d="M185 612V472H518Q525 483 530.5 501.0Q536 519 536 540Q536 577 519.5 594.5Q503 612 475 612ZM369 472V612H36Q29 601 23.5 583.0Q18 565 18 544Q18 506 34.5 489.0Q51 472 79 472ZM187 585H362V1077Q351 1080 328.0 1083.0Q305 1086 281 1086Q229 1086 208.0 1067.5Q187 1049 187 1003Z  M793 814H963V1077Q952 1080 931.5 1083.0Q911 1086 887 1086Q838 1086 815.5 1069.0Q793 1052 793 1006ZM963 903H793V426Q804 423 824.5 420.0Q845 417 869 417Q919 417 941.0 433.5Q963 450 963 497Z M1565 835Q1565 915 1532.5 973.0Q1500 1031 1441.5 1062.5Q1383 1094 1303 1094Q1224 1094 1165.0 1063.0Q1106 1032 1073.5 974.0Q1041 916 1041 835Q1041 756 1074.0 698.0Q1107 640 1166.0 608.5Q1225 577 1303 577Q1382 577 1440.5 609.0Q1499 641 1532.0 699.0Q1565 757 1565 835ZM1303 710Q1262 710 1238.5 742.5Q1215 775 1215 835Q1215 897 1238.0 929.0Q1261 961 1303 961Q1345 961 1368.0 928.5Q1391 896 1391 835Q1391 776 1367.5 743.0Q1344 710 1303 710Z  M1830 814H1998V911Q1998 936 2014.5 947.5Q2031 959 2061 959Q2076 959 2092.0 956.5Q2108 954 2120 950Q2129 960 2135.5 974.0Q2142 988 2142 1007Q2142 1044 2113.5 1068.5Q2085 1093 2013 1093Q1925 1093 1877.5 1053.0Q1830 1013 1830 923ZM1940 733V603H2129Q2135 613 2140.5 630.0Q2146 647 2146 667Q2146 702 2130.5 717.5Q2115 733 2089 733ZM1998 838H1830V479Q1841 476 1861.5 472.5Q1882 469 1905 469Q1954 469 1976.0 486.0Q1998 503 1998 549Z M2385 735V849H2215V709Q2215 680 2230.5 658.5Q2246 637 2271 621Q2306 600 2353.0 589.0Q2400 578 2450 578Q2559 578 2559 655Q2559 673 2554.0 688.5Q2549 704 2542 715Q2532 713 2518.0 712.0Q2504 711 2487 711Q2462 711 2434.0 717.0Q2406 723 2385 735ZM2215 814H2385V1077Q2374 1080 2353.5 1083.0Q2333 1086 2309 1086Q2260 1086 2237.5 1069.0Q2215 1052 2215 1006Z M2824 970Q2841 970 2861.5 966.5Q2882 963 2892 957V877L2820 883Q2792 885 2774.0 895.0Q2756 905 2756 925Q2756 945 2771.5 957.5Q2787 970 2824 970ZM2816 577Q2925 577 2990.5 621.5Q3056 666 3056 760V984Q3056 1010 3041.5 1026.5Q3027 1043 3007 1055Q2975 1074 2929.0 1084.0Q2883 1094 2824 1094Q2719 1094 2655.5 1053.5Q2592 1013 2592 931Q2592 862 2633.5 825.0Q2675 788 2760 779L2891 765V758Q2891 729 2865.5 716.5Q2840 704 2792 704Q2755 704 2718.5 712.0Q2682 720 2653 732Q2640 723 2631.0 704.5Q2622 686 2622 666Q2622 618 2673 598Q2702 587 2741.5 582.0Q2781 577 2816 577Z M3146 457Q3146 419 3172.0 393.0Q3198 367 3239 367Q3280 367 3306.0 393.0Q3332 419 3332 457Q3332 494 3306.0 520.5Q3280 547 3239 547Q3198 547 3172.0 520.5Q3146 494 3146 457ZM3154 814H3324V1077Q3313 1080 3292.5 1083.0Q3272 1086 3248 1086Q3199 1086 3176.5 1069.0Q3154 1052 3154 1006ZM3324 903H3154V599Q3165 596 3185.5 593.0Q3206 590 3230 590Q3280 590 3302.0 606.5Q3324 623 3324 670Z M3623 1058Q3563 1058 3512.0 1035.0Q3461 1012 3430.5 959.5Q3400 907 3400 821Q3400 741 3432.0 686.5Q3464 632 3522.5 604.5Q3581 577 3659 577Q3716 577 3764.5 592.0Q3813 607 3839 624Q3859 637 3870.5 655.0Q3882 673 3882 700V1015H3719V722Q3709 717 3697.0 713.5Q3685 710 3666 710Q3623 710 3596.0 736.5Q3569 763 3569 822Q3569 885 3593.5 908.0Q3618 931 3655 931Q3685 931 3705.0 920.5Q3725 910 3741 897L3746 1030Q3723 1042 3693.5 1050.0Q3664 1058 3623 1058ZM3722 1067V977H3882V1071Q3882 1141 3848.0 1186.5Q3814 1232 3756.5 1254.0Q3699 1276 3628 1276Q3575 1276 3533.5 1267.5Q3492 1259 3468 1243Q3432 1219 3432 1175Q3432 1152 3441.5 1133.0Q3451 1114 3463 1105Q3492 1121 3528.5 1132.0Q3565 1143 3605 1143Q3658 1143 3690.0 1125.0Q3722 1107 3722 1067Z M4480 835Q4480 915 4447.5 973.0Q4415 1031 4356.5 1062.5Q4298 1094 4218 1094Q4139 1094 4080.0 1063.0Q4021 1032 3988.5 974.0Q3956 916 3956 835Q3956 756 3989.0 698.0Q4022 640 4081.0 608.5Q4140 577 4218 577Q4297 577 4355.5 609.0Q4414 641 4447.0 699.0Q4480 757 4480 835ZM4218 710Q4177 710 4153.5 742.5Q4130 775 4130 835Q4130 897 4153.0 929.0Q4176 961 4218 961Q4260 961 4283.0 928.5Q4306 896 4306 835Q4306 776 4282.5 743.0Q4259 710 4218 710Z"/>
+    <path class="smile" pathLength="1" d="M960 1420 C 1900 1560, 3200 1550, 4330 1365"/></g></svg>
+  <p class="splash-sub">Panel de control</p>
+</section>
+
+<!-- Asistente de primera vez -->
+<section id="wizard" class="screen">
+  <div class="wz-card">
+    <ol class="wz-steps"><li class="on">Bienvenida</li><li>Acceso</li><li>Preferencias</li><li>Listo</li></ol>
+    <div class="wz-page on" data-step="0">
+      <img src="logo.png" class="wz-logo" alt="">
+      <h1>Bienvenido al panel de control</h1>
+      <p>Vigila desde aquí todos los servicios de T lo traigo: la base de datos, la web, las compilaciones, los pedidos, los errores y las sugerencias para que nada falle.</p>
+      <button class="btn primary" data-next>Empezar</button>
+    </div>
+    <div class="wz-page" data-step="1">
+      <h1>Accede como superadministrador</h1><p>Solo las cuentas de superadministrador pueden usar el panel.</p>
+      <form id="loginForm" autocomplete="on">
+        <label>Usuario o correo<input id="email" required autocomplete="username" placeholder="DNL-Owner"></label>
+        <label>Contraseña<input id="pass" type="password" required autocomplete="current-password"></label>
+        <label class="check"><input type="checkbox" id="remember" checked> Recordar en este equipo (cifrado por Windows)</label>
+        <p class="err" id="loginErr"></p>
+        <button class="btn primary" id="loginBtn">Entrar</button>
+      </form>
+    </div>
+    <div class="wz-page" data-step="2">
+      <h1>Tus preferencias</h1><p>Podrás cambiarlas cuando quieras en Ajustes.</p>
+      <div class="pref"><span>Comprobar cada</span><div class="seg" id="intervalSeg"><button data-v="1">1 min</button><button data-v="5" class="on">5 min</button><button data-v="15">15 min</button></div></div>
+      <label class="switch"><input type="checkbox" id="prefNotify" checked><i></i> Avisos de Windows cuando algo falle</label>
+      <label class="switch"><input type="checkbox" id="prefAuto"><i></i> Iniciar con Windows (en la bandeja)</label>
+      <label class="switch"><input type="checkbox" id="prefTray" checked><i></i> Al cerrar, seguir vigilando en la bandeja</label>
+      <label class="switch"><input type="checkbox" id="prefDark"><i></i> Modo oscuro</label>
+      <button class="btn primary" data-next>Continuar</button>
+    </div>
+    <div class="wz-page" data-step="3">
+      <div class="done-check"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M14 27 l8 8 l16 -18"/></svg></div>
+      <h1>¡Todo listo!</h1><p>El panel ya está vigilando. Si algo falla, te avisará aunque la ventana esté cerrada.</p>
+      <button class="btn primary" id="finishWizard">Abrir el panel</button>
+    </div>
+  </div>
+</section>
+
+<!-- Panel -->
+<section id="app" class="screen">
+  <nav id="side">
+    <button class="nav on" data-page="resumen"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z"/></svg><span>Resumen</span></button>
+    <button class="nav" data-page="servicios"><svg viewBox="0 0 24 24"><path d="M4 5h16v4H4zm0 5h16v4H4zm0 5h16v4H4z"/></svg><span>Servicios</span></button>
+    <button class="nav" data-page="actividad"><svg viewBox="0 0 24 24"><path d="M3 17h2v4H3zm4-6h2v10H7zm4 3h2v7h-2zm4-8h2v15h-2zm4 4h2v11h-2z"/></svg><span>Actividad</span></button>
+    <button class="nav" data-page="errores"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2zm1 15h-2v2h2zm0-6h-2v5h2z"/></svg><span>Errores</span><b class="badge" id="badgeErr"></b></button>
+    <button class="nav" data-page="sugerencias"><svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9zm3-19a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span>Sugerencias</span><b class="badge" id="badgeSug"></b></button>
+    <button class="nav" data-page="entidades"><svg viewBox="0 0 24 24"><path d="M12 3 2 8v2h20V8zM4 12v6h3v-6zm6 0v6h4v-6zm7 0v6h3v-6zM2 20v2h20v-2z"/></svg><span>Entidades</span></button>
+    <button class="nav" data-page="pendientes"><svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg><span>Pendientes</span><b class="badge" id="badgePen"></b></button>
+    <div class="side-sp"></div>
+    <button class="nav" data-page="ajustes"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.3-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg><span>Ajustes</span></button>
+    <div class="who" id="who"></div>
+  </nav>
+  <main id="content"></main>
+</section>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body></html>

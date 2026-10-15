@@ -44,6 +44,9 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
 
         AppearanceSection(s) { f -> vm.updateSettings(f) }
         ToggleRow("Modo fácil", "Botones y letras más grandes, lectura en voz alta", s.senior, Icons.Filled.Elderly) { v -> vm.updateSettings { it.copy(senior = v) } }
+        var mails by remember(p?.emailNotifications) { mutableStateOf(p?.emailNotifications ?: true) }
+        ToggleRow("Correos de mis compras", "Te enviamos el resumen del pedido y la factura o justificante al entregarlo", mails, Icons.Filled.Email) { v ->
+            mails = v; vm.viewModelScopeLaunch { Locator.repo.setEmailNotifications(v) } }
         var consent by remember { mutableStateOf(es.unocerobits.tlotraigo.data.Analytics.consent) }
         ToggleRow("Estadísticas y errores", "Enviar datos anónimos de uso para mejorar la app", consent, Icons.Filled.Insights) { v ->
             es.unocerobits.tlotraigo.data.Analytics.consent = v; consent = v

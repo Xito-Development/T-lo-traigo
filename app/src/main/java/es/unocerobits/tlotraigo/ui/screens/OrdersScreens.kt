@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -144,34 +145,68 @@ fun OrdersScreen(onOpen: (Long) -> Unit) {
     }
 }
 
+/**
+ * Seguimiento del pedido: barra de progreso con la bolsa que avanza y lista de pasos.
+ * (Antes los conectores tenían altura fija y se descuadraban cuando el paso actual tenía dos líneas.)
+ */
 @Composable
-fun StatusTimeline(status: String) {
+fun StatusTimeline(status: String, awaitingPayment: Boolean = false, ticket: Boolean = false) {
     val cur = OrderStatus.of(status)
-    if (cur == OrderStatus.CANCELADO) {
-        Message(Icons.Filled.Cancel, cur.label, cur.clientText); return
-    }
-    val idx = OrderStatus.flow.indexOf(cur)
-    val pulse by rememberInfiniteTransition(label = "p").animateFloat(1f, 1.35f, infiniteRepeatable(tween(900, easing = EaseInOutSine), RepeatMode.Reverse), label = "pulse")
+    if (cur == OrderStatus.CANCELADO) { Message(Icons.Filled.Cancel, cur.label, cur.clientText); return }
+    val flow = OrderStatus.flow
+    val idx = flow.indexOf(cur).coerceAtLeast(0)
+    val progress by animateFloatAsState(idx / (flow.size - 1f), spring(dampingRatio = 0.7f, stiffness = 60f), label = "prog")
+    val inf = rememberInfiniteTransition(label = "tl")
+    val pulse by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(1600, easing = LinearEasing)), label = "pulse")
+    val bob by inf.animateFloat(-2f, 2f, infiniteRepeatable(tween(500, easing = EaseInOutSine), RepeatMode.Reverse), label = "bob")
+    val primary = MaterialTheme.colorScheme.primary; val track = MaterialTheme.colorScheme.surfaceContainerHighest
     Column {
-        OrderStatus.flow.forEachIndexed { i, s ->
-            val done = i <= idx
-            val dot by animateColorAsState(if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, tween(500), label = "d")
-            Row {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(28.dp).scale(if (i == idx && i < OrderStatus.flow.lastIndex) pulse else 1f).clip(CircleShape).background(dot), Alignment.Center) {
-                        if (done) Icon(Icons.Filled.Check, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onPrimary)
+        // Barra de progreso con la bolsa avanzando
+        BoxWithConstraints(Modifier.fillMaxWidth().height(44.dp)) {
+            val w = maxWidth
+            Box(Modifier.align(Alignment.CenterStart).fillMaxWidth().height(8.dp).clip(CircleShape).background(track)) {
+                Box(Modifier.fillMaxHeight().fillMaxWidth(progress).clip(CircleShape)
+                    .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.tertiary, primary))))
+            }
+            flow.forEachIndexed { i, _ -> val done = i <= idx
+                Box(Modifier.offset(x = (w - 14.dp) * (i / (flow.size - 1f))).align(Alignment.CenterStart).size(14.dp).clip(CircleShape)
+                    .background(if (done) primary else track)) }
+            if (idx < flow.lastIndex) Box(Modifier.offset(x = (w - 36.dp) * progress, y = bob.dp).align(Alignment.CenterStart).size(36.dp).clip(CircleShape)
+                .background(androidx.compose.ui.graphics.Color(0xFFF2B544)), Alignment.Center) {
+                Icon(if (cur == OrderStatus.EN_CAMINO) Icons.Filled.LocalShipping else Icons.Filled.ShoppingBag, null, Modifier.size(20.dp), tint = androidx.compose.ui.graphics.Color(0xFF1B2428))
+            } else Box(Modifier.offset(x = w - 36.dp).align(Alignment.CenterStart).size(36.dp).clip(CircleShape).background(primary), Alignment.Center) {
+                Icon(Icons.Filled.Home, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onPrimary) }
+        }
+        Spacer(Modifier.height(14.dp))
+        flow.forEachIndexed { i, s ->
+            val done = i < idx; val now = i == idx
+            val dot by animateColorAsState(if (i <= idx) primary else MaterialTheme.colorScheme.outlineVariant, tween(500), label = "d")
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                Column(Modifier.width(32.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(32.dp), Alignment.Center) {
+                        if (now && i < flow.lastIndex) Box(Modifier.size((32 + 14 * pulse).dp).clip(CircleShape).background(primary.copy(alpha = 0.25f * (1f - pulse))))
+                        Box(Modifier.size(28.dp).clip(CircleShape).background(dot), Alignment.Center) {
+                            androidx.compose.animation.AnimatedVisibility(i <= idx, enter = scaleIn(Motion.bouncy()) + fadeIn()) {
+                                Icon(if (now && i < flow.lastIndex) Icons.Filled.MoreHoriz else Icons.Filled.Check, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                            }
+                        }
                     }
-                    if (i < OrderStatus.flow.lastIndex) {
-                        val fill by animateFloatAsState(if (i < idx) 1f else 0f, tween(600), label = "f")
-                        Box(Modifier.width(4.dp).height(34.dp).background(MaterialTheme.colorScheme.outlineVariant)) {
-                            Box(Modifier.fillMaxWidth().fillMaxHeight(fill).background(MaterialTheme.colorScheme.primary))
+                    if (i < flow.lastIndex) {
+                        val fill by animateFloatAsState(if (i < idx) 1f else 0f, tween(700, easing = Motion.emphasized), label = "f")
+                        Box(Modifier.width(4.dp).weight(1f).padding(vertical = 2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.outlineVariant)) {
+                            Box(Modifier.fillMaxWidth().fillMaxHeight(fill).background(primary))
                         }
                     }
                 }
                 Spacer(Modifier.width(14.dp))
-                Column(Modifier.padding(top = 2.dp)) {
-                    Text(s.label, style = MaterialTheme.typography.titleMedium, color = if (done) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (i == idx) Text(s.clientText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(Modifier.padding(top = 4.dp, bottom = if (i < flow.lastIndex) 18.dp else 0.dp).weight(1f)) {
+                    Text(s.label, style = if (now) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                        color = if (i <= idx) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+                    androidx.compose.animation.AnimatedVisibility(now, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                        Text(when { s == OrderStatus.COMPRANDO && awaitingPayment -> "Ticket subido: confirma el pago para que salga hacia tu casa"
+                            s == OrderStatus.COMPRANDO && ticket -> "Compra hecha · preparando la salida"; else -> s.clientText },
+                            style = MaterialTheme.typography.bodyMedium, color = if (awaitingPayment && s == OrderStatus.COMPRANDO) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
@@ -209,7 +244,7 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             Text(prettyDate(o.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(16.dp))
             Card(shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer)) {
-                Box(Modifier.fillMaxWidth().padding(20.dp)) { StatusTimeline(o.status) }
+                Box(Modifier.fillMaxWidth().padding(20.dp)) { StatusTimeline(o.status, o.awaitingPayment, o.ticketTotal != null) }
             }
             Spacer(Modifier.height(10.dp))
             ScheduleBadge(o.scheduledDate, o.scheduledSlot)
@@ -227,6 +262,8 @@ fun OrderDetailScreen(vm: AppViewModel, id: Long, onBack: () -> Unit, onRepeat: 
             if (o.status == "entregado") ReviewSection(o)
             SectionTitle("Productos")
             ItemsWithDiff(o)
+            if (customerView) { val openList = LocalOpenList.current
+                TextButton({ openList(-1, o.items.map { it.toListItem() }) }) { Icon(Icons.Filled.PlaylistAdd, null); Spacer(Modifier.width(6.dp)); Text("Guardar como lista") } }
             HorizontalDivider(Modifier.padding(vertical = 10.dp))
             Row { Text(if (o.ticketTotal != null) "Productos (ticket del súper)" else "Productos (estimado)", Modifier.weight(1f)); Text(eur(o.ticketTotal ?: o.subtotal)) }
             Row { Text("Servicio del repartidor", Modifier.weight(1f)); Text(eur(o.serviceFee)) }
@@ -372,6 +409,7 @@ private fun TrackingCard(o: Order) {
     val ctx = LocalContext.current
     var loc by remember { mutableStateOf<DriverLocation?>(null) }
     var dest by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    var tries by remember { mutableIntStateOf(0) }
     LaunchedEffect(o.address) {
         dest = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runCatching {
@@ -380,21 +418,52 @@ private fun TrackingCard(o: Order) {
             }.getOrNull()
         }
     }
-    LaunchedEffect(o.id) { while (true) { loc = runCatching { Locator.repo.driverLocation(o.id) }.getOrNull(); delay(10_000) } }
-    val l = loc ?: return
-    val km = dest?.let { (la, lo) -> FloatArray(1).also { android.location.Location.distanceBetween(l.lat, l.lng, la, lo, it) }[0] / 1000f }
-    Card(Modifier.fillMaxWidth().padding(top = 12.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)) {
+    LaunchedEffect(o.id) { while (true) { loc = runCatching { Locator.repo.driverLocation(o.id) }.getOrNull() ?: loc; tries++; delay(8_000) } }
+    val l = loc
+    val km = if (l != null) dest?.let { (la, lo) -> FloatArray(1).also { android.location.Location.distanceBetween(l.lat, l.lng, la, lo, it) }[0] / 1000f } else null
+    Card(Modifier.fillMaxWidth().padding(top = 12.dp).animateContentSize(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)) {
+        if (l != null) LiveMap(l.lat, l.lng, dest)
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.NearMe, null, Modifier.size(32.dp))
+            val pulse by rememberInfiniteTransition(label = "loc").animateFloat(0.85f, 1.15f, infiniteRepeatable(tween(900, easing = EaseInOutSine), RepeatMode.Reverse), label = "lp")
+            Icon(Icons.Filled.NearMe, null, Modifier.size(32.dp).scale(pulse))
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(km?.let { if (it < 0.3f) "¡Tu repartidor está llegando!" else "Tu repartidor está a ${"%.1f".format(Locale("es", "ES"), it)} km" } ?: "Tu repartidor va de camino",
-                    style = MaterialTheme.typography.titleMedium)
-                Text("Actualizado hace ${hoursSinceSec(l.updatedAt)}", style = MaterialTheme.typography.bodySmall)
+                Text(when { l == null -> "Buscando la ubicación del repartidor…"; km == null -> "Tu repartidor va de camino"
+                    km < 0.3f -> "¡Tu repartidor está llegando!"; else -> "Tu repartidor está a ${"%.1f".format(Locale("es", "ES"), km)} km" }, style = MaterialTheme.typography.titleMedium)
+                Text(if (l != null) "Actualizado hace ${hoursSinceSec(l.updatedAt)}" else if (tries > 4) "El repartidor aún no comparte su ubicación (puede tener el GPS apagado)." else "Se actualiza sola cada pocos segundos",
+                    style = MaterialTheme.typography.bodySmall)
             }
-            TextButton({ ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
-                android.net.Uri.parse("geo:${l.lat},${l.lng}?q=${l.lat},${l.lng}(Repartidor)")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }) { Text("Ver mapa") }
+            if (l != null) TextButton({ ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("geo:${l.lat},${l.lng}?q=${l.lat},${l.lng}(Repartidor)")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }) { Text("Abrir mapa") }
         }
+    }
+}
+
+/** Mapa pequeño de OpenStreetMap (3×2 teselas) con el repartidor (punto que late) y, si se conoce, la casa. */
+@Composable
+private fun LiveMap(lat: Double, lng: Double, home: Pair<Double, Double>?) {
+    val z = 15; val n = 1 shl z
+    fun tx(lo: Double) = (lo + 180.0) / 360.0 * n
+    fun ty(la: Double) = (1.0 - kotlin.math.ln(kotlin.math.tan(Math.toRadians(la)) + 1 / kotlin.math.cos(Math.toRadians(la))) / Math.PI) / 2.0 * n
+    val fx = tx(lng); val fy = ty(lat); val x0 = fx.toInt() - 1; val y0 = fy.toInt() - 1
+    val ctx = LocalContext.current
+    val pulse by rememberInfiniteTransition(label = "map").animateFloat(0f, 1f, infiniteRepeatable(tween(1400)), label = "mp")
+    BoxWithConstraints(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))) {
+        val tile = maxWidth / 3
+        Column(Modifier.offset(y = -(tile * 0.5f))) { for (dy in 0..2) Row { for (dx in 0..2) {
+            coil.compose.AsyncImage(coil.request.ImageRequest.Builder(ctx).data("https://tile.openstreetmap.org/$z/${x0 + dx}/${y0 + dy}.png")
+                .addHeader("User-Agent", "TLoTraigo/0.6 (info@unocerobits.com)").crossfade(true).build(), null, Modifier.size(tile)) } } }
+        androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+            val t = size.width / 3
+            fun pos(fxx: Double, fyy: Double) = androidx.compose.ui.geometry.Offset(((fxx - x0) * t).toFloat(), ((fyy - y0) * t - t * 0.5f).toFloat())
+            home?.let { (hl, hn) -> val p = pos(tx(hn), ty(hl)); if (p.x in 0f..size.width && p.y in 0f..size.height) {
+                drawCircle(androidx.compose.ui.graphics.Color(0xFFF2B544), 14f, p); drawCircle(androidx.compose.ui.graphics.Color.White, 6f, p) } }
+            val p = pos(fx, fy)
+            drawCircle(androidx.compose.ui.graphics.Color(0xFF2E6B57).copy(alpha = 0.35f * (1f - pulse)), 18f + 40f * pulse, p)
+            drawCircle(androidx.compose.ui.graphics.Color.White, 13f, p); drawCircle(androidx.compose.ui.graphics.Color(0xFF2E6B57), 9f, p)
+        }
+        Text("© OpenStreetMap", Modifier.align(Alignment.BottomEnd).background(androidx.compose.ui.graphics.Color.White.copy(alpha = .7f)).padding(horizontal = 4.dp),
+            style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color.DarkGray)
     }
 }
 private fun hoursSinceSec(iso: String): String = runCatching {

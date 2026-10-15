@@ -337,6 +337,44 @@ class Repository(val api: SupabaseApi) {
     suspend fun saveUsage(usage: String?, consent: Boolean?) {
         api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { usage?.let { put("usage", it) }; consent?.let { put("analytics_consent", it) } }.toString())
     }
+    // --- Sustituciones, avisos de la entidad, verificación y correos
+    suspend fun substituteItem(itemId: Long, substitute: String?, unavailable: Boolean) {
+        api.rpc("substitute_item", buildJsonObject { put("p_item", itemId); put("p_substitute", substitute); put("p_unavailable", unavailable) })
+    }
+    suspend fun orgNotices(orgId: Long, afterId: Long = 0): List<OrgNotice> = parse(api.rest("GET", "org_notices?org_id=eq.$orgId&id=gt.$afterId&order=id.desc&limit=20"))
+    suspend fun submitVerification(orgId: Long, fields: JsonObject) { api.rpc("submit_org_verification", buildJsonObject { put("p_org", orgId); put("p", fields) }) }
+    suspend fun reviewVerification(orgId: Long, ok: Boolean, note: String?) { api.rpc("review_org_verification", buildJsonObject { put("p_org", orgId); put("p_ok", ok); put("p_note", note) }) }
+    suspend fun uploadOrgDoc(orgId: Long, bytes: ByteArray, mime: String): String {
+        val ext = if (mime == "application/pdf") "pdf" else if (mime == "image/png") "png" else "jpg"
+        val path = "$orgId/acreditacion_${System.currentTimeMillis()}.$ext"; api.upload("org-docs", path, bytes, mime); return path
+    }
+    suspend fun orgDocUrl(path: String) = api.signedUrl("org-docs", path)
+    suspend fun setEmailNotifications(on: Boolean) { api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { put("email_notifications", on) }.toString()) }
+
+    // --- Listas guardadas
+    suspend fun lists(): List<ShoppingList> = parse(api.rest("GET", "shopping_lists?select=*&order=updated_at.desc"))
+    suspend fun saveList(l: ShoppingList): ShoppingList {
+        val body = buildJsonObject {
+            put("name", l.name.trim().ifBlank { "Mi lista" }); put("emoji", l.emoji); put("color", l.color); put("customer_id", l.customerId)
+            put("items", api.json.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(ListItem.serializer()), l.items))
+            if (l.id == 0L) put("owner_id", api.uid)
+        }.toString()
+        val r = if (l.id == 0L) api.rest("POST", "shopping_lists", body, prefer = "return=representation")
+                else api.rest("PATCH", "shopping_lists?id=eq.${l.id}", body, prefer = "return=representation")
+        return parse<List<ShoppingList>>(r).first()
+    }
+    suspend fun deleteList(id: Long) { api.rest("DELETE", "shopping_lists?id=eq.$id") }
+    /** Mete toda la lista en la cesta (productos del catálogo y artículos de la lista fácil). Devuelve cuántos no estaban disponibles. */
+    suspend fun listToCart(l: ShoppingList): Int {
+        val prodQty = l.items.mapNotNull { i -> i.productId?.let { it to i.qty } }.toMap()
+        val prods = productsByIds(prodQty.keys)
+        prods.forEach { p -> Locator.cart.set(p, (Locator.cart.lines.value[p.id]?.qty ?: 0) + prodQty.getValue(p.id)) }
+        val needItems = l.items.filter { it.needId != null }
+        var missing = prodQty.size - prods.size
+        if (needItems.isNotEmpty()) { val ns = needs().associateBy { it.id }
+            needItems.forEach { i -> ns[i.needId]?.let { Locator.cart.addNeed(it, i.detail.orEmpty(), i.qty) } ?: run { missing++ } } }
+        return missing
+    }
 }
 
 /** Dirección completa para el repartidor: «Calle Mayor 12, 1º B — 24760 Villaquejida (León). Indicaciones». */

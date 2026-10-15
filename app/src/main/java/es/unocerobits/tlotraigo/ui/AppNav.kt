@@ -67,7 +67,9 @@ fun AppNav(vm: AppViewModel) {
     val spec = tween<IntOffset>(380, easing = EaseOutCubic)
     val invite by vm.inviteCode.collectAsState()
     if (invite != null && (boot == Boot.Client || boot == Boot.Driver)) RedeemInviteDialog(vm, invite!!) { vm.inviteCode.value = null }
-    CompositionLocalProvider(LocalOpenChat provides { id: Long -> nav.navigate("chat/$id") }, LocalOpenOrg provides { id: Long -> nav.navigate("org/$id") },
+    var pendingList by remember { mutableStateOf<List<es.unocerobits.tlotraigo.data.ListItem>>(emptyList()) }
+    CompositionLocalProvider(LocalOpenList provides { id: Long, items: List<es.unocerobits.tlotraigo.data.ListItem> -> pendingList = items; nav.navigate("list/$id") },
+        LocalOpenChat provides { id: Long -> nav.navigate("chat/$id") }, LocalOpenOrg provides { id: Long -> nav.navigate("org/$id") },
         LocalIsSuper provides (vm.profile.collectAsState().value?.role == "superadmin")) {
     val reduced = reducedMotion()
     var celebration by remember { mutableStateOf<Celebration?>(null) }
@@ -89,6 +91,8 @@ fun AppNav(vm: AppViewModel) {
         composable("onboard") { OnboardingWizard(vm) }
         composable("org/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->
             OrgPanel(vm, e.arguments?.getLong("id") ?: 0, onBack = { nav.popBackStack() }, onOrder = { nav.navigate("order/$it") }) }
+        composable("list/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->
+            ListDetailScreen(vm, e.arguments?.getLong("id") ?: -1, pendingList, onBack = { nav.popBackStack() }, onCart = { nav.navigate("cart") { popUpTo("home") } }) }
         composable("chat/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e -> ChatScreen(vm, e.arguments?.getLong("id") ?: 0) { nav.popBackStack() } }
         composable("needs") { NeedsScreen(vm, onBack = { nav.popBackStack() }, onCart = { nav.navigate("cart") }) }
         composable("terms") { TermsScreen(vm) }

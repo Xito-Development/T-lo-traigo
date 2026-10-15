@@ -63,6 +63,7 @@ data class Profile(
     @SerialName("terms_version") val termsVersion: String? = null,
     val usage: String? = null,
     @SerialName("org_id") val orgId: Long? = null,
+    @SerialName("email_notifications") val emailNotifications: Boolean = true,
     @SerialName("recipient_name") val recipientName: String? = null,
     val street: String? = null,
     @SerialName("street_number") val streetNumber: String? = null,
@@ -169,7 +170,24 @@ data class Organization(
     @SerialName("allow_bizum_driver") val allowBizumDriver: Boolean = true, @SerialName("allow_bizum_org") val allowBizumOrg: Boolean = false,
     @SerialName("bizum_org_phone") val bizumOrgPhone: String? = null, @SerialName("bizum_org_name") val bizumOrgName: String? = null,
     @SerialName("brand_color") val brandColor: String? = null, @SerialName("logo_url") val logoUrl: String? = null,
+    @SerialName("closed_dates") val closedDates: List<String> = emptyList(),
+    @SerialName("legal_name") val legalName: String? = null, @SerialName("tax_id") val taxId: String? = null, @SerialName("legal_form") val legalForm: String? = null,
+    @SerialName("fiscal_address") val fiscalAddress: String? = null, @SerialName("representative_name") val representativeName: String? = null,
+    @SerialName("representative_id") val representativeId: String? = null, @SerialName("representative_role") val representativeRole: String? = null,
+    @SerialName("verification_status") val verificationStatus: String = "sin_datos", @SerialName("verification_note") val verificationNote: String? = null,
+    @SerialName("doc_path") val docPath: String? = null,
 )
+@Serializable
+data class OrgNotice(val id: Long, @SerialName("org_id") val orgId: Long, val body: String, val kind: String = "aviso", @SerialName("created_at") val createdAt: String = "")
+
+/** Lista guardada («como una lista de reproducción»): se compra entera con un toque. */
+@Serializable
+data class ShoppingList(val id: Long = 0, @SerialName("owner_id") val ownerId: String? = null, @SerialName("customer_id") val customerId: String? = null,
+    val name: String, val emoji: String = "🛒", val color: String = "#2E6B57", val items: List<ListItem> = emptyList(),
+    @SerialName("updated_at") val updatedAt: String? = null)
+@Serializable
+data class ListItem(@SerialName("product_id") val productId: Long? = null, @SerialName("need_id") val needId: Long? = null,
+    val name: String, val detail: String? = null, val qty: Int = 1, val icon: String? = null, val price: Double = 0.0)
 @Serializable
 data class ReportCount(val town: String? = null, val driver: String? = null, val n: Int = 0, val delivered: Int = 0)
 @Serializable
@@ -289,6 +307,8 @@ data class OrderItem(
     @SerialName("need_id") val needId: Long? = null,
     val detail: String? = null,
     @SerialName("real_total") val realTotal: Double? = null,
+    val substitute: String? = null,
+    val unavailable: Boolean = false,
     val products: Cold? = null,
     val needs: Cold? = null,
     val name: String,

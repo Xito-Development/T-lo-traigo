@@ -265,6 +265,8 @@ fun TicketSection(o: Order, onSaved: () -> Unit) {
         cam.launch(FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f))
     }
     val sumReals = reals.values.mapNotNull { parseNum(it) }.sum()
+    var swap by remember { mutableStateOf<OrderItem?>(null) }
+    swap?.let { item -> SubstituteDialog(item, { swap = null; onSaved() }) { swap = null } }
     Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(14.dp)) {
             Text("🧾 Ticket de compra (obligatorio)", style = MaterialTheme.typography.titleMedium)
@@ -272,9 +274,15 @@ fun TicketSection(o: Order, onSaved: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall)
             o.items.forEach { it ->
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    IconButton({ swap = it }, Modifier.size(40.dp)) { Icon(Icons.Filled.SwapHoriz, "No hay ${it.name}: cambiar o quitar", tint = MaterialTheme.colorScheme.primary) }
                     Column(Modifier.weight(1f)) {
-                        Text("${it.qty} × ${it.name}", style = MaterialTheme.typography.bodyMedium)
-                        Text("Estimado ${eur(it.unitPrice * it.qty)}${it.detail?.let { d -> " · $d" } ?: ""}", style = MaterialTheme.typography.bodySmall)
+                        Text("${it.qty} × ${it.name}", style = MaterialTheme.typography.bodyMedium,
+                            textDecoration = if (it.unavailable) androidx.compose.ui.text.style.TextDecoration.LineThrough else null)
+                        when {
+                            it.unavailable -> Text("❌ No había · quitado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            it.substitute != null -> Text("🔁 Cambiado por: ${it.substitute}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            else -> Text("Estimado ${eur(it.unitPrice * it.qty)}${it.detail?.let { d -> " · $d" } ?: ""}", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                     OutlinedTextField(reals[it.id].orEmpty(), { v -> reals[it.id] = v.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(7) },
                         Modifier.width(110.dp), placeholder = { Text("Real") }, suffix = { Text("€") }, singleLine = true,
@@ -325,8 +333,10 @@ fun ItemsWithDiff(o: Order) {
         Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("${i.qty} ×", Modifier.width(40.dp), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
             Column(Modifier.weight(1f)) {
-                Text(i.name, style = MaterialTheme.typography.bodyLarge)
+                Text(i.name, style = MaterialTheme.typography.bodyLarge, textDecoration = if (i.unavailable) androidx.compose.ui.text.style.TextDecoration.LineThrough else null)
                 i.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                if (i.unavailable) Text("No había en el súper", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
+                i.substitute?.let { Text("🔁 Cambiado por: $it", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary) }
             }
             Column(horizontalAlignment = Alignment.End) {
                 val r = i.realTotal
@@ -491,4 +501,28 @@ fun ComplaintDialog(vm: AppViewModel, orderId: Long?, onDone: (String?) -> Unit)
         confirmButton = { Button({ scope.launch { try { val n = Locator.repo.submitComplaint(orderId, name, contact, subject, body); onDone("Reclamación registrada con el número $n.") } catch (e: ApiException) { err = e.message } } },
             enabled = name.isNotBlank() && contact.isNotBlank() && subject.isNotBlank() && body.length >= 10) { Text("Presentar") } },
         dismissButton = { TextButton({ onDone(null) }) { Text("Cancelar") } })
+}
+
+/** El repartidor no encuentra un producto: lo cambia por otro o lo quita. El cliente recibe un mensaje en el chat (con notificación). */
+@Composable
+fun SubstituteDialog(item: OrderItem, onDone: () -> Unit, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var text by remember { mutableStateOf("") }
+    var err by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    fun send(unavailable: Boolean) = scope.launch {
+        busy = true; err = null
+        try { Locator.repo.substituteItem(item.id, text.takeIf { !unavailable }, unavailable); onDone() } catch (e: ApiException) { err = e.message }
+        busy = false
+    }
+    AlertDialog(onDismissRequest = onDismiss, icon = { Icon(Icons.Filled.SwapHoriz, null) }, title = { Text("No hay «${item.name}»") },
+        text = { Column {
+            item.detail?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Text("Escribe por qué lo cambias o quítalo. El cliente recibirá un aviso y podrá contestarte por el chat.", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium)
+            OutlinedTextField(text, { text = it.take(200) }, Modifier.fillMaxWidth().padding(top = 8.dp), label = { Text("Lo cambio por…") },
+                placeholder = { Text("Ej.: leche semidesnatada de otra marca") }, singleLine = true)
+            ErrorText(err)
+        } },
+        confirmButton = { Button({ send(false) }, enabled = text.isNotBlank() && !busy) { Text("Cambiar y avisar") } },
+        dismissButton = { Row { TextButton({ send(true) }, enabled = !busy) { Text("Quitar (no hay)", color = MaterialTheme.colorScheme.error) }; TextButton(onDismiss) { Text("Cancelar") } } })
 }

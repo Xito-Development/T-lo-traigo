@@ -56,7 +56,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     var cardOn by remember { mutableStateOf(false) }
     // Días de reparto de la entidad del pueblo (los demás días no se pueden elegir)
     var orgDays by remember { mutableStateOf<List<Int>?>(null) }
-    LaunchedEffect(target?.orgId) { orgDays = target?.orgId?.let { runCatching { Locator.repo.organization(it)?.deliveryDays }.getOrNull() } }
+    var orgClosed by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(target?.orgId) { target?.orgId?.let { runCatching { Locator.repo.organization(it) }.getOrNull() }?.let { orgDays = it.deliveryDays; orgClosed = it.closedDates } }
     LaunchedEffect(Unit) { cardOn = runCatching { Locator.repo.fees().cardEnabled }.getOrDefault(false); if (!cardOn && method == PayMethod.CARD) method = PayMethod.CASH }
     LaunchedEffect(quote?.allowCash, quote?.allowBizum) { if (quote?.allowCash == false && quote?.allowBizum == true) method = PayMethod.BIZUM }
     var payConfirm by remember { mutableStateOf(false) }
@@ -166,7 +167,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     items((0L..14L).toList()) { d ->
                         val day = today.plusDays(d)
                         val label = when (d) { 0L -> "Hoy"; 1L -> "Mañana"; else -> day.format(chipFmt).replaceFirstChar { it.uppercase() } }
-                        val open = day.dayOfWeek.value in (orgDays ?: (1..7).toList())
+                        val open = day.dayOfWeek.value in (orgDays ?: (1..7).toList()) && day.toString() !in orgClosed
                         FilterChip(date == day, { date = day; if (slot == null) slot = "manana" }, { Text(label) }, enabled = open)
                     }
                 }
@@ -216,9 +217,28 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                 val q = quote
                 if (q == null) Loading()
                 else {
-                    lines.values.forEach { l ->
-                        SummaryLine("${l.qty} × ${l.product.name}" + (l.detail?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""), l.total, muted = true)
+                    // Productos bien visibles: icono o foto, cantidad, nombre, detalle y precio
+                    Surface(Modifier.fillMaxWidth().padding(bottom = 8.dp), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Column(Modifier.padding(vertical = 4.dp)) {
+                            lines.values.forEachIndexed { i, l ->
+                                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box { ProductThumb(l.product, 48)
+                                        Surface(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp), shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.primary) {
+                                            Text("${l.qty}", Modifier.padding(horizontal = 7.dp, vertical = 1.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimary) } }
+                                    Spacer(Modifier.width(14.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(l.product.name, style = MaterialTheme.typography.titleMedium, maxLines = 2)
+                                        (l.detail ?: l.product.brand)?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2) }
+                                        Text("${l.qty} × ${eur(l.product.price)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Text(eur(l.total), style = MaterialTheme.typography.titleMedium)
+                                }
+                                if (i < lines.size - 1) HorizontalDivider(Modifier.padding(start = 74.dp))
+                            }
+                        }
                     }
+                    val openList = LocalOpenList.current
+                    TextButton({ openList(-1, lines.values.map { it.toListItem() }) }) { Icon(Icons.Filled.PlaylistAdd, null); Spacer(Modifier.width(6.dp)); Text("Guardar como lista") }
                     SummaryLine("Productos (precio orientativo)", q.subtotal)
                     SummaryLine("   de los que IVA", q.productsVat, muted = true)
                     SummaryLine((if (q.payoutMode == "gastos") "Servicio de T lo traigo" else "Servicio del repartidor") + " (${q.servicePct.toInt()} %)", q.service)

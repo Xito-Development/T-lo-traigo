@@ -1,0 +1,61 @@
+{
+  "name": "tlotraigo-control",
+  "productName": "T lo traigo Control",
+  "version": "1.0.1",
+  "description": "Panel de control de T lo traigo para el superadministrador: estado de los servicios, errores, actividad y sugerencias.",
+  "author": "UNOCEROBITS · Xito Development <info@unocerobits.com>",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "es.unocerobits.tlotraigo.control",
+    "productName": "T lo traigo Control",
+    "copyright": "© 2026 UNOCEROBITS y Xito Development",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/installerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp",
+      "license": "build/licencia.txt",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "T lo traigo Control",
+      "runAfterFinish": true,
+      "language": "3082",
+      "artifactName": "TLoTraigo-Control-Setup-${version}.exe"
+    }
+  }
+}

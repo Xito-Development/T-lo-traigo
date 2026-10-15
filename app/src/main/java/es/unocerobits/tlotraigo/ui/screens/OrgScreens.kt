@@ -92,7 +92,8 @@ fun AdminOrgs(vm: AppViewModel, onOpen: (Long) -> Unit) {
         }
         val l = list
         if (l == null) item { Loading() } else items(l, key = { it.id }) { o ->
-            ListItem(headlineContent = { Text(o.name) }, supportingContent = { Text("${kinds.toMap()[o.kind]} · plan ${o.plan}${o.subscriptionUntil?.let { " hasta ${prettyDay(it)}" } ?: ""}") },
+            ListItem(headlineContent = { Row(verticalAlignment = Alignment.CenterVertically) { Text(o.name, Modifier.weight(1f, false)); Spacer(Modifier.width(8.dp)); VerificationPill(o.verificationStatus) } },
+                supportingContent = { Text("${kinds.toMap()[o.kind]} · plan ${o.plan}${o.subscriptionUntil?.let { " hasta ${prettyDay(it)}" } ?: ""}${o.taxId?.let { " · $it" } ?: ""}") },
                 leadingContent = { Icon(if (o.kind == "ayuntamiento" || o.kind == "diputacion") Icons.Filled.AccountBalance else Icons.Filled.Groups, null) },
                 trailingContent = { AppSwitch(o.active, { v -> scope.launch { runCatching { Locator.repo.updateOrganization(o.id, buildJsonObject { put("active", v) }) }; reload++ } }) },
                 modifier = Modifier.clickable { onOpen(o.id) })
@@ -161,6 +162,13 @@ fun OrgPanel(vm: AppViewModel, orgId: Long, onBack: (() -> Unit)? = null, onOrde
 private fun OrgSummary(o: Organization, v: OrgOverview, onChange: () -> Unit) {
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        if (o.verificationStatus != "verificada") Card(Modifier.fillMaxWidth().padding(bottom = 12.dp), colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer)) {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.VerifiedUser, null); Spacer(Modifier.width(10.dp))
+                Text(if (o.verificationStatus == "pendiente") "Verificación en revisión: aún no se aceptan pedidos." else "Falta verificar la entidad: ve a Ajustes → Datos fiscales.",
+                    Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
         Card(colors = CardDefaults.cardColors(if (o.acceptingOrders) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer)) {
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -292,7 +300,7 @@ private fun OrgInvites(o: Organization) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -304,6 +312,8 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
         AppSwitch(v, set)
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        OrgVerification(o, onSaved)
+        Spacer(Modifier.height(16.dp))
         OutlinedTextField(x.name, { x = x.copy(name = it) }, Modifier.fillMaxWidth(), label = { Text("Nombre de la entidad") }, singleLine = true)
         OutlinedTextField(x.publicPhone.orEmpty(), { x = x.copy(publicPhone = it) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Teléfono de atención (lo ven los usuarios)") }, singleLine = true)
         OutlinedTextField(x.welcomeMessage.orEmpty(), { x = x.copy(welcomeMessage = it.take(300)) }, Modifier.fillMaxWidth().padding(top = 6.dp),
@@ -329,8 +339,27 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
             NumField("Desde", x.openHour.toString(), "h", Modifier.weight(1f)) { x = x.copy(openHour = (it.filter(Char::isDigit).toIntOrNull() ?: 9).coerceIn(0, 23)) }
             NumField("Hasta", x.closeHour.toString(), "h", Modifier.weight(1f)) { x = x.copy(closeHour = (it.filter(Char::isDigit).toIntOrNull() ?: 22).coerceIn(1, 24)) }
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
-            dayNames.forEachIndexed { i, d -> val n = i + 1; FilterChip(n in x.deliveryDays, { x = x.copy(deliveryDays = if (n in x.deliveryDays) x.deliveryDays - n else x.deliveryDays + n) }, { Text(d) }) }
+        Text("Días en los que se entrega la compra", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
+            listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo").forEachIndexed { i, d -> val n = i + 1; val on = n in x.deliveryDays
+                FilterChip(on, { x = x.copy(deliveryDays = if (on) x.deliveryDays - n else x.deliveryDays + n) }, { Text(d) },
+                    leadingIcon = if (on) { { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) } } else null) }
+        }
+        if (x.deliveryDays.isEmpty()) Text("⚠️ Sin ningún día de reparto los usuarios no podrán pedir.", color = MaterialTheme.colorScheme.error)
+        Text("Días sin reparto (festivos, vacaciones)", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp))
+        var pickDate by remember { mutableStateOf(false) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
+            x.closedDates.sorted().forEach { d -> InputChip(true, { x = x.copy(closedDates = x.closedDates - d) }, { Text(prettyDay(d)) },
+                trailingIcon = { Icon(Icons.Filled.Close, "Quitar", Modifier.size(18.dp)) }) }
+            AssistChip({ pickDate = true }, { Text("Añadir día") }, leadingIcon = { Icon(Icons.Filled.EventBusy, null, Modifier.size(18.dp)) })
+        }
+        if (pickDate) {
+            val st = rememberDatePickerState(selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= System.currentTimeMillis() - 86_400_000 })
+            DatePickerDialog(onDismissRequest = { pickDate = false }, confirmButton = { TextButton({
+                st.selectedDateMillis?.let { ms -> val d = java.time.Instant.ofEpochMilli(ms).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
+                    if (d !in x.closedDates) x = x.copy(closedDates = x.closedDates + d) }; pickDate = false }) { Text("Añadir") } },
+                dismissButton = { TextButton({ pickDate = false }) { Text("Cancelar") } }) { DatePicker(st, title = { Text("Día sin reparto", Modifier.padding(16.dp)) }) }
         }
         SectionTitle("Formas de pago para los usuarios")
         sw("Efectivo", "El usuario paga el importe del ticket al repartidor al recibir la compra", x.allowCash) { x = x.copy(allowCash = it) }
@@ -367,6 +396,7 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
                             put("subscription_until", x.subscriptionUntil.orEmpty()); Unit }
                         put("open_hour", x.openHour); put("close_hour", x.closeHour); put("auto_approve_drivers", x.autoApproveDrivers)
                         putJsonArray("delivery_days") { x.deliveryDays.sorted().forEach { add(it) } }
+                        putJsonArray("closed_dates") { x.closedDates.sorted().forEach { add(it) } }
                     }); onSaved(); "Guardado ✓"
                 } catch (e: ApiException) { e.message }
             }
@@ -487,4 +517,107 @@ private fun OrgComplaints() {
             } }
         }
     }
+}
+
+/** Valida NIF (DNI de autónomo), NIE y CIF españoles con su dígito de control (igual que el servidor). */
+fun validTaxId(raw: String): Boolean {
+    val s = raw.uppercase().filter { it.isLetterOrDigit() }; val letters = "TRWAGMYFPDXBNJZSQVHLCKE"
+    if (Regex("^[0-9]{8}[A-Z]$").matches(s)) return letters[(s.take(8).toLong() % 23).toInt()] == s.last()
+    if (Regex("^[XYZ][0-9]{7}[A-Z]$").matches(s)) return letters[(("XYZ".indexOf(s[0])).toString() + s.substring(1, 8)).toInt() % 23] == s.last()
+    if (Regex("^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$").matches(s)) {
+        var sum = 0
+        for (i in 1..7) { var d = s[i].digitToInt(); if (i % 2 == 1) { d *= 2; sum += d / 10 + d % 10 } else sum += d }
+        val n = (10 - sum % 10) % 10; val c = s.last(); val letter = "JABCDEFGHI"[n]
+        return when (s[0]) { 'K', 'P', 'Q', 'S', 'N', 'W' -> c == letter; 'A', 'B', 'E', 'H' -> c == n.digitToChar(); else -> c == n.digitToChar() || c == letter }
+    }
+    return false
+}
+
+private val legalForms = listOf("administracion" to "Administración pública", "asociacion" to "Asociación o fundación", "sociedad" to "Empresa (S.L., S.A.)",
+    "autonomo" to "Autónomo", "cooperativa" to "Cooperativa", "otra" to "Otra")
+
+@Composable
+fun VerificationPill(status: String) {
+    val (t, c) = when (status) { "verificada" -> "✓ Verificada" to MaterialTheme.colorScheme.primary; "pendiente" -> "En revisión" to MaterialTheme.colorScheme.tertiary
+        "rechazada" -> "Rechazada" to MaterialTheme.colorScheme.error; else -> "Sin datos fiscales" to MaterialTheme.colorScheme.outline }
+    Surface(shape = androidx.compose.foundation.shape.CircleShape, color = c.copy(alpha = 0.15f)) { Text(t, Modifier.padding(horizontal = 10.dp, vertical = 3.dp), style = MaterialTheme.typography.labelMedium, color = c) }
+}
+
+/** Datos fiscales y verificación de la entidad (obligatoria para recibir pedidos). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun OrgVerification(o: Organization, onChange: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val isSuper = LocalIsSuper.current
+    var form by remember(o) { mutableStateOf(o.legalForm ?: if (o.kind == "ayuntamiento" || o.kind == "diputacion") "administracion" else "asociacion") }
+    var name by remember(o) { mutableStateOf(o.legalName ?: o.name) }
+    var tax by remember(o) { mutableStateOf(o.taxId.orEmpty()) }
+    var addr by remember(o) { mutableStateOf(o.fiscalAddress.orEmpty()) }
+    var rep by remember(o) { mutableStateOf(o.representativeName.orEmpty()) }
+    var repId by remember(o) { mutableStateOf(o.representativeId.orEmpty()) }
+    var repRole by remember(o) { mutableStateOf(o.representativeRole.orEmpty()) }
+    var doc by remember(o) { mutableStateOf(o.docPath) }
+    var msg by remember { mutableStateOf<String?>(null) }
+    var note by remember { mutableStateOf("") }
+    val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        scope.launch { msg = try {
+            val mime = ctx.contentResolver.getType(uri) ?: "image/jpeg"
+            val bytes = if (mime == "application/pdf") ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes() }
+                        else kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { ImageUtil.prepare(ctx, uri, 2000) }
+            doc = Locator.repo.uploadOrgDoc(o.id, bytes, if (mime == "application/pdf") mime else "image/jpeg"); "Documento subido ✓"
+        } catch (e: Exception) { e.message } }
+    }
+    val taxOk = validTaxId(tax); val repOk = repId.isBlank() || validTaxId(repId)
+    val hint = when (form) { "autonomo" -> "Tu NIF (DNI con letra) o NIE"; "administracion" -> "CIF de la administración (empieza por P, Q o S)"; "asociacion" -> "CIF de la asociación (empieza por G)"
+        "sociedad" -> "CIF de la empresa (empieza por A o B)"; "cooperativa" -> "CIF de la cooperativa (empieza por F)"; else -> "CIF o NIF" }
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("Datos fiscales y verificación", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); VerificationPill(o.verificationStatus) }
+        Text(when (o.verificationStatus) { "verificada" -> "La entidad está verificada y puede recibir pedidos."
+            "pendiente" -> "Estamos revisando los datos. Suele tardar 1–2 días laborables."
+            "rechazada" -> "No se ha podido verificar: ${o.verificationNote ?: "revisa los datos"}"
+            else -> "Para recibir pedidos hay que verificar la entidad: rellena sus datos fiscales y adjunta un documento acreditativo." },
+            Modifier.padding(vertical = 6.dp), style = MaterialTheme.typography.bodySmall, color = if (o.verificationStatus == "rechazada") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { legalForms.forEach { (k, l) -> FilterChip(form == k, { form = k }, { Text(l) }) } }
+        OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text(if (form == "autonomo") "Nombre y apellidos del titular" else "Razón social") }, singleLine = true)
+        OutlinedTextField(tax, { tax = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(9) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text(if (form == "autonomo") "NIF / NIE" else "CIF") },
+            supportingText = { Text(if (tax.isEmpty()) hint else if (taxOk) "✓ Número válido" else "El número no es válido (revisa la letra o el dígito final)") },
+            isError = tax.isNotEmpty() && !taxOk, singleLine = true)
+        OutlinedTextField(addr, { addr = it }, Modifier.fillMaxWidth().padding(top = 2.dp), label = { Text("Domicilio fiscal") }, singleLine = true)
+        if (form != "autonomo") {
+            OutlinedTextField(rep, { rep = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Representante (nombre y apellidos)") }, singleLine = true)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OutlinedTextField(repId, { repId = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(9) }, Modifier.weight(1f).padding(top = 6.dp), label = { Text("DNI/NIE") },
+                    isError = !repOk, singleLine = true)
+                OutlinedTextField(repRole, { repRole = it }, Modifier.weight(1f).padding(top = 6.dp), label = { Text("Cargo (alcalde, presidente…)") }, singleLine = true)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+            OutlinedButton({ pick.launch("*/*") }) { Icon(Icons.Filled.UploadFile, null); Spacer(Modifier.width(6.dp)); Text(if (doc == null) "Adjuntar documento" else "Cambiar documento") }
+            Spacer(Modifier.width(8.dp))
+            Text(if (doc != null) "✓ Adjuntado" else "Tarjeta del CIF, alta censal o certificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        msg?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+        Spacer(Modifier.height(10.dp))
+        BigButton(if (o.verificationStatus == "verificada") "Actualizar datos" else "Enviar para verificar", {
+            scope.launch { msg = try {
+                Locator.repo.submitVerification(o.id, kotlinx.serialization.json.buildJsonObject {
+                    put("legal_form", form); put("legal_name", (if (form == "autonomo") name else name)); put("tax_id", tax); put("fiscal_address", addr)
+                    put("representative_name", if (form == "autonomo") name else rep); put("representative_id", if (form == "autonomo") tax else repId)
+                    put("representative_role", if (form == "autonomo") "Titular" else repRole); doc?.let { put("doc_path", it) } }); onChange(); "Enviado ✓"
+            } catch (e: ApiException) { e.message } }
+        }, enabled = taxOk && repOk && name.isNotBlank() && addr.isNotBlank() && (form == "autonomo" || rep.isNotBlank()), icon = Icons.Filled.VerifiedUser)
+        if (isSuper && o.verificationStatus != "verificada") {
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+            Text("Revisión (superadministrador)", style = MaterialTheme.typography.titleSmall)
+            if (o.docPath != null) TextButton({ scope.launch { Locator.repo.orgDocUrl(o.docPath)?.let { ctx.openUrl(it) } } }) { Icon(Icons.Filled.Description, null); Spacer(Modifier.width(6.dp)); Text("Ver documento") }
+            Text("Comprueba el CIF/NIF en la sede de la AEAT o en el registro correspondiente antes de verificar.", style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(note, { note = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Motivo si se rechaza") }, singleLine = true)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                Button({ scope.launch { runCatching { Locator.repo.reviewVerification(o.id, true, null) }; onChange() } }, enabled = o.taxId != null) { Text("Verificar") }
+                OutlinedButton({ scope.launch { runCatching { Locator.repo.reviewVerification(o.id, false, note) }; onChange() } }) { Text("Rechazar") }
+            }
+        }
+    } }
 }

@@ -35,10 +35,12 @@ class SupabaseApi(context: Context, private val baseUrl: String, private val key
     val json = Json { ignoreUnknownKeys = true; explicitNulls = false; coerceInputValues = true }
     private val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
     private val mutex = Mutex()
+    // Conexiones que caducan pronto: al volver de segundo plano no se reutiliza una conexión ya cerrada por el móvil
     private val http = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(25, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
+        .connectionPool(okhttp3.ConnectionPool(5, 20, TimeUnit.SECONDS))
         .build()
 
     var session: Session? = prefs.getString("s", null)?.let { runCatching { json.decodeFromString<Session>(it) }.getOrNull() }
@@ -171,18 +173,27 @@ class SupabaseApi(context: Context, private val baseUrl: String, private val key
             }
             val payload = (body ?: "").toRequestBody("application/json".toMediaType())
             rb.method(method, if (method == "GET" || method == "DELETE" && body == null) null else payload)
-            try {
-                http.newCall(rb.build()).execute().use { r ->
-                    val txt = r.body?.string().orEmpty()
-                    val err = if (r.isSuccessful) null else friendly(txt, r.code)
-                    DebugTools.record(HttpLog(t0, method, shortPath, r.code, System.currentTimeMillis() - t0, err))
-                    if (err != null) throw ApiException(err, r.code)
-                    txt
+            // Al volver a la app la red puede tardar un instante en estar lista: se reintenta 3 veces con espera creciente
+            var attempt = 0
+            while (true) {
+                try {
+                    return@withContext http.newCall(rb.build()).execute().use { r ->
+                        val txt = r.body?.string().orEmpty()
+                        val err = if (r.isSuccessful) null else friendly(txt, r.code)
+                        DebugTools.record(HttpLog(t0, method, shortPath, r.code, System.currentTimeMillis() - t0, err))
+                        if (err != null) throw ApiException(err, r.code)
+                        txt
+                    }
+                } catch (e: IOException) {
+                    DebugTools.record(HttpLog(t0, method, shortPath, 0, System.currentTimeMillis() - t0, e.javaClass.simpleName))
+                    if (++attempt >= 3 || (method != "GET" && attempt >= 2)) throw ApiException("Sin conexión. Comprueba internet e inténtalo de nuevo.")
+                    http.connectionPool.evictAll()
+                    delay(600L * attempt)
                 }
-            } catch (e: IOException) {
-                DebugTools.record(HttpLog(t0, method, shortPath, 0, System.currentTimeMillis() - t0, e.javaClass.simpleName))
-                throw ApiException("Sin conexión. Comprueba internet e inténtalo de nuevo.")
             }
+            @Suppress("UNREACHABLE_CODE")
+            ""
+
         }
 
     private fun friendly(raw: String, code: Int): String {

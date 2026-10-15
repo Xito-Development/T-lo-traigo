@@ -2,6 +2,25 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.5] - 2026-10-15
+- El repartidor puede cambiar un producto que no hay por otro, o quitarlo; el cliente recibe un aviso en el chat y lo ve en su pedido y en el correo.
+- Correos de las compras: resumen al hacer el pedido y factura o justificante al entregarlo (se puede desactivar en Ajustes).
+- Verificación de entidades: datos fiscales (razón social, CIF/NIF validado, domicilio, representante) y documento acreditativo; sin verificar no reciben pedidos.
+### Cambiado / - Icono de la web: el logo redondo sin fondo.
+### Corregido
+- «Sin conexión» al volver a la app: la conexión se renueva y las peticiones se reintentan solas. y líneas '- ') serán las notas de la próxima versión. publicar.bat lo vacía al publicar. -->
+### Añadido
+- Mis listas: listas de la compra guardadas, como listas de reproducción (nombre, emoji y color). Se compran enteras con un toque; se crean desde cero, desde la cesta o desde un pedido anterior.
+- Seguimiento con mapa en directo: el cliente ve dónde está el repartidor (y su casa) y a cuántos kilómetros.
+- La entidad elige los días de entrega y puede marcar días sin reparto (festivos, vacaciones); en la cesta no se pueden elegir.
+- Nuevo programa para Windows «T lo traigo Control» (carpeta desktop/), que se publica aparte como «desktop-v1.0.0».
+### Cambiado
+- Resumen de la cesta con los productos bien visibles: foto o icono, cantidad, detalle y precio.
+- Línea de seguimiento rediseñada: barra de progreso con la bolsa que avanza, pasos que se van completando y aviso de pago pendiente.
+### Corregido
+- La línea de seguimiento se descuadraba cuando el paso actual ocupaba dos líneas.
+- La ubicación del repartidor no llegaba al cliente si el repartidor no estaba «disponible», si estaba parado o mientras el GPS buscaba señal; ahora se envía al momento y cada 10 segundos.
+
 ## [0.6.4] - 2026-10-15
 - Transiciones suaves entre pantallas y entre pestañas (según la dirección), botones que se hunden al pulsarlos, mensajes del chat que aparecen con suavidad y tarjetas de la Lista fácil que cambian de color al añadir.
 - Si en Android están desactivadas las animaciones (accesibilidad), la app no anima.

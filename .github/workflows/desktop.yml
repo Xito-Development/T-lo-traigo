@@ -1,0 +1,39 @@
+# Compila el programa de Windows «T lo traigo Control» y lo publica como Release «desktop-vX.Y.Z»
+# cuando cambia la carpeta desktop/ (la versión sale de desktop/package.json).
+name: Programa de Windows
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults: { run: { working-directory: desktop } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Versión
+        id: v
+        shell: bash
+        run: |
+          V=$(node -p "require('./package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "desktop-v$V" >/dev/null 2>&1; then echo "existe=1" >> "$GITHUB_OUTPUT"; else echo "existe=0" >> "$GITHUB_OUTPUT"; fi
+        env: { GH_TOKEN: '${{ github.token }}' }
+      - name: Instalar y compilar el instalador
+        if: steps.v.outputs.existe == '0'
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --win --x64 --publish never
+      - name: Publicar
+        if: steps.v.outputs.existe == '0'
+        shell: bash
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          gh release create "desktop-v${{ steps.v.outputs.version }}" dist/*.exe \
+            --title "T lo traigo Control ${{ steps.v.outputs.version }} (Windows)" \
+            --notes "Panel de control para el superadministrador. Descarga el instalador .exe y ábrelo." --latest=false

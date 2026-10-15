@@ -1,4 +1,4 @@
-• Transiciones suaves entre pantallas y entre pestañas (según la dirección), botones que se hunden al pulsarlos, mensajes del chat que aparecen con suavidad y tarjetas de la Lista fácil que cambian de color al añadir.
-• Si en Android están desactivadas las animaciones (accesibilidad), la app no anima.
-• Animación de arranque: la bolsa cae con rebote, brotan las hojas, aparece la casa, estela de reparto y el nombre se revela; sin destellos blancos al abrir.
-• Interruptores ani
+• El repartidor puede cambiar un producto que no hay por otro, o quitarlo; el cliente recibe un aviso en el chat y lo ve en su pedido y en el correo.
+• Correos de las compras: resumen al hacer el pedido y factura o justificante al entregarlo (se puede desactivar en Ajustes).
+• Verificación de entidades: datos fiscales (razón social, CIF/NIF validado, domicilio, representante) y documento acreditativo; sin verificar no reciben pedidos.
+• «Sin conexión» al volver a la app: la c
