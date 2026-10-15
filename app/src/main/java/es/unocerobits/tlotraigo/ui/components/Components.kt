@@ -1,5 +1,9 @@
 package es.unocerobits.tlotraigo.ui.components
 
+import androidx.compose.ui.graphics.graphicsLayer
+
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -89,11 +93,14 @@ fun BigButton(
             }
         }
     }
-    val m = modifier.fillMaxWidth().heightIn(min = bigH())
+    val src = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by src.collectIsPressedAsState()
+    val sc by androidx.compose.animation.core.animateFloatAsState(if (pressed) 0.96f else 1f, androidx.compose.animation.core.spring(0.5f, 600f), label = "press")
+    val m = modifier.fillMaxWidth().heightIn(min = bigH()).graphicsLayer { scaleX = sc; scaleY = sc }
     val shape = MaterialTheme.shapes.medium
-    if (tonal) FilledTonalButton(click, m, enabled && !loading, shape, content = content)
+    if (tonal) FilledTonalButton(click, m, enabled && !loading, shape, interactionSource = src, content = content)
     else Button(click, m, enabled && !loading, shape,
-        border = if (LocalHighContrast.current) BorderStroke(2.dp, MaterialTheme.colorScheme.onPrimary) else null, content = content)
+        border = if (LocalHighContrast.current) BorderStroke(2.dp, MaterialTheme.colorScheme.onPrimary) else null, interactionSource = src, content = content)
 }
 
 @Composable

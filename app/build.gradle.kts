@@ -86,6 +86,7 @@ android {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     // Solo en la versión de Google Play: actualizaciones desde la tienda (In-App Updates)
     "playImplementation"("com.google.android.play:app-update-ktx:2.1.0")
     // Versiones fijadas: últimas compatibles con minSdk 21.

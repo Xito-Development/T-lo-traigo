@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
@@ -157,44 +158,58 @@ fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
         // «Lo de siempre»: artículos de la lista fácil de pedidos anteriores
         usual = runCatching { Locator.repo.myOrders().flatMap { it.items }.filter { it.needId != null }.distinctBy { it.needId to it.detail }.take(6) }.getOrDefault(emptyList())
     }
+    val snack = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    fun added(t: String) = scope.launch { snack.currentSnackbarData?.dismiss(); snack.showSnackbar("Añadido a la cesta: $t") }
     Scaffold(topBar = { TopAppBar({ Text("Lista fácil") }, navigationIcon = { IconButton(onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }) },
+        snackbarHost = { SnackbarHost(snack) },
         bottomBar = { if (lines.isNotEmpty()) Surface(tonalElevation = 6.dp) { Box(Modifier.navigationBarsPadding().padding(16.dp)) {
             BigButton("Ver mi cesta (${productos(lines.values.sumOf { it.qty })})", onCart, icon = Icons.Filled.ShoppingCart) } } }) { pad ->
-        Column(Modifier.padding(pad)) {
-            Text("Toca lo que necesites y dinos cómo lo quieres. Los precios son orientativos: pagarás lo que marque el ticket del súper.",
-                Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(q, { q = it }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), placeholder = { Text("Buscar: leche, pan, pañales…") },
-                leadingIcon = { Icon(Icons.Filled.Search, null) }, singleLine = true, shape = androidx.compose.foundation.shape.CircleShape)
-            needs?.let { all -> if (q.isBlank()) VoiceListCard(all) { items -> items.forEach { (n, qty, d) -> vm.cart.addNeed(n, d, qty) } } }
-            if (usual.isNotEmpty() && q.isBlank()) {
-                Text("Lo de siempre", Modifier.padding(start = 16.dp, top = 10.dp), style = MaterialTheme.typography.titleMedium)
-                androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(usual.size) { i -> val it = usual[i]
-                        AssistChip({ needs?.firstOrNull { n -> n.id == it.needId }?.let { n -> vm.cart.addNeed(n, it.detail.orEmpty(), it.qty) } },
-                            { Text("${it.name}${it.detail?.let { d -> " · $d" } ?: ""}", maxLines = 1) }, leadingIcon = { Icon(Icons.Filled.Add, null, Modifier.size(18.dp)) })
+        val n = needs?.filter { q.isBlank() || q.trim().lowercase() in it.name.lowercase() || it.options.any { o -> o.v.any { v -> q.trim().lowercase() in v.lowercase() } } }
+        // Una sola lista desplazable: cabecera, buscador, dictado, «lo de siempre» y la cuadrícula (antes solo se desplazaba la cuadrícula)
+        LazyVerticalGrid(GridCells.Adaptive(150.dp), Modifier.padding(pad).fillMaxSize(), contentPadding = PaddingValues(12.dp, 4.dp, 12.dp, 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val full: androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope.() -> androidx.compose.foundation.lazy.grid.GridItemSpan = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }
+            item(span = full) {
+                Text("Toca lo que necesites y dinos cómo lo quieres. Los precios son orientativos: pagarás lo que marque el ticket del súper.",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            item(span = full) {
+                OutlinedTextField(q, { q = it }, Modifier.fillMaxWidth(), placeholder = { Text("Buscar: leche, pan, pañales…") },
+                    leadingIcon = { Icon(Icons.Filled.Search, null) }, trailingIcon = { if (q.isNotEmpty()) IconButton({ q = "" }) { Icon(Icons.Filled.Close, "Borrar búsqueda") } },
+                    singleLine = true, shape = androidx.compose.foundation.shape.CircleShape)
+            }
+            if (q.isBlank()) needs?.let { all -> item(span = full) { VoiceListCard(all) { items -> items.forEach { (nd, qty, d) -> vm.cart.addNeed(nd, d, qty) }; added(productos(items.sumOf { it.second })) } } }
+            if (usual.isNotEmpty() && q.isBlank()) item(span = full) {
+                Column {
+                    Text("Lo de siempre", style = MaterialTheme.typography.titleMedium)
+                    androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(usual.size) { i -> val it = usual[i]
+                            AssistChip({ needs?.firstOrNull { nd -> nd.id == it.needId }?.let { nd -> vm.cart.addNeed(nd, it.detail.orEmpty(), it.qty); added("${it.qty} × ${it.name}") } },
+                                { Text("${it.name}${it.detail?.let { d -> " · $d" } ?: ""}", maxLines = 1) }, leadingIcon = { Icon(Icons.Filled.Add, null, Modifier.size(18.dp)) })
+                        }
                     }
                 }
             }
-            val n = needs?.filter { q.isBlank() || q.trim().lowercase() in it.name.lowercase() || it.options.any { o -> o.v.any { v -> q.trim().lowercase() in v.lowercase() } } }
-            if (n == null) Loading()
-            else LazyVerticalGrid(GridCells.Adaptive(150.dp), contentPadding = PaddingValues(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(n, key = { it.id }) { need ->
-                    val inCart = lines.values.filter { it.needId == need.id }.sumOf { it.qty }
-                    Surface(Modifier.clip(MaterialTheme.shapes.large).clickable { sel = need }, shape = MaterialTheme.shapes.large,
-                        color = if (inCart > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
-                        Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(AppIcons.vector(need.icon), null, Modifier.size(44.dp), tint = MaterialTheme.colorScheme.primary)
-                            Text(need.name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                            Text("≈ ${eur(need.estPrice)} / ${need.unitLabel}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            if (inCart > 0) Text("En la cesta: $inCart", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        }
+            if (n == null) item(span = full) { Loading() }
+            else if (n.isEmpty()) item(span = full) { Message(Icons.Filled.SearchOff, "No lo encuentro", "Usa «Otra cosa» o escríbelo en la lista de arriba.") }
+            else items(n, key = { it.id }) { need ->
+                val inCart = lines.values.filter { it.needId == need.id }.sumOf { it.qty }
+                val tileColor by androidx.compose.animation.animateColorAsState(if (inCart > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer, label = "tile")
+                val pop by androidx.compose.animation.core.animateFloatAsState(if (inCart > 0) 1f else 0f, Motion.bouncy(), label = "pop")
+                Surface(Modifier.animateItem().graphicsLayer { scaleX = 1f + pop * 0.03f; scaleY = 1f + pop * 0.03f }.clip(MaterialTheme.shapes.large).clickable { sel = need },
+                    shape = MaterialTheme.shapes.large, color = tileColor) {
+                    Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(AppIcons.vector(need.icon), null, Modifier.size(44.dp), tint = MaterialTheme.colorScheme.primary)
+                        Text(need.name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Text("≈ ${eur(need.estPrice)} / ${need.unitLabel}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (inCart > 0) Text("En la cesta: $inCart", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
         }
     }
-    sel?.let { NeedDialog(it, { d, q -> vm.cart.addNeed(it, d, q); sel = null }) { sel = null } }
+    sel?.let { nd -> NeedDialog(nd, { d, qq -> vm.cart.addNeed(nd, d, qq); added("$qq × ${nd.name}"); sel = null }) { sel = null } }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

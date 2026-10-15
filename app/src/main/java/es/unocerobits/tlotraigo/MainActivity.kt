@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
         es.unocerobits.tlotraigo.store.StoreUpdates.check(this)   // Google Play: actualizar desde la tienda
         intent?.getLongExtra("chat", 0L)?.takeIf { it > 0 }?.let { vm.openChat.value = it }
         intent?.data?.takeIf { it.host == "unirse" }?.getQueryParameter("c")?.let { vm.inviteCode.value = it }
+        if (intent?.getBooleanExtra("install_update", false) == true) es.unocerobits.tlotraigo.data.AutoUpdater.install(this)
         setContent {
             val settings by vm.settings.collectAsState()
             val dark = settings.mode.isDark(isSystemInDarkTheme())
@@ -62,10 +63,28 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         intent.getLongExtra("chat", 0L).takeIf { it > 0 }?.let { vm.openChat.value = it }
         intent.data?.takeIf { it.host == "unirse" }?.getQueryParameter("c")?.let { vm.inviteCode.value = it }
+        if (intent.getBooleanExtra("install_update", false)) es.unocerobits.tlotraigo.data.AutoUpdater.install(this)
     }
 
+    // --- Actualización automática cuando no se está usando la app
+    private var lastTouch = System.currentTimeMillis()
+    private val idleHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val idleCheck = object : Runnable {
+        override fun run() {
+            if (System.currentTimeMillis() - lastTouch > 60_000) es.unocerobits.tlotraigo.data.AutoUpdater.onIdle(this@MainActivity)
+            idleHandler.postDelayed(this, 20_000)
+        }
+    }
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean { lastTouch = System.currentTimeMillis(); return super.dispatchTouchEvent(ev) }
     override fun onResume() {
         super.onResume()
-        es.unocerobits.tlotraigo.store.StoreUpdates.check(this)   // completa una actualización ya descargada
+        es.unocerobits.tlotraigo.store.StoreUpdates.check(this)
+        idleHandler.postDelayed(idleCheck, 20_000)
+    }
+    override fun onPause() { idleHandler.removeCallbacks(idleCheck); super.onPause() }
+    override fun onStop() {
+        super.onStop()
+        es.unocerobits.tlotraigo.data.AutoUpdater.onIdle(this)          // GitHub: descarga mientras no se usa
+        es.unocerobits.tlotraigo.store.StoreUpdates.onBackground(this)  // Play: instala lo ya descargado
     }
 }

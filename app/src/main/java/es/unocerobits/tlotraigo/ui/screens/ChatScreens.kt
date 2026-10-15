@@ -73,8 +73,10 @@ fun ChatScreen(vm: AppViewModel, orderId: Long, onBack: () -> Unit) {
                         items(quick) { q -> AssistChip({ send(q) }, { Text(q) }) }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        val dictar = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+                            r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { t -> text = (if (text.isBlank()) t else "$text $t").replaceFirstChar { it.uppercase() } } }
                         OutlinedTextField(text, { text = it.take(1000) }, Modifier.weight(1f), placeholder = { Text("Escribe un mensaje…") }, maxLines = 4,
-                            shape = MaterialTheme.shapes.large)
+                            shape = MaterialTheme.shapes.large, trailingIcon = { IconButton({ runCatching { dictar.launch(dictationIntent("Di tu mensaje")) } }) { Icon(Icons.Filled.Mic, "Dictar mensaje") } })
                         Spacer(Modifier.width(6.dp))
                         FilledIconButton({ send(text) }, enabled = text.isNotBlank(), modifier = Modifier.size(52.dp)) { Icon(Icons.AutoMirrored.Filled.Send, "Enviar") }
                     }
@@ -85,7 +87,8 @@ fun ChatScreen(vm: AppViewModel, orderId: Long, onBack: () -> Unit) {
             if (msgs.isEmpty()) item { Message(Icons.Filled.Forum, "Sin mensajes todavía", "Escribe aquí para hablar con ${if (myRole == "cliente") "tu repartidor" else "el cliente"}.") }
             items(msgs, key = { it.id }) { m ->
                 val mine = m.role == myRole; val system = m.role == "sistema"
-                Box(Modifier.fillMaxWidth(), contentAlignment = if (system) Alignment.Center else if (mine) Alignment.CenterEnd else Alignment.CenterStart) {
+                Box(Modifier.fillMaxWidth().animateItem(fadeInSpec = androidx.compose.animation.core.tween(300), placementSpec = androidx.compose.animation.core.spring(0.8f, 400f)),
+                    contentAlignment = if (system) Alignment.Center else if (mine) Alignment.CenterEnd else Alignment.CenterStart) {
                     Surface(shape = RoundedCornerShape(18.dp, 18.dp, if (mine) 4.dp else 18.dp, if (mine) 18.dp else 4.dp),
                         color = when { system -> MaterialTheme.colorScheme.tertiaryContainer; mine -> MaterialTheme.colorScheme.primary; else -> MaterialTheme.colorScheme.surfaceContainerHigh },
                         modifier = Modifier.widthIn(max = 320.dp)) {
@@ -103,65 +106,124 @@ fun ChatScreen(vm: AppViewModel, orderId: Long, onBack: () -> Unit) {
 }
 
 // =================== Lista por texto o voz ===================
-private val numeros = mapOf("un" to 1, "una" to 1, "uno" to 1, "dos" to 2, "tres" to 3, "cuatro" to 4, "cinco" to 5, "seis" to 6, "siete" to 7, "ocho" to 8, "nueve" to 9, "diez" to 10, "doce" to 12)
+private val numeros = mapOf("un" to 1, "una" to 1, "uno" to 1, "dos" to 2, "tres" to 3, "cuatro" to 4, "cinco" to 5, "seis" to 6, "siete" to 7, "ocho" to 8,
+    "nueve" to 9, "diez" to 10, "once" to 11, "doce" to 12, "quince" to 15, "veinte" to 20, "medio" to 1, "media" to 1)
 private val sinonimos = mapOf(
-    "Pan" to listOf("pan", "barra", "hogaza", "chapata"), "Leche" to listOf("leche"), "Huevos" to listOf("huevo"),
-    "Fruta" to listOf("manzana", "plátano", "platano", "naranja", "pera", "uva", "fruta", "mandarina", "melón", "sandía"),
-    "Verdura" to listOf("patata", "tomate", "cebolla", "lechuga", "zanahoria", "pimiento", "verdura", "ajo", "calabacín"),
+    "Pan" to listOf("pan", "barra", "hogaza", "chapata", "baguette"), "Leche" to listOf("leche"), "Huevos" to listOf("huevo"),
+    "Fruta" to listOf("manzana", "plátano", "platano", "naranja", "pera", "uva", "fruta", "mandarina", "melón", "sandía", "kiwi", "fresa"),
+    "Verdura" to listOf("patata", "tomate", "cebolla", "lechuga", "zanahoria", "pimiento", "verdura", "ajo", "calabacín", "puerro", "judías verdes"),
     "Agua" to listOf("agua"), "Cereales" to listOf("cereal", "avena", "muesli"), "Galletas" to listOf("galleta"), "Café" to listOf("café", "cafe"),
-    "Aceite" to listOf("aceite"), "Arroz y pasta" to listOf("arroz", "macarr", "espagueti", "pasta", "fideo"), "Legumbres" to listOf("lenteja", "garbanzo", "alubia", "judía"),
+    "Aceite" to listOf("aceite"), "Arroz y pasta" to listOf("arroz", "macarr", "espagueti", "pasta ", "fideo"), "Legumbres" to listOf("lenteja", "garbanzo", "alubia"),
     "Yogures" to listOf("yogur"), "Carne" to listOf("pollo", "ternera", "cerdo", "carne", "filete", "chuleta"), "Pescado" to listOf("merluza", "pescado", "salmón", "sardina", "bacalao"),
-    "Embutido y queso" to listOf("jamón", "chorizo", "queso", "cecina", "salchichón", "lomo", "embutido"),
-    "Limpieza" to listOf("lejía", "friegasuelos", "lavavajillas", "detergente", "bayeta", "suavizante"),
+    "Embutido y queso" to listOf("jamón", "jamon", "chorizo", "queso", "cecina", "salchichón", "lomo", "embutido"),
+    "Limpieza" to listOf("lejía", "lejia", "friegasuelos", "lavavajillas", "detergente", "bayeta", "suavizante"),
     "Papel e higiene" to listOf("papel", "gel", "champú", "pasta de dientes", "desodorante", "jabón"),
-    "Zumos y refrescos" to listOf("zumo", "refresco", "coca", "gaseosa", "fanta"), "Conservas" to listOf("atún", "conserva", "tomate frito", "bonito"),
-    "Congelados" to listOf("congelad", "pizza", "croqueta", "helado"), "Azúcar, sal y harina" to listOf("azúcar", "azucar", "sal ", "harina", "pan rallado"),
+    "Zumos y refrescos" to listOf("zumo", "refresco", "coca", "gaseosa", "fanta"), "Conservas" to listOf("atún", "atun", "conserva", "tomate frito", "bonito"),
+    "Congelados" to listOf("congelad", "pizza", "croqueta", "helado"), "Azúcar, sal y harina" to listOf("azúcar", "azucar", " sal ", "harina", "pan rallado"),
     "Mascotas" to listOf("perro", "gato", "pienso"), "Bebé" to listOf("pañal", "toallita", "potito"),
 )
+/** Muletillas del dictado que no son productos. */
+private val muletilla = Regex("^(e+h*m*|e+m+|m+|h+m+|a+h+|o+h+|uh+|este|pues|bueno|vale|oye|venga|vamos|nada|y?eso|mira)$")
+/** Palabras con las que se corrige lo que se acaba de decir. */
+private val correccion = setOf("perdón", "perdon", "perdona", "espera", "rectifico", "digo", "mejor", "corrijo")
+private val sobranAlFinal = setOf("de", "del", "la", "el", "los", "las", "y", "con", "un", "una", "unos", "unas")
 
-/** «2 litros de leche, pan y 6 huevos» → [(Leche, 2, "litros de leche"), (Pan, 1, "pan"), (Huevos, 6, "huevos")]. */
+/**
+ * Entiende listas escritas o dictadas, aunque vengan sin comas y con dudas:
+ * «2 barras de pan blanquinas ehhhm 6 bricks de no no 5 bricks de leche» → 2 × «Barras de pan blanquinas», 5 × «Bricks de leche».
+ * - Quita muletillas (eh, ehm, mmm, bueno, pues…) y «o sea», «a ver», «por favor».
+ * - «no no», «perdón», «espera», «digo», «mejor» anulan lo que se estaba diciendo (o el artículo anterior si ya estaba completo).
+ * - Cada número (2, «dos», «media»…) empieza un artículo nuevo; también las comas, los puntos y la «y».
+ */
 fun parseShoppingList(text: String, needs: List<Need>): List<Triple<Need, Int, String>> {
     val otra = needs.firstOrNull { it.name == "Otra cosa" } ?: return emptyList()
-    return text.replace(" y ", ",").split('\n', ',', ';', '.').map { it.trim() }.filter { it.length >= 2 }.map { raw ->
-        val words = raw.split(' ')
-        val first = words.first().lowercase()
-        val qty = first.toIntOrNull() ?: numeros[first]
-        val detail = if (qty != null) words.drop(1).joinToString(" ") else raw
+    val clean = (" " + text.lowercase() + " ").replace(Regex("[\\n.;:!?¿¡]+"), " , ").replace(",", " , ")
+        .replace(Regex(" (o sea|a ver|por favor|quiero decir|es decir) "), " ").replace(" y ", " , ")
+    val tokens = clean.split(Regex("\\s+")).filter { it.isNotBlank() }
+    val items = mutableListOf<MutableList<String>>(); val cur = mutableListOf<String>()
+    fun isQty(t: String) = t.toIntOrNull() != null || t in numeros
+    fun flush() { if (cur.any { !isQty(it) }) items += cur.toMutableList(); cur.clear() }
+    var k = 0
+    while (k < tokens.size) {
+        val t = tokens[k]; val next = tokens.getOrNull(k + 1)
+        when {
+            t == "," -> flush()
+            t in correccion || (t == "no" && (next == "no" || (next != null && isQty(next)))) -> {
+                if (cur.any { !isQty(it) }) cur.clear() else { cur.clear(); if (items.isNotEmpty()) items.removeAt(items.lastIndex) }
+                while (tokens.getOrNull(k + 1) == "no") k++
+            }
+            muletilla.matches(t) -> {}
+            isQty(t) && cur.any { !isQty(it) } -> { flush(); cur += t }
+            else -> cur += t
+        }
+        k++
+    }
+    flush()
+    return items.mapNotNull { words ->
+        val w = words.toMutableList()
+        while (w.isNotEmpty() && w.last() in sobranAlFinal) w.removeAt(w.lastIndex)
+        if (w.isEmpty()) return@mapNotNull null
+        val first = w.first()
+        val qty = first.toIntOrNull() ?: numeros[first]?.takeIf { first != "medio" && first != "media" }
+        val detailWords = if (qty != null) w.drop(1) else w
+        if (detailWords.isEmpty()) return@mapNotNull null
+        val detail = detailWords.joinToString(" ").replaceFirstChar { it.uppercase() }
         val low = " ${detail.lowercase()} "
         val need = sinonimos.entries.firstOrNull { (_, ks) -> ks.any { it in low } }?.key?.let { n -> needs.firstOrNull { it.name == n } } ?: otra
-        Triple(need, (qty ?: 1).coerceIn(1, 99), detail.replaceFirstChar { it.uppercase() })
+        Triple(need, (qty ?: 1).coerceIn(1, 99), detail)
     }
 }
+
+private class Draft(val need: Need, qty: Int, detail: String) { var qty by mutableIntStateOf(qty); var detail by mutableStateOf(detail) }
+
+/** Intent de dictado configurado para frases largas con pausas. */
+fun dictationIntent(prompt: String) = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+    .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+    .putExtra(RecognizerIntent.EXTRA_PROMPT, prompt).putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+    .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2500L)
+    .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 2000L)
 
 @Composable
 fun VoiceListCard(needs: List<Need>, onAdd: (List<Triple<Need, Int, String>>) -> Unit) {
     var text by remember { mutableStateOf("") }
     var err by remember { mutableStateOf<String?>(null) }
+    val drafts = remember { mutableStateListOf<Draft>() }
+    fun review() { drafts.clear(); parseShoppingList(text, needs).forEach { (n, q, d) -> drafts += Draft(n, q, d) }; if (drafts.isEmpty() && text.isNotBlank()) err = "No he entendido ningún producto. Prueba con «2 barras de pan, leche…»" else err = null }
     val voice = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { text = if (text.isBlank()) it else "$text, $it" }
+        r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { text = if (text.isBlank()) it else "$text, $it"; review() }
     }
-    val preview = remember(text, needs) { parseShoppingList(text, needs) }
-    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer)) {
+    Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer)) {
         Column(Modifier.padding(16.dp).animateContentSize()) {
             Text("Escribe o dicta tu lista", style = MaterialTheme.typography.titleMedium)
-            Text("Ej.: «2 litros de leche, pan, 6 huevos y pilas AA»", style = MaterialTheme.typography.bodySmall)
+            Text("Ej.: «2 barras de pan, 5 bricks de leche y pilas». Puedes decir «no, no» o «perdón» para corregir.", style = MaterialTheme.typography.bodySmall)
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                OutlinedTextField(text, { text = it }, Modifier.weight(1f), placeholder = { Text("Tu lista…") }, minLines = 2, shape = MaterialTheme.shapes.medium)
+                OutlinedTextField(text, { text = it; drafts.clear() }, Modifier.weight(1f), placeholder = { Text("Tu lista…") }, minLines = 2, shape = MaterialTheme.shapes.medium)
                 Spacer(Modifier.width(8.dp))
                 FilledIconButton({
-                    try {
-                        voice.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                            .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES").putExtra(RecognizerIntent.EXTRA_PROMPT, "Di lo que necesitas"))
-                    } catch (e: ActivityNotFoundException) { err = "Este móvil no tiene dictado por voz. Escribe la lista." }
+                    try { voice.launch(dictationIntent("Di lo que necesitas, por ejemplo: dos barras de pan, cinco bricks de leche")) }
+                    catch (e: ActivityNotFoundException) { err = "Este móvil no tiene dictado por voz. Escribe la lista." }
                 }, Modifier.size(56.dp)) { Icon(Icons.Filled.Mic, "Dictar por voz") }
             }
+            if (text.isNotBlank() && drafts.isEmpty()) TextButton(::review) { Icon(Icons.Filled.Checklist, null); Spacer(Modifier.width(6.dp)); Text("Revisar la lista") }
             ErrorText(err)
-            if (preview.isNotEmpty()) {
-                Text("Se añadirá:", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
-                preview.forEach { (n, q, d) -> Text("• $q × $d  (${n.name})", style = MaterialTheme.typography.bodyMedium) }
+            if (drafts.isNotEmpty()) {
+                Text("Revisa y corrige antes de añadir:", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+                drafts.toList().forEach { d ->
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 3.dp)) {
+                        QtyStepper(d.qty, { if (d.qty > 1) d.qty-- }, { if (d.qty < 99) d.qty++ })
+                        Spacer(Modifier.width(6.dp))
+                        Column(Modifier.weight(1f)) {
+                            androidx.compose.foundation.text.BasicTextField(d.detail, { d.detail = it.take(120) },
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSecondaryContainer), modifier = Modifier.fillMaxWidth())
+                            Text(d.need.name, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                        IconButton({ drafts.remove(d) }) { Icon(Icons.Filled.Close, "Quitar ${d.detail}") }
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
-                BigButton("Añadir ${productos(preview.sumOf { it.second })} a la cesta", { onAdd(preview); text = "" }, icon = Icons.Filled.AddShoppingCart)
+                BigButton("Añadir ${productos(drafts.sumOf { it.qty })} a la cesta", {
+                    onAdd(drafts.filter { it.detail.isNotBlank() }.map { Triple(it.need, it.qty, it.detail.trim()) }); drafts.clear(); text = ""
+                }, icon = Icons.Filled.AddShoppingCart)
             }
         }
     }

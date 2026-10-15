@@ -1,3 +1,4 @@
-• Versión de Google Play: las actualizaciones se descargan e instalan desde la tienda (In-App Updates); «Valorar en Google Play» en Acerca de.
-• Versión de GitHub: opción de pasarse a Google Play cuando esté publicada.
-• Web: cuando la app esté en Google Play, «Descargar» lleva a la tienda y ofrece la alternativa del APK de GitHub (se configura desde el modo edición).
+• Transiciones suaves entre pantallas y entre pestañas (según la dirección), botones que se hunden al pulsarlos, mensajes del chat que aparecen con suavidad y tarjetas de la Lista fácil que cambian de color al añadir.
+• Si en Android están desactivadas las animaciones (accesibilidad), la app no anima.
+• Animación de arranque: la bolsa cae con rebote, brotan las hojas, aparece la casa, estela de reparto y el nombre se revela; sin destellos blancos al abrir.
+• Interruptores ani

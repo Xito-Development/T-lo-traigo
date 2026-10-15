@@ -1,39 +1,59 @@
 package es.unocerobits.tlotraigo.store
 
 import android.app.Activity
+import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.install.InstallStateUpdatedListener
+import es.unocerobits.tlotraigo.data.AutoUpdater
 
 /**
- * Versión de Google Play: las actualizaciones llegan por la tienda.
- * Si hay una versión nueva se descarga en segundo plano (flexible) y, al terminar, se instala.
- * Si la versión instalada es muy antigua (prioridad alta en Play Console), la actualización es obligatoria (inmediata).
+ * Versión de Google Play: la actualización se descarga desde la tienda en segundo plano (flexible) y se instala sola
+ * cuando el usuario sale de la app, avisando con una notificación. Si es urgente (prioridad 4–5 en Play Console), es inmediata.
  */
 object StoreUpdates {
     const val FROM_STORE = true
+    private var mgr: AppUpdateManager? = null
     private var listener: InstallStateUpdatedListener? = null
+    @Volatile private var downloaded = false
+
+    private fun manager(a: Activity) = mgr ?: AppUpdateManagerFactory.create(a.applicationContext).also { mgr = it }
 
     fun check(activity: Activity) {
-        val mgr = AppUpdateManagerFactory.create(activity)
-        mgr.appUpdateInfo.addOnSuccessListener { info ->
+        val m = manager(activity)
+        m.appUpdateInfo.addOnSuccessListener { info ->
             when {
-                info.installStatus() == InstallStatus.DOWNLOADED -> mgr.completeUpdate()
+                info.installStatus() == InstallStatus.DOWNLOADED -> downloaded = true   // se instalará al salir
                 info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS ->
-                    runCatching { mgr.startUpdateFlow(info, activity, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()) }
+                    runCatching { m.startUpdateFlow(info, activity, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()) }
                 info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE -> {
                     val immediate = info.updatePriority() >= 4 && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
-                    if (!immediate) {
-                        listener?.let { mgr.unregisterListener(it) }
-                        listener = InstallStateUpdatedListener { st -> if (st.installStatus() == InstallStatus.DOWNLOADED) mgr.completeUpdate() }.also { mgr.registerListener(it) }
+                    if (!immediate && listener == null) {
+                        listener = InstallStateUpdatedListener { st ->
+                            if (st.installStatus() == InstallStatus.DOWNLOADED) { downloaded = true; AutoUpdater.notifyReady(activity.applicationContext, null, fromStore = true) }
+                        }.also { m.registerListener(it) }
                     }
                     val type = if (immediate) AppUpdateType.IMMEDIATE else AppUpdateType.FLEXIBLE
-                    if (info.isUpdateTypeAllowed(type)) runCatching { mgr.startUpdateFlow(info, activity, AppUpdateOptions.newBuilder(type).build()) }
+                    if (info.isUpdateTypeAllowed(type)) runCatching { m.startUpdateFlow(info, activity, AppUpdateOptions.newBuilder(type).build()) }
                 }
             }
+        }
+    }
+
+    /** Al salir de la app (onStop): si la descarga terminó, Google Play la instala sin interrumpir al usuario. */
+    fun onBackground(activity: Activity) { if (downloaded) runCatching { manager(activity).completeUpdate() } }
+
+    fun checkManual(activity: Activity, onResult: (String) -> Unit) {
+        manager(activity).appUpdateInfo.addOnSuccessListener { info ->
+            if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) { check(activity); onResult("Descargando la actualización desde Google Play…") }
+            else if (info.installStatus() == InstallStatus.DOWNLOADED) { onResult("Actualización lista: se instalará al salir de la app.") }
+            else onResult("Ya tienes la última versión.")
+        }.addOnFailureListener {
+            runCatching { activity.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=${activity.packageName}"))) }
+            onResult("Abre Google Play para comprobar si hay una versión nueva.")
         }
     }
 }

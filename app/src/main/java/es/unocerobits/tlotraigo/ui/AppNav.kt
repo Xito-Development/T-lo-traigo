@@ -1,5 +1,9 @@
 package es.unocerobits.tlotraigo.ui
 
+import es.unocerobits.tlotraigo.ui.components.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -41,7 +45,9 @@ fun TabLabel(text: String) = Text(text, maxLines = 1, overflow = TextOverflow.El
 fun AppNav(vm: AppViewModel) {
     val nav = rememberNavController()
     val boot by vm.boot.collectAsState()
-    LaunchedEffect(boot) {
+    var splashDone by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(boot, splashDone) {
+        if (!splashDone) return@LaunchedEffect   // la animación de arranque se ve completa
         val dest = when (boot) {
             Boot.LoggedOut -> "login"; Boot.NeedsTerms -> "terms"; Boot.NeedsProfile -> "onboard"; Boot.Client -> "home"; Boot.Driver -> "driver"
             else -> return@LaunchedEffect
@@ -53,7 +59,7 @@ fun AppNav(vm: AppViewModel) {
         nav.addOnDestinationChangedListener(l); onDispose { nav.removeOnDestinationChangedListener(l); es.unocerobits.tlotraigo.data.Analytics.flush() }
     }
     val update by vm.update.collectAsState()
-    LaunchedEffect(Unit) { vm.checkUpdate() }
+    val readyUpd by es.unocerobits.tlotraigo.data.AutoUpdater.ready.collectAsState()
     update?.let { UpdateDialog(it) { vm.dismissUpdate() } }
     val chatReq by vm.openChat.collectAsState()
     LaunchedEffect(chatReq, boot) { val id = chatReq; if (id != null && (boot == Boot.Client || boot == Boot.Driver)) { nav.navigate("chat/$id"); vm.openChat.value = null } }
@@ -63,14 +69,18 @@ fun AppNav(vm: AppViewModel) {
     if (invite != null && (boot == Boot.Client || boot == Boot.Driver)) RedeemInviteDialog(vm, invite!!) { vm.inviteCode.value = null }
     CompositionLocalProvider(LocalOpenChat provides { id: Long -> nav.navigate("chat/$id") }, LocalOpenOrg provides { id: Long -> nav.navigate("org/$id") },
         LocalIsSuper provides (vm.profile.collectAsState().value?.role == "superadmin")) {
+    val reduced = reducedMotion()
+    var celebration by remember { mutableStateOf<Celebration?>(null) }
+    CompositionLocalProvider(LocalCelebrate provides { c: Celebration -> if (!reduced) celebration = c }) {
+    Box {
     NavHost(
         nav, "splash",
-        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, spec) + fadeIn(tween(300)) },
-        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, spec) { it / 4 } + fadeOut(tween(250)) },
-        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, spec) { it / 4 } + fadeIn(tween(300)) },
-        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, spec) + fadeOut(tween(250)) },
+        enterTransition = { if (reduced) EnterTransition.None else fadeIn(Motion.enter(320)) + slideInHorizontally(Motion.enter(380)) { it / 8 } },
+        exitTransition = { if (reduced) ExitTransition.None else fadeOut(tween(200)) + slideOutHorizontally(Motion.enter(380)) { -it / 12 } },
+        popEnterTransition = { if (reduced) EnterTransition.None else fadeIn(Motion.enter(320)) + slideInHorizontally(Motion.enter(380)) { -it / 8 } },
+        popExitTransition = { if (reduced) ExitTransition.None else fadeOut(tween(200)) + slideOutHorizontally(Motion.enter(380)) { it / 12 } },
     ) {
-        composable("splash") { SplashScreen(vm) }
+        composable("splash") { SplashScreen(vm) { splashDone = true } }
         composable("login") { LoginScreen(vm, onRegister = { nav.navigate("register") }, onVerify = toVerify) }
         composable("register") { RegisterScreen(vm, onBack = { nav.popBackStack() }, onVerify = toVerify) }
         composable("verify/{mode}/{email}") { e ->
@@ -95,6 +105,23 @@ fun AppNav(vm: AppViewModel) {
         composable("order/{id}", listOf(navArgument("id") { type = NavType.LongType })) { e ->
             OrderDetailScreen(vm, e.arguments?.getLong("id") ?: 0, onBack = { nav.popBackStack() }, onRepeat = { nav.navigate("cart") { popUpTo("home") } })
         }
+    }
+    // Aviso discreto: actualización descargada en segundo plano, lista para instalar con un toque
+    val ctxU = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.animation.AnimatedVisibility(readyUpd != null && (boot == Boot.Client || boot == Boot.Driver), Modifier.align(Alignment.BottomCenter),
+        enter = androidx.compose.animation.slideInVertically { it } + androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.slideOutVertically { it } + androidx.compose.animation.fadeOut()) {
+        Surface(Modifier.padding(16.dp).navigationBarsPadding().padding(bottom = 72.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.inverseSurface, shadowElevation = 8.dp) {
+            Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.SystemUpdate, null, tint = MaterialTheme.colorScheme.inverseOnSurface)
+                Spacer(Modifier.width(10.dp))
+                Text("Versión ${readyUpd?.version} descargada", Modifier.weight(1f), color = MaterialTheme.colorScheme.inverseOnSurface, style = MaterialTheme.typography.bodyMedium)
+                TextButton({ es.unocerobits.tlotraigo.data.AutoUpdater.install(ctxU) }) { Text("Instalar", color = MaterialTheme.colorScheme.inversePrimary) }
+                IconButton({ es.unocerobits.tlotraigo.data.AutoUpdater.ready.value = null }) { Icon(Icons.Filled.Close, "Más tarde", tint = MaterialTheme.colorScheme.inverseOnSurface) }
+            }
+        }
+    }
+    CelebrationOverlay(celebration) { celebration = null }
+    }
     }
     }
 }
@@ -129,7 +156,10 @@ private fun ClientHome(vm: AppViewModel, onCart: () -> Unit, onOrder: (Long) -> 
     ) { pad ->
         // El Scaffold ya aplica el inset de la barra de estado: no añadir statusBarsPadding (doble margen).
         AnimatedContent(tab, Modifier.padding(pad), transitionSpec = {
-            (fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 20 }) togetherWith fadeOut(tween(150))
+            // La pestaña nueva entra desde el lado hacia el que se ha movido el usuario
+            val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+            (fadeIn(Motion.enter(300)) + slideInHorizontally(Motion.enter(360)) { dir * it / 10 }) togetherWith
+                (fadeOut(tween(160)) + slideOutHorizontally(Motion.enter(360)) { -dir * it / 14 })
         }, label = "tab") { t ->
             when (t) {
                 Tab.COMPRAR -> CatalogScreen(vm, onCart, onNeeds)

@@ -2,6 +2,24 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.4] - 2026-10-15
+- Transiciones suaves entre pantallas y entre pestañas (según la dirección), botones que se hunden al pulsarlos, mensajes del chat que aparecen con suavidad y tarjetas de la Lista fácil que cambian de color al añadir.
+- Si en Android están desactivadas las animaciones (accesibilidad), la app no anima.
+- Animación de arranque: la bolsa cae con rebote, brotan las hojas, aparece la casa, estela de reparto y el nombre se revela; sin destellos blancos al abrir.
+- Interruptores animados: icono ✓/✕ que gira, pequeño rebote y vibración al cambiar.
+- Actualización automática: la versión de GitHub descarga la nueva versión en segundo plano cuando la app no se usa (1 minuto sin tocarla o al salir) y avisa con una notificación y un aviso «Instalar»; la versión de Google Play la descarga desde la tienda y la instala al salir de la app, avisando.
+### Corregido
+- Ajustes: las opciones de tamaño de letra se salían de la pantalla con letra grande; ahora se reparten en varias líneas y hay vista previa. y líneas '- ') serán las notas de la próxima versión. publicar.bat lo vacía al publicar. -->
+### Añadido
+- Lista dictada más inteligente: entiende listas sin comas, quita muletillas («eh», «mmm», «bueno»…) y obedece correcciones («no no», «perdón», «espera»).
+- Antes de añadir la lista dictada se puede revisar y corregir: cantidad, texto y quitar artículos.
+- Dictado por voz también en el chat.
+- Aviso «Añadido a la cesta» en la Lista fácil.
+- Versión de Google Play: «Buscar actualizaciones» en Acerca de.
+- Pruebas automáticas antes de publicar cada versión.
+### Corregido
+- Lista fácil: toda la pantalla se desplaza a la vez (antes solo se movía la cuadrícula y quedaba atascada).
+
 ## [0.6.3] - 2026-10-14
 ### Añadido
 - Versión de Google Play: las actualizaciones se descargan e instalan desde la tienda (In-App Updates); «Valorar en Google Play» en Acerca de.

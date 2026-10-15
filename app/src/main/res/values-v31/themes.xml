@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.TLoTraigo" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/brand_green</item>
+        <item name="android:statusBarColor">@color/brand_green</item>
+        <!-- Android 12+: pantalla de inicio del sistema con el mismo verde y el icono de la app -->
+        <item name="android:windowSplashScreenBackground">@color/brand_green</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/brand_green</item>
+    </style>
+</resources>

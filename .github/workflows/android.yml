@@ -71,6 +71,7 @@ jobs:
         run: |
           chmod +x gradlew
           # APK "github" (con actualizador) para las Releases y AAB "play" (sin actualizador) para Google Play
+          ./gradlew --no-daemon testGithubDebugUnitTest   # si alguna prueba falla, no se publica
           ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
           mkdir -p dist
           cp app/build/outputs/apk/github/release/app-github-release.apk "dist/TLoTraigo-${VERSION_NAME}.apk"

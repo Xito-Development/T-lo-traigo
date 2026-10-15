@@ -1,5 +1,7 @@
 package es.unocerobits.tlotraigo.ui.screens
 
+import androidx.compose.animation.animateContentSize
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -50,10 +52,16 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         ToggleRow("Leer en voz alta", "Botón de altavoz junto a los productos", s.speak, Icons.Filled.RecordVoiceOver) { v -> vm.updateSettings { it.copy(speak = v) } }
         Text("Tamaño de letra", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
         val steps = listOf(1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme")
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 8.dp)) {
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(vertical = 8.dp)) {
             steps.forEach { (v, l) ->
-                FilterChip(kotlin.math.abs(s.textScale - v) < .01f, { vm.updateSettings { it.copy(textScale = v) } }, { Text(l) })
+                val on = kotlin.math.abs(s.textScale - v) < .01f
+                FilterChip(on, { vm.updateSettings { it.copy(textScale = v) } }, { Text(l, maxLines = 1) },
+                    leadingIcon = if (on) { { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) } } else null)
             }
+        }
+        Surface(Modifier.fillMaxWidth().animateContentSize(), color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = MaterialTheme.shapes.medium) {
+            Text("Así se verán los textos de la app.", Modifier.padding(14.dp), style = MaterialTheme.typography.bodyLarge)
         }
 
         SectionTitle("Mis datos")
@@ -110,7 +118,7 @@ fun ToggleRow(title: String, sub: String, value: Boolean, icon: androidx.compose
         Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) { Text(title, style = MaterialTheme.typography.titleMedium); Text(sub, style = MaterialTheme.typography.bodySmall) }
-        Switch(value, onChange)
+        AppSwitch(value, onChange)
     }
 }
 

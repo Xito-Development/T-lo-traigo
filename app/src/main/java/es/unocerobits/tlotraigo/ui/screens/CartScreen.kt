@@ -39,6 +39,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
     val me by vm.profile.collectAsState()
     val scope = rememberCoroutineScope()
     val ctx = androidx.compose.ui.platform.LocalContext.current
+    val celebrate = LocalCelebrate.current
 
     var seniors by remember { mutableStateOf<List<Profile>>(emptyList()) }
     var target by remember(me) { mutableStateOf(me) }
@@ -108,6 +109,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
             val id = Locator.repo.createOrder(t.id, lines.values.first().product.supermarketId,
                 lines.mapValues { it.value.qty }, method.db, address, notes, date?.toString(), if (date == null) null else slot, adultOk)
             // No se cobra ahora: el cliente paga cuando el repartidor sube el ticket con el importe real
+            celebrate(Celebration("¡Pedido hecho!", "Te avisaremos cuando un repartidor lo acepte", "🛍️"))
             vm.cart.clear(); onPlaced(id)
         } catch (e: Exception) { err = e.message; payingMsg = null }
         busy = false

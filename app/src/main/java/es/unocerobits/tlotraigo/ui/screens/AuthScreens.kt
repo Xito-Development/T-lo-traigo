@@ -46,16 +46,18 @@ fun BrandMark(size: Int = 96) {
 }
 
 @Composable
-fun SplashScreen(vm: AppViewModel) {
+fun SplashScreen(vm: AppViewModel, onAnimationDone: () -> Unit = {}) {
     val boot by vm.boot.collectAsState()
-    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        BrandMark(120)
-        Spacer(Modifier.height(24.dp))
-        Wordmark(width = 260.dp)
-        Spacer(Modifier.height(24.dp))
-        when (val b = boot) {
-            is Boot.Error -> { ErrorText(b.msg); BigButton("Reintentar", { vm.start() }, icon = Icons.Filled.Refresh) }
-            else -> CircularProgressIndicator()
+    var done by remember { mutableStateOf(false) }
+    Box(Modifier.fillMaxSize()) {
+        AnimatedSplash { done = true; onAnimationDone() }
+        // Si tarda la conexión o falla, se muestra debajo sin estropear la animación
+        Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            when (val b = boot) {
+                is Boot.Error -> { Text(b.msg, color = androidx.compose.ui.graphics.Color.White); Spacer(Modifier.height(8.dp)); BigButton("Reintentar", { vm.start() }, icon = Icons.Filled.Refresh) }
+                Boot.Loading -> if (done) CircularProgressIndicator(color = androidx.compose.ui.graphics.Color(0xFFF2B544))
+                else -> {}
+            }
         }
     }
 }

@@ -112,7 +112,7 @@ fun DebugScreen(vm: AppViewModel, onBack: () -> Unit) {
                     headlineContent = { Text(d.profile?.fullName?.ifBlank { null } ?: d.driverId.take(8)) },
                     supportingContent = { Text((if (d.approved) "Aprobado" else "Pendiente de aprobación") + (if (d.available) " · disponible" else "") + (d.profile?.phone?.let { " · $it" } ?: "")) },
                     trailingContent = {
-                        Switch(d.approved, { v -> run("aprobar") { repo.setDriverApproved(d.driverId, v); reloadDrivers++; if (v) "Repartidor aprobado" else "Aprobación retirada" } })
+                        AppSwitch(d.approved, { v -> run("aprobar") { repo.setDriverApproved(d.driverId, v); reloadDrivers++; if (v) "Repartidor aprobado" else "Aprobación retirada" } })
                     },
                     colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                 )

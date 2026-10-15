@@ -111,7 +111,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                         Text(if (on) "Estás disponible" else "No estás disponible", style = MaterialTheme.typography.titleLarge)
                         Text(if (on) "Recibirás pedidos de tus pueblos" else "Actívalo para ver pedidos nuevos", style = MaterialTheme.typography.bodyMedium)
                     }
-                    Switch(on, { v -> ds?.let { cur -> val n = cur.copy(available = v); ds = n
+                    AppSwitch(on, { v -> ds?.let { cur -> val n = cur.copy(available = v); ds = n
                         scope.launch { runCatching { Locator.repo.saveDriverSettings(n) } }
                         if (v) pedirPermisosYArrancar() else es.unocerobits.tlotraigo.DriverService.stop(ctxS) } })
                 }
@@ -134,6 +134,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
             list == null -> item { Loading() }
             list.isEmpty() -> item { Message(Icons.Filled.HourglassEmpty, "No hay pedidos nuevos", "Te avisaremos aquí en cuanto llegue uno.") }
             else -> items(list, key = { it.id }) { o ->
+                val celebrate = LocalCelebrate.current
                 Card(Modifier.fillMaxWidth().padding(vertical = 6.dp).animateItem(), shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer)) {
                     Column(Modifier.padding(18.dp)) {
@@ -159,7 +160,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                             BigButton("Aceptar", {
                                 scope.launch {
                                     busyId = o.id
-                                    try { Locator.repo.acceptOrder(o.id); onAccepted() } catch (e: ApiException) { err = e.message; orders = runCatching { Locator.repo.pendingOrders() }.getOrNull() }
+                                    try { Locator.repo.acceptOrder(o.id); celebrate(Celebration("¡Pedido aceptado!", "Lo tienes en «Mis repartos»")); onAccepted() } catch (e: ApiException) { err = e.message; orders = runCatching { Locator.repo.pendingOrders() }.getOrNull() }
                                     busyId = null
                                 }
                             }, Modifier.weight(1.4f), loading = busyId == o.id, icon = Icons.Filled.TaskAlt)
@@ -263,6 +264,7 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                     OutlinedButton({ openChat(o.id) }, Modifier.weight(1f)) { Icon(Icons.Filled.Forum, null); Spacer(Modifier.width(6.dp)); Text("Chat") }
                     OutlinedButton({ ctx.navigateTo(o.address) }, Modifier.weight(1f)) { Icon(Icons.Filled.Navigation, null); Spacer(Modifier.width(6.dp)); Text("Ruta") }
                 }
+                val celebrate = LocalCelebrate.current
                 val locPerm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
                     es.unocerobits.tlotraigo.DriverService.start(ctx)
                 }
@@ -287,6 +289,7 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                             busy = true
                             try {
                                 Locator.repo.setStatus(o.id, st)
+                                when (st) { "entregado" -> celebrate(Celebration("¡Entregado!", "Gracias por hacer la compra a tu vecino")); "en_camino" -> celebrate(Celebration("¡En camino!", "El cliente ya puede ver por dónde vas")) }
                                 if (st == "entregado" && o.paymentMethod == "tarjeta") Locator.repo.payout(o.id)
                                 if (st == "en_camino") {
                                     if (es.unocerobits.tlotraigo.DriverService.hasLocation(ctx)) es.unocerobits.tlotraigo.DriverService.start(ctx)
@@ -327,7 +330,7 @@ private fun DriverSettingsPanel(vm: AppViewModel) {
         ).forEach { (m, on, upd) ->
             Row(Modifier.fillMaxWidth().clickable { save(upd(!on)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) { Text(m.label, style = MaterialTheme.typography.titleMedium); Text(m.hint, style = MaterialTheme.typography.bodySmall) }
-                Switch(on, { save(upd(it)) })
+                AppSwitch(on, { save(upd(it)) })
             }
         }
         SectionTitle("Tu Bizum (opcional)")

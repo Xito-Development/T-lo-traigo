@@ -94,7 +94,7 @@ fun AdminOrgs(vm: AppViewModel, onOpen: (Long) -> Unit) {
         if (l == null) item { Loading() } else items(l, key = { it.id }) { o ->
             ListItem(headlineContent = { Text(o.name) }, supportingContent = { Text("${kinds.toMap()[o.kind]} · plan ${o.plan}${o.subscriptionUntil?.let { " hasta ${prettyDay(it)}" } ?: ""}") },
                 leadingContent = { Icon(if (o.kind == "ayuntamiento" || o.kind == "diputacion") Icons.Filled.AccountBalance else Icons.Filled.Groups, null) },
-                trailingContent = { Switch(o.active, { v -> scope.launch { runCatching { Locator.repo.updateOrganization(o.id, buildJsonObject { put("active", v) }) }; reload++ } }) },
+                trailingContent = { AppSwitch(o.active, { v -> scope.launch { runCatching { Locator.repo.updateOrganization(o.id, buildJsonObject { put("active", v) }) }; reload++ } }) },
                 modifier = Modifier.clickable { onOpen(o.id) })
         }
     }
@@ -167,7 +167,7 @@ private fun OrgSummary(o: Organization, v: OrgOverview, onChange: () -> Unit) {
                     Text(if (o.acceptingOrders) "Aceptando pedidos" else "Pedidos pausados", style = MaterialTheme.typography.titleLarge)
                     Text("Horario de entrega: ${o.openHour}:00–${o.closeHour}:00 · ${o.deliveryDays.sorted().joinToString(" ") { dayNames[it - 1] }}", style = MaterialTheme.typography.bodyMedium)
                 }
-                Switch(o.acceptingOrders, { a -> scope.launch { runCatching { Locator.repo.updateOrganization(o.id, buildJsonObject { put("accepting_orders", a) }) }; onChange() } })
+                AppSwitch(o.acceptingOrders, { a -> scope.launch { runCatching { Locator.repo.updateOrganization(o.id, buildJsonObject { put("accepting_orders", a) }) }; onChange() } })
             }
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -224,7 +224,7 @@ private fun OrgDrivers(o: Organization, v: OrgOverview, onChange: () -> Unit) {
         items(v.drivers, key = { it.id }) { d ->
             ListItem(headlineContent = { Text(d.name) }, supportingContent = { Text((if (d.available) "🟢 Disponible" else "⚪ No disponible") + (d.phone?.let { " · $it" } ?: "")) },
                 trailingContent = { Row(verticalAlignment = Alignment.CenterVertically) {
-                    Switch(d.approved, { a -> scope.launch { runCatching { Locator.repo.orgSetDriver(d.id, a) }; onChange() } })
+                    AppSwitch(d.approved, { a -> scope.launch { runCatching { Locator.repo.orgSetDriver(d.id, a) }; onChange() } })
                     IconButton({ scope.launch { runCatching { Locator.repo.orgSetDriver(d.id, false, remove = true) }; onChange() } }) { Icon(Icons.Filled.PersonRemove, "Quitar de la entidad") }
                 } })
         }
@@ -242,7 +242,7 @@ private fun OrgTowns(o: Organization, v: OrgOverview, onChange: () -> Unit) {
         items(v.towns, key = { it.id }) { t ->
             ListItem(headlineContent = { Text(t.name + if (!t.active) " (desactivado)" else "") },
                 supportingContent = { Text("CP ${t.postalCode ?: "—"} · envío ${eur(t.deliveryFee)} · ${fmtNum(t.distanceKm, 0)} km al súper") },
-                trailingContent = { Switch(t.active, { a -> scope.launch { runCatching { Locator.repo.orgSaveTown(o.id, t.id, t.name, t.postalCode, t.deliveryFee, t.distanceKm, a) }; onChange() } }) },
+                trailingContent = { AppSwitch(t.active, { a -> scope.launch { runCatching { Locator.repo.orgSaveTown(o.id, t.id, t.name, t.postalCode, t.deliveryFee, t.distanceKm, a) }; onChange() } }) },
                 modifier = Modifier.clickable { edit = t })
         }
     }
@@ -301,7 +301,7 @@ private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
     var msg by remember { mutableStateOf<String?>(null) }
     @Composable fun sw(t: String, d: String, v: Boolean, set: (Boolean) -> Unit) = Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) { Text(t, style = MaterialTheme.typography.titleMedium); Text(d, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        Switch(v, set)
+        AppSwitch(v, set)
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         OutlinedTextField(x.name, { x = x.copy(name = it) }, Modifier.fillMaxWidth(), label = { Text("Nombre de la entidad") }, singleLine = true)

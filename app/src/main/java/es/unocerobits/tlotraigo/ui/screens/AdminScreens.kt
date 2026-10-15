@@ -246,14 +246,14 @@ fun ProductEditorScreen(id: Long?, onBack: () -> Unit) {
                     Text("Solo mayores de 18", style = MaterialTheme.typography.titleMedium)
                     Text("Bebidas alcohólicas: el cliente confirma su edad y el repartidor pide el DNI", style = MaterialTheme.typography.bodySmall)
                 }
-                Switch(adultOnly, { adultOnly = it })
+                AppSwitch(adultOnly, { adultOnly = it })
             }
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Visible en el catálogo", style = MaterialTheme.typography.titleMedium)
                     Text(if (active) "Los clientes pueden comprarlo" else "Oculto para los clientes", style = MaterialTheme.typography.bodySmall)
                 }
-                Switch(active, { active = it })
+                AppSwitch(active, { active = it })
             }
             ErrorText(err)
             Spacer(Modifier.height(12.dp))
@@ -330,7 +330,7 @@ private fun AdminFees() {
                 Text("Desactivado: solo efectivo. Actívalo cuando estés dado de alta y tengas Stripe configurado.", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Switch(card, { card = it; f = f!!.copy(cardEnabled = it) })
+            AppSwitch(card, { card = it; f = f!!.copy(cardEnabled = it) })
         }
         var demo by remember { mutableStateOf(f!!.demoPayments) }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -339,7 +339,7 @@ private fun AdminFees() {
                 Text("Permite «Simular pago». Desactívalo cuando configures Stripe: si no, cualquiera podría marcar pedidos como pagados.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Switch(demo, { demo = it; f = f!!.copy(demoPayments = it) })
+            AppSwitch(demo, { demo = it; f = f!!.copy(demoPayments = it) })
         }
         SectionTitle("Modelo de repartidores")
         var mode by remember { mutableStateOf(f!!.payoutMode) }
@@ -522,7 +522,7 @@ private fun AdminDrivers(vm: AppViewModel) {
                 headlineContent = { Text(d.fullName.ifBlank { d.email }) },
                 supportingContent = { Text(listOfNotNull(d.email, d.phone, d.rating?.let { "★ $it" }).joinToString(" · ")) },
                 trailingContent = {
-                    Switch(d.approved == true, { v -> scope.launch { try { Locator.repo.setDriverApproved(d.id, v); reload++ } catch (e: ApiException) { err = e.message } } })
+                    AppSwitch(d.approved == true, { v -> scope.launch { try { Locator.repo.setDriverApproved(d.id, v); reload++ } catch (e: ApiException) { err = e.message } } })
                 },
             )
         }

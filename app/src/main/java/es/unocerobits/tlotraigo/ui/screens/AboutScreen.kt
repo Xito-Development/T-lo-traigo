@@ -61,7 +61,12 @@ fun AboutDialog(onDismiss: () -> Unit, vm: es.unocerobits.tlotraigo.AppViewModel
                     Text("La compra del súper en la puerta de casa, para los pueblos de León.", textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyLarge)
                     if (es.unocerobits.tlotraigo.store.StoreUpdates.FROM_STORE && BuildConfig.PLAY_PUBLISHED) {
+                        val act = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+                        var playMsg by remember { mutableStateOf<String?>(null) }
                         Spacer(Modifier.height(12.dp))
+                        OutlinedButton({ act?.let { es.unocerobits.tlotraigo.store.StoreUpdates.checkManual(it) { m -> playMsg = m } } }) {
+                            Icon(Icons.Filled.SystemUpdate, null); Spacer(Modifier.width(8.dp)); Text("Buscar actualizaciones") }
+                        playMsg?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary) }
                         OutlinedButton({ open(BuildConfig.PLAY_URL) }) { Icon(Icons.Filled.Star, null); Spacer(Modifier.width(8.dp)); Text("Valorar en Google Play") }
                     }
                     if (vm != null && es.unocerobits.tlotraigo.data.Updater.enabled) {

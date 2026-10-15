@@ -316,6 +316,7 @@ private fun DriverCard(d: PersonLite, driverId: String) {
 
 @Composable
 private fun ReviewSection(o: Order) {
+    val celebrateReview = LocalCelebrate.current
     val scope = rememberCoroutineScope()
     var existing by remember { mutableStateOf<Review?>(null) }
     var loaded by remember { mutableStateOf(false) }
@@ -354,6 +355,7 @@ private fun ReviewSection(o: Order) {
                         busy = true; err = null
                         try {
                             Locator.repo.submitReview(o.id, driver, delivery, comment)
+                            celebrateReview(Celebration("¡Gracias por tu opinión!", "Nos ayuda a mejorar el servicio", "⭐"))
                             existing = Review(o.id, o.driverId, driver, delivery, comment.ifBlank { null }); editing = false
                         } catch (x: ApiException) { err = x.message }
                         busy = false
@@ -459,6 +461,7 @@ private fun PayNowCard(o: Order, onDone: () -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TipCard(o: Order, onDone: () -> Unit) {
+    val celebrateTip = LocalCelebrate.current
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var amount by remember { mutableStateOf<Double?>(null) }
@@ -506,7 +509,7 @@ private fun TipCard(o: Order, onDone: () -> Unit) {
             if (cardOn) TextButton({ scope.launch { try { Locator.repo.giveTip(o.id, a!!, "efectivo"); onDone() } catch (e: ApiException) { err = e.message } } },
                 enabled = a != null && a >= 0.5) { Text("Ya se la di en efectivo") }
             else BigButton(if (a != null) "Le he dado ${eur(a)} en efectivo" else "Apuntar propina en efectivo", {
-                scope.launch { try { Locator.repo.giveTip(o.id, a!!, "efectivo"); onDone() } catch (e: ApiException) { err = e.message } } },
+                scope.launch { try { Locator.repo.giveTip(o.id, a!!, "efectivo"); celebrateTip(Celebration("¡Gracias por tu propina!", "Va entera para el repartidor", "💛")); onDone() } catch (e: ApiException) { err = e.message } } },
                 enabled = a != null && a >= 0.5, icon = Icons.Filled.Favorite)
         }
     }
@@ -541,7 +544,8 @@ private fun BizumPayCard(o: Order, onDone: () -> Unit) {
             Text("El repartidor saldrá hacia tu casa cuando confirmes que lo has enviado.", style = MaterialTheme.typography.bodySmall)
             ErrorText(err)
             Spacer(Modifier.height(8.dp))
-            BigButton("Ya he enviado el Bizum", { scope.launch { try { Locator.repo.clientMarkPaid(o.id); onDone() } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.Send)
+            val celebrate = LocalCelebrate.current
+            BigButton("Ya he enviado el Bizum", { scope.launch { try { Locator.repo.clientMarkPaid(o.id); celebrate(Celebration("¡Bizum enviado!", "El repartidor sale hacia tu casa")); onDone() } catch (e: ApiException) { err = e.message } } }, icon = Icons.Filled.Send)
             TextButton({ scope.launch { try { Locator.repo.confirmCash(o.id); onDone() } catch (e: ApiException) { err = e.message } } }) { Text("Prefiero pagar en efectivo al recibirlo") }
         }
     }
