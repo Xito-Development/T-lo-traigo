@@ -2,6 +2,13 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.7] - 2026-10-15
+### Añadido
+- Web: preguntas frecuentes que se abren y cierran con animación, de una en una.
+### Corregido
+- Web: en modo oscuro, los botones «Escríbenos» y «Solicitar una demostración» se volvían ilegibles al pulsarlos.
+- Compilación del programa de Windows en GitHub más robusta (el instalador queda también como archivo de la ejecución).
+
 ## [0.6.6] - 2026-10-15
 ### Añadido
 - Web con más vida: franja de cifras animadas, pueblos en movimiento, tarjetas de entidades con iconos e inclinación 3D, brillo en los botones y preguntas que se despliegan con suavidad.

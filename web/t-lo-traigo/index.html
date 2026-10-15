@@ -60,7 +60,8 @@ h3{font:800 1.4rem/1.2 var(--f-title)}
 .btn-line{border-color:rgba(255,255,255,.6);color:#fff}
 .btn-line:hover{border-color:var(--turquesa);color:var(--turquesa)}
 .btn-ink{border-color:var(--pino);color:var(--pino)}
-.btn-ink:hover{background:var(--pino);color:#fff}
+.btn-ink:hover,.btn-ink:active,.btn-ink:focus-visible{background:var(--pino);color:#fff}
+:root[data-theme="dark"] .btn-ink:hover,:root[data-theme="dark"] .btn-ink:active,:root[data-theme="dark"] .btn-ink:focus-visible{background:var(--pino);color:#0F1614;border-color:var(--pino)}
 .btn small{font-weight:400;opacity:.8}
 
 header{position:fixed;inset:0 0 auto 0;z-index:20;padding:.8rem 0;background:rgba(31,77,63,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .35s,box-shadow .35s}
@@ -265,7 +266,7 @@ img,svg,canvas{max-width:100%}
 #themeBtn:hover{border-color:var(--mostaza)}
 details{background:#fff;border:2px solid var(--linea);border-radius:var(--r);padding:1rem 1.2rem;margin:.7rem 0;max-width:800px}
 details summary{cursor:pointer;font:800 1.15rem var(--f-title);color:var(--pino-hondo);list-style:none}
-details summary::after{content:"+";float:right;transition:transform .3s}
+details summary::after{content:"+";float:right;transition:transform .45s cubic-bezier(.34,1.56,.64,1),color .3s;font-size:1.3em;line-height:1}
 details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem;color:var(--gris)}
 :root[data-theme="dark"] details{background:#1C2723;border-color:var(--linea)}
 .edit-only{display:none;margin-top:1rem;font-size:.95rem} body.editing .edit-only{display:block}
@@ -297,7 +298,8 @@ details[open] summary::after{transform:rotate(45deg)} details p{margin-top:.6rem
 .feats li,.steps li,details,.ticket{transition:transform .4s var(--spring),box-shadow .4s}
 details:hover{transform:translateX(6px)}
 details[open]{box-shadow:0 18px 36px -26px rgba(31,77,63,.6)}
-details p{animation:fadeDown .45s var(--ease)} @keyframes fadeDown{from{opacity:0;transform:translateY(-6px)}}
+details{overflow:hidden} details summary::-webkit-details-marker{display:none} details[open] summary::after{color:var(--mustard-hondo)}
+details.opening p{animation:fadeDown .5s var(--ease) both} @keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}}
 /* Barra de desplazamiento con la estética de la marca */
 html{scrollbar-color:var(--pino) transparent;scrollbar-width:thin}
 ::-webkit-scrollbar{width:12px;height:12px}
@@ -820,6 +822,31 @@ b.onclick=function(){var t=r.getAttribute('data-theme')==='dark'?'light':'dark';
     el.addEventListener('mousemove', function (ev) { var r = el.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width - .5, y = (ev.clientY - r.top) / r.height - .5;
       el.style.transform = 'perspective(700px) rotateX(' + (-y * 6) + 'deg) rotateY(' + (x * 8) + 'deg) translateY(-4px)'; });
     el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+  });
+})();
+</script>
+<script>
+/* Desplegables animados: se abren y cierran con suavidad y solo hay uno abierto a la vez */
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var all = [].slice.call(document.querySelectorAll('details'));
+  function animate(d, open) {
+    var sum = d.querySelector('summary'), start = d.offsetHeight;
+    if (d._anim) d._anim.cancel();
+    if (open) { d.open = true; d.classList.add('opening'); }
+    var end = open ? d.scrollHeight : sum.offsetHeight + (d.offsetHeight - d.clientHeight) + parseFloat(getComputedStyle(d).paddingTop) + parseFloat(getComputedStyle(d).paddingBottom);
+    if (reduce) { d.open = open; return; }
+    d.style.overflow = 'hidden';
+    d._anim = d.animate({ height: [start + 'px', end + 'px'] }, { duration: open ? 420 : 320, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    d._anim.onfinish = function () { d._anim = null; d.style.height = ''; if (!open) d.open = false; d.classList.remove('opening'); };
+  }
+  all.forEach(function (d) {
+    d.querySelector('summary').addEventListener('click', function (e) {
+      e.preventDefault();
+      var opening = !d.open || (d._anim && !d.classList.contains('opening'));
+      if (opening) all.forEach(function (o) { if (o !== d && o.open) animate(o, false); });
+      animate(d, opening);
+    });
   });
 })();
 </script>

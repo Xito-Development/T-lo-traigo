@@ -29,11 +29,16 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npx electron-builder --win --x64 --publish never
+      - name: Guardar el instalador (descargable desde la ejecución aunque falle la publicación)
+        if: steps.v.outputs.existe == '0'
+        uses: actions/upload-artifact@v4
+        with: { name: instalador-windows, path: desktop/dist/*.exe }
       - name: Publicar
         if: steps.v.outputs.existe == '0'
-        shell: bash
-        env: { GH_TOKEN: '${{ github.token }}' }
-        run: |
-          gh release create "desktop-v${{ steps.v.outputs.version }}" dist/*.exe \
-            --title "T lo traigo Control ${{ steps.v.outputs.version }} (Windows)" \
-            --notes "Panel de control para el superadministrador. Descarga el instalador .exe y ábrelo." --latest=false
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-v${{ steps.v.outputs.version }}
+          name: T lo traigo Control ${{ steps.v.outputs.version }} (Windows)
+          body: Panel de control para el superadministrador. Descarga el instalador .exe y ábrelo.
+          make_latest: false
+          files: desktop/dist/*.exe
