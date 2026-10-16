@@ -114,8 +114,8 @@ fun AccountScreen(vm: AppViewModel, onBack: () -> Unit) {
                     enabled = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$").matches(ne) && ne != email) { Text("Cambiar correo") }
             }
 
-            // Correo de la plataforma (solo superadministrador)
-            if (p?.isSuper == true) MailConfig()
+            // Correo de la plataforma y avisos del vigilante (solo superadministrador)
+            if (p?.isSuper == true) { MailConfig(); AdminAlerts(vm) }
 
             // Privacidad y sesiones
             Section("Privacidad y sesiones", Icons.Filled.Shield) {
@@ -191,6 +191,42 @@ private fun MailConfig() {
                 val ok = o["status"]?.jsonPrimitive?.intOrNull == 200 && o["msg"]?.jsonPrimitive?.contentOrNull?.startsWith("enviado") == true
                 Text("${if (ok) "✓" else "•"} ${o["msg"]?.jsonPrimitive?.contentOrNull.orEmpty()}", style = MaterialTheme.typography.bodySmall,
                     color = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+/** Avisos al correo del superadministrador: caídas, errores, pedidos atascados, reclamaciones, entidades… */
+@Composable
+private fun AdminAlerts(vm: AppViewModel) {
+    val p by vm.profile.collectAsState()
+    val scope = rememberCoroutineScope()
+    var on by remember(p?.adminAlertEmails) { mutableStateOf(p?.adminAlertEmails ?: true) }
+    var alerts by remember { mutableStateOf<JsonArray?>(null) }
+    var msg by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { alerts = runCatching { Locator.repo.activeAlerts() }.getOrNull() }
+    Section("Avisos del vigilante", Icons.Filled.NotificationsActive) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) { Text("Recibir avisos por correo", style = MaterialTheme.typography.titleSmall)
+                Text("Caídas de la web o de la compilación, errores de la app, pedidos sin repartidor o reclamados, reclamaciones, reembolsos, entidades por verificar o vencidas y fallos de correo. Lo urgente llega al momento; cada mañana, un resumen.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            AppSwitch(on, { v -> on = v; scope.launch { runCatching { Locator.repo.setAdminAlerts(v) }; vm.refreshProfile() } })
+        }
+        if (p?.notifyEmail.isNullOrBlank() && Locator.api.email.orEmpty().endsWith("@tlotraigo.app"))
+            Text("⚠️ Añade arriba tu «correo para avisos»: tu cuenta no tiene buzón.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        OutlinedButton({ scope.launch { msg = try { Locator.repo.sendAdminDigest(); "Resumen en camino: revisa tu correo en un minuto." } catch (e: ApiException) { e.message } } },
+            Modifier.padding(top = 8.dp)) { Icon(Icons.Filled.Send, null); Spacer(Modifier.width(8.dp)); Text("Enviarme el resumen ahora") }
+        msg?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+        val list = alerts
+        if (list != null) {
+            Text(if (list.isEmpty()) "✓ Ningún aviso activo" else "Avisos activos (${list.size})", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp))
+            list.take(8).forEach { a -> val o = a.jsonObject; val sev = o["severity"]?.jsonPrimitive?.contentOrNull
+                Row(Modifier.padding(vertical = 3.dp)) {
+                    Box(Modifier.padding(top = 6.dp).size(8.dp).clip(CircleShape).background(when (sev) { "alta" -> MaterialTheme.colorScheme.error; "media" -> Color(0xFFDE9A2A); else -> MaterialTheme.colorScheme.primary }))
+                    Spacer(Modifier.width(8.dp))
+                    Column { Text(o["title"]?.jsonPrimitive?.contentOrNull.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+                        Text(o["body"]?.jsonPrimitive?.contentOrNull.orEmpty().replace(Regex("<[^>]+>"), ""), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
             }
         }
     }

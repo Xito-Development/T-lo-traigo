@@ -1,3 +1,3 @@
-• Ajustes → Cuenta: correo de acceso, correo para avisos, correos de compras, cambiar contraseña (con medidor de seguridad) y correo, descargar mis datos, cerrar sesión en todos los dispositivos y eliminar cuenta.
-• Superadministrador: configuración del correo de compras (clave de Brevo), correo de prueba y últimos envíos.
-• Programa de Windows 1.1: pedidos en curso con detalle y filtros, usuarios, correo de compras, acciones sobre entidades (verificar, renovar, activar, paus
+• Vigilante: el superadministrador recibe por correo las caídas de la web o de la compilación, errores de la app, pedidos sin repartidor o reclamados, reclamaciones, reembolsos, entidades por verificar o vencidas y fallos de correo (lo urgente al momento, recordatorio cada 24 h y aviso de «resuelto») y un resumen cada mañana.
+• Ajustes → Cuenta (superadministrador): activar los avisos, enviar el resumen al momento y ver los avisos activos.
+• Al abrir la app vuelve a avisar de

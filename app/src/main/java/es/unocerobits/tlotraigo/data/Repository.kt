@@ -357,6 +357,9 @@ class Repository(val api: SupabaseApi) {
     suspend fun mailStatus(): JsonObject = api.json.parseToJsonElement(api.rpc("mail_status")).jsonObject
     suspend fun setBrevoKey(k: String) { api.rpc("set_brevo_key", buildJsonObject { put("p_key", k.trim()) }) }
     suspend fun sendTestEmail() { api.rpc("send_test_email") }
+    suspend fun setAdminAlerts(on: Boolean) { api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { put("admin_alert_emails", on) }.toString()) }
+    suspend fun sendAdminDigest() { api.rpc("send_admin_digest") }
+    suspend fun activeAlerts(): JsonArray = api.json.parseToJsonElement(api.rest("GET", "admin_alerts?resolved_at=is.null&select=severity,title,body,first_seen&order=first_seen.desc&limit=30")).jsonArray
 
     // --- Listas guardadas
     suspend fun lists(): List<ShoppingList> = parse(api.rest("GET", "shopping_lists?select=*&order=updated_at.desc"))

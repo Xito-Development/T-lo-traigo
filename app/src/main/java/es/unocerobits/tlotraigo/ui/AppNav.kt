@@ -60,6 +60,7 @@ fun AppNav(vm: AppViewModel) {
     }
     val update by vm.update.collectAsState()
     val readyUpd by es.unocerobits.tlotraigo.data.AutoUpdater.ready.collectAsState()
+    LaunchedEffect(Unit) { kotlinx.coroutines.delay(2500); if (es.unocerobits.tlotraigo.data.AutoUpdater.ready.value == null) vm.checkUpdate() }
     update?.let { UpdateDialog(it) { vm.dismissUpdate() } }
     val chatReq by vm.openChat.collectAsState()
     LaunchedEffect(chatReq, boot) { val id = chatReq; if (id != null && (boot == Boot.Client || boot == Boot.Driver)) { nav.navigate("chat/$id"); vm.openChat.value = null } }

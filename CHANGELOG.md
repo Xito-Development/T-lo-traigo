@@ -2,6 +2,13 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.9] - 2026-10-16
+### Añadido
+- Vigilante: el superadministrador recibe por correo las caídas de la web o de la compilación, errores de la app, pedidos sin repartidor o reclamados, reclamaciones, reembolsos, entidades por verificar o vencidas y fallos de correo (lo urgente al momento, recordatorio cada 24 h y aviso de «resuelto») y un resumen cada mañana.
+- Ajustes → Cuenta (superadministrador): activar los avisos, enviar el resumen al momento y ver los avisos activos.
+### Corregido
+- Al abrir la app vuelve a avisar de que hay una versión nueva (versión de GitHub).
+
 ## [0.6.8] - 2026-10-16
 ### Añadido
 - Ajustes → Cuenta: correo de acceso, correo para avisos, correos de compras, cambiar contraseña (con medidor de seguridad) y correo, descargar mis datos, cerrar sesión en todos los dispositivos y eliminar cuenta.
