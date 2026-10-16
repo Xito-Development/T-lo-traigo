@@ -190,16 +190,22 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onSaved: () -> Uni
     val p by vm.profile.collectAsState()
     val towns by vm.towns.collectAsState()
     var step by rememberSaveable { mutableIntStateOf(0) }
-    var name by rememberSaveable(p?.id) { mutableStateOf(p?.fullName.orEmpty()) }
-    var phone by rememberSaveable(p?.id) { mutableStateOf(p?.phone.orEmpty()) }
-    var recipient by rememberSaveable(p?.id) { mutableStateOf(p?.recipientName ?: p?.fullName.orEmpty()) }
-    var town by rememberSaveable(p?.id) { mutableStateOf(p?.townId) }
-    var cp by rememberSaveable(p?.id) { mutableStateOf(p?.postalCode.orEmpty()) }
-    var province by rememberSaveable(p?.id) { mutableStateOf(p?.province ?: "León") }
-    var street by rememberSaveable(p?.id) { mutableStateOf(p?.street.orEmpty()) }
-    var number by rememberSaveable(p?.id) { mutableStateOf(p?.streetNumber.orEmpty()) }
-    var floor by rememberSaveable(p?.id) { mutableStateOf(p?.floorDoor.orEmpty()) }
-    var directions by rememberSaveable(p?.id) { mutableStateOf(p?.directions.orEmpty()) }
+    var name by rememberSaveable { mutableStateOf(p?.fullName.orEmpty()) }
+    var phone by rememberSaveable { mutableStateOf(p?.phone.orEmpty()) }
+    var recipient by rememberSaveable { mutableStateOf(p?.recipientName ?: p?.fullName.orEmpty()) }
+    var town by rememberSaveable { mutableStateOf(p?.townId) }
+    var cp by rememberSaveable { mutableStateOf(p?.postalCode.orEmpty()) }
+    var province by rememberSaveable { mutableStateOf(p?.province ?: "León") }
+    var street by rememberSaveable { mutableStateOf(p?.street.orEmpty()) }
+    var number by rememberSaveable { mutableStateOf(p?.streetNumber.orEmpty()) }
+    var floor by rememberSaveable { mutableStateOf(p?.floorDoor.orEmpty()) }
+    var directions by rememberSaveable { mutableStateOf(p?.directions.orEmpty()) }
+    // Cuando el perfil llega después de abrir la pantalla, se rellenan solo los campos que siguen vacíos
+    LaunchedEffect(p?.id) { p?.let { pp ->
+        if (name.isBlank()) name = pp.fullName; if (phone.isBlank()) phone = pp.phone.orEmpty(); if (recipient.isBlank()) recipient = pp.recipientName ?: pp.fullName
+        if (town == null) town = pp.townId; if (cp.isBlank()) cp = pp.postalCode.orEmpty(); if (street.isBlank()) street = pp.street.orEmpty()
+        if (number.isBlank()) number = pp.streetNumber.orEmpty(); if (floor.isBlank()) floor = pp.floorDoor.orEmpty(); if (directions.isBlank()) directions = pp.directions.orEmpty()
+    } }
     var busy by remember { mutableStateOf(false) }
     var err by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -228,15 +234,22 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onSaved: () -> Uni
                         field(name, { name = it }, "Tu nombre y apellidos", cap = KeyboardCapitalization.Words)
                         field(phone, { phone = it.filter { c -> c.isDigit() || c == '+' || c == ' ' } }, "Teléfono de contacto", KeyboardType.Phone)
                         field(recipient, { recipient = it }, "¿A nombre de quién se entrega?", cap = KeyboardCapitalization.Words, ph = "Si es para otra persona, su nombre")
+                        var redeem by remember { mutableStateOf(false) }
+                        if (redeem) RedeemInviteDialog(vm) { redeem = false; vm.refreshProfile() }
+                        TextButton({ redeem = true }, Modifier.padding(top = 4.dp)) { Icon(Icons.Filled.VpnKey, null); Spacer(Modifier.width(6.dp)); Text("Tengo un código de invitación") }
                     }
                     1 -> {
                         Spacer(Modifier.height(10.dp))
                         TownPicker(towns, town) { t -> town = t.id; t.postalCode?.let { cp = it } }
-                        field(cp, { cp = it.filter(Char::isDigit).take(5) }, "Código postal", KeyboardType.Number)
+                        field(cp, { v -> cp = v.filter(Char::isDigit).take(5)
+                            if (cp.length == 5) towns.firstOrNull { it.postalCode == cp }?.let { town = it.id } }, "Código postal", KeyboardType.Number,
+                            ph = "Al escribirlo elegimos tu pueblo")
                         field(province, { province = it }, "Provincia", cap = KeyboardCapitalization.Words)
                     }
                     2 -> {
-                        field(street, { street = it }, "Calle, plaza o camino", cap = KeyboardCapitalization.Words, ph = "Ej.: Calle Mayor")
+                        AddressSuggestField(street, { street = it }, "Calle, plaza o camino", onPick = { sg ->
+                            street = sg.street ?: street; sg.number?.let { number = it }; sg.postalCode?.let { if (cp.isBlank()) cp = it }
+                        }, context = townName.orEmpty(), placeholder = "Escribe y elige: «Calle Mayor»")
                         field(number, { number = it.take(10) }, "Número", ph = "Ej.: 12 o s/n")
                     }
                     3 -> {

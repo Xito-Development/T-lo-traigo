@@ -1,4 +1,5 @@
-• Invitaciones por correo: el superadministrador invita al responsable de una entidad (también al crearla) y la entidad invita a repartidores y usuarios; la persona recibe un correo, crea su cuenta y su contraseña en la web y queda unida a la entidad con su rol.
-• Passkeys: entrar sin contraseña con la huella, la cara o el bloqueo de pantalla (Android 9+); se crean y se borran en Ajustes → Cuenta.
-• Panel de control 1.2: invitar por correo desde Entidades.
-• Panel de control 
+• Tamaño de letra «Pequeña».
+• Dictado nuevo con animación (ondas y barras que siguen la voz y texto en directo) y que entiende el habla natural: «quiero dos litros de leche, también un par de barras y luego unas manzanas», «…no, mejor 3», «kilo y medio».
+• Lista fácil: 44 iconos nuevos y mantener pulsado un artículo para cambiar su icono.
+• Compras recurrentes: cada lista puede repetirse ciertos días; ese día aparece un aviso para añadirla a la cesta con un toque.
+• Direccio

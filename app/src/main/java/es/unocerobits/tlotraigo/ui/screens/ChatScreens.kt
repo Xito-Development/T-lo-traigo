@@ -1,5 +1,9 @@
 package es.unocerobits.tlotraigo.ui.screens
 
+import androidx.compose.animation.core.*
+
+import androidx.compose.ui.graphics.graphicsLayer
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -106,66 +110,81 @@ fun ChatScreen(vm: AppViewModel, orderId: Long, onBack: () -> Unit) {
 }
 
 // =================== Lista por texto o voz ===================
-private val numeros = mapOf("un" to 1, "una" to 1, "uno" to 1, "dos" to 2, "tres" to 3, "cuatro" to 4, "cinco" to 5, "seis" to 6, "siete" to 7, "ocho" to 8,
-    "nueve" to 9, "diez" to 10, "once" to 11, "doce" to 12, "quince" to 15, "veinte" to 20, "medio" to 1, "media" to 1)
+private val numeros = mapOf("un" to 1, "una" to 1, "uno" to 1, "unos" to 1, "unas" to 1, "dos" to 2, "tres" to 3, "cuatro" to 4, "cinco" to 5, "seis" to 6, "siete" to 7,
+    "ocho" to 8, "nueve" to 9, "diez" to 10, "once" to 11, "doce" to 12, "trece" to 13, "catorce" to 14, "quince" to 15, "dieciséis" to 16, "dieciseis" to 16,
+    "diecisiete" to 17, "dieciocho" to 18, "diecinueve" to 19, "veinte" to 20, "veinticinco" to 25, "treinta" to 30, "cuarenta" to 40, "cincuenta" to 50,
+    "medio" to 1, "media" to 1, "par" to 2)
 private val sinonimos = mapOf(
-    "Pan" to listOf("pan", "barra", "hogaza", "chapata", "baguette"), "Leche" to listOf("leche"), "Huevos" to listOf("huevo"),
-    "Fruta" to listOf("manzana", "plátano", "platano", "naranja", "pera", "uva", "fruta", "mandarina", "melón", "sandía", "kiwi", "fresa"),
-    "Verdura" to listOf("patata", "tomate", "cebolla", "lechuga", "zanahoria", "pimiento", "verdura", "ajo", "calabacín", "puerro", "judías verdes"),
-    "Agua" to listOf("agua"), "Cereales" to listOf("cereal", "avena", "muesli"), "Galletas" to listOf("galleta"), "Café" to listOf("café", "cafe"),
+    "Pan" to listOf("pan", "barra", "hogaza", "chapata", "baguette", "pan de molde", "bollo"), "Leche" to listOf("leche"), "Huevos" to listOf("huevo"),
+    "Fruta" to listOf("manzana", "plátano", "platano", "naranja", "pera", "uva", "fruta", "mandarina", "melón", "melon", "sandía", "kiwi", "fresa", "limón", "limon", "melocot"),
+    "Verdura" to listOf("patata", "tomate", "cebolla", "lechuga", "zanahoria", "pimiento", "verdura", "ajo", "calabacín", "puerro", "judías verdes", "pepino", "berenjena"),
+    "Agua" to listOf("agua"), "Cereales" to listOf("cereal", "avena", "muesli"), "Galletas" to listOf("galleta", "magdalena", "bizcocho"), "Café" to listOf("café", "cafe", "cápsula"),
     "Aceite" to listOf("aceite"), "Arroz y pasta" to listOf("arroz", "macarr", "espagueti", "pasta ", "fideo"), "Legumbres" to listOf("lenteja", "garbanzo", "alubia"),
-    "Yogures" to listOf("yogur"), "Carne" to listOf("pollo", "ternera", "cerdo", "carne", "filete", "chuleta"), "Pescado" to listOf("merluza", "pescado", "salmón", "sardina", "bacalao"),
-    "Embutido y queso" to listOf("jamón", "jamon", "chorizo", "queso", "cecina", "salchichón", "lomo", "embutido"),
-    "Limpieza" to listOf("lejía", "lejia", "friegasuelos", "lavavajillas", "detergente", "bayeta", "suavizante"),
-    "Papel e higiene" to listOf("papel", "gel", "champú", "pasta de dientes", "desodorante", "jabón"),
-    "Zumos y refrescos" to listOf("zumo", "refresco", "coca", "gaseosa", "fanta"), "Conservas" to listOf("atún", "atun", "conserva", "tomate frito", "bonito"),
+    "Yogures" to listOf("yogur", "natilla", "flan"), "Carne" to listOf("pollo", "ternera", "cerdo", "carne", "filete", "chuleta", "pavo", "hamburguesa"),
+    "Pescado" to listOf("merluza", "pescado", "salmón", "salmon", "sardina", "bacalao", "lenguado"),
+    "Embutido y queso" to listOf("jamón", "jamon", "chorizo", "queso", "cecina", "salchichón", "lomo", "embutido", "mortadela"),
+    "Limpieza" to listOf("lejía", "lejia", "friegasuelos", "lavavajillas", "detergente", "bayeta", "suavizante", "estropajo"),
+    "Papel e higiene" to listOf("papel", "gel", "champú", "champu", "pasta de dientes", "desodorante", "jabón", "jabon", "servilleta"),
+    "Zumos y refrescos" to listOf("zumo", "refresco", "coca", "gaseosa", "fanta", "cerveza", "vino"), "Conservas" to listOf("atún", "atun", "conserva", "tomate frito", "bonito"),
     "Congelados" to listOf("congelad", "pizza", "croqueta", "helado"), "Azúcar, sal y harina" to listOf("azúcar", "azucar", " sal ", "harina", "pan rallado"),
     "Mascotas" to listOf("perro", "gato", "pienso"), "Bebé" to listOf("pañal", "toallita", "potito"),
 )
-/** Muletillas del dictado que no son productos. */
-private val muletilla = Regex("^(e+h*m*|e+m+|m+|h+m+|a+h+|o+h+|uh+|este|pues|bueno|vale|oye|venga|vamos|nada|y?eso|mira)$")
+/** Muletillas y relleno del habla natural que no son productos. */
+private val muletilla = Regex("^(e+h*m*|e+m+|m+|h+m+|a+h+|o+h+|uh+|este|pues|bueno|vale|oye|venga|vamos|nada|y?eso|mira|quiero|necesito|ponme|pon|tráeme|traeme|trae|dame|compra|comprar|apunta|añade|anade|también|tambien|además|ademas|luego|después|despues|gracias|porfa|hola|quería|queria|querría|querria|apúntame|apuntame|cómprame|comprame|traer|algo|cosas)$")
 /** Palabras con las que se corrige lo que se acaba de decir. */
-private val correccion = setOf("perdón", "perdon", "perdona", "espera", "rectifico", "digo", "mejor", "corrijo")
-private val sobranAlFinal = setOf("de", "del", "la", "el", "los", "las", "y", "con", "un", "una", "unos", "unas")
+private val correccion = setOf("perdón", "perdon", "perdona", "espera", "rectifico", "digo", "mejor", "corrijo", "error")
+private val sobranAlFinal = setOf("de", "del", "la", "el", "los", "las", "y", "con", "un", "una", "unos", "unas", "o")
+private val sobranAlPrincipio = setOf("de", "del", "la", "el", "los", "las", "y", "o", "que")
 
 /**
- * Entiende listas escritas o dictadas, aunque vengan sin comas y con dudas:
- * «2 barras de pan blanquinas ehhhm 6 bricks de no no 5 bricks de leche» → 2 × «Barras de pan blanquinas», 5 × «Bricks de leche».
- * - Quita muletillas (eh, ehm, mmm, bueno, pues…) y «o sea», «a ver», «por favor».
- * - «no no», «perdón», «espera», «digo», «mejor» anulan lo que se estaba diciendo (o el artículo anterior si ya estaba completo).
- * - Cada número (2, «dos», «media»…) empieza un artículo nuevo; también las comas, los puntos y la «y».
+ * Entiende listas escritas o dictadas de forma natural, aunque vengan sin comas y con dudas:
+ * «quiero dos litros de leche, también un par de barras de pan y luego unas manzanas» o
+ * «2 barras de pan blanquinas ehhhm 6 bricks de no no 5 bricks de leche».
+ * - Quita muletillas y relleno («eh», «bueno», «quiero», «ponme», «también», «luego», «por favor», «nada más»…).
+ * - «no no», «perdón», «espera», «digo», «mejor» anulan lo que se estaba diciendo; «…, no, mejor 3» corrige la cantidad.
+ * - Cada número (2, «dos», «un par de», «unas»…) empieza un artículo nuevo; también las comas, los puntos y la «y».
  */
 fun parseShoppingList(text: String, needs: List<Need>): List<Triple<Need, Int, String>> {
     val otra = needs.firstOrNull { it.name == "Otra cosa" } ?: return emptyList()
     val clean = (" " + text.lowercase() + " ").replace(Regex("[\\n.;:!?¿¡]+"), " , ").replace(",", " , ")
-        .replace(Regex(" (o sea|a ver|por favor|quiero decir|es decir) "), " ").replace(" y ", " , ")
+        .replace(Regex(" (o sea|a ver|por favor|quiero decir|es decir|nada más|nada mas|y ya está|y ya esta|eso es todo|y ya|me hace falta|hace falta|me falta|otra cosa|un poquito de|un poco de) "), " , ")
+        .replace(Regex(" y (medio|media|cuarto) "), " y_$1 ").replace(" y ", " , ").replace(" un par de ", " 2 ").replace(" par de ", " 2 ")
     val tokens = clean.split(Regex("\\s+")).filter { it.isNotBlank() }
     val items = mutableListOf<MutableList<String>>(); val cur = mutableListOf<String>()
+    var corregible: MutableList<String>? = null   // artículo anulado con «mejor…»: si después solo viene un número, se corrige su cantidad
     fun isQty(t: String) = t.toIntOrNull() != null || t in numeros
-    fun flush() { if (cur.any { !isQty(it) }) items += cur.toMutableList(); cur.clear() }
+    fun hasWords(l: List<String>) = l.any { !isQty(it) }
+    fun flush() {
+        val c = corregible
+        if (!hasWords(cur) && cur.isNotEmpty() && c != null) { items += (listOf(cur.first()) + c.dropWhile(::isQty)).toMutableList(); corregible = null }
+        else if (hasWords(cur)) { items += cur.toMutableList(); corregible = null }
+        cur.clear()
+    }
     var k = 0
     while (k < tokens.size) {
         val t = tokens[k]; val next = tokens.getOrNull(k + 1)
         when {
             t == "," -> flush()
-            t in correccion || (t == "no" && (next == "no" || (next != null && isQty(next)))) -> {
-                if (cur.any { !isQty(it) }) cur.clear() else { cur.clear(); if (items.isNotEmpty()) items.removeAt(items.lastIndex) }
-                while (tokens.getOrNull(k + 1) == "no") k++
+            t in correccion || (t == "no" && (next == "no" || next in correccion || (next != null && isQty(next)) ||
+                    ((tokens.getOrNull(k - 1) ?: ",") == "," && (next == null || next == ",")))) -> {
+                if (hasWords(cur)) { corregible = cur.toMutableList(); cur.clear() }
+                else { cur.clear(); if (corregible == null && items.isNotEmpty()) corregible = items.removeAt(items.lastIndex) }
+                while (tokens.getOrNull(k + 1) == "no" || tokens.getOrNull(k + 1) in correccion) k++
             }
             muletilla.matches(t) -> {}
-            isQty(t) && cur.any { !isQty(it) } -> { flush(); cur += t }
+            isQty(t) && hasWords(cur) -> { flush(); cur += t }
             else -> cur += t
         }
         k++
     }
     flush()
     return items.mapNotNull { words ->
-        val w = words.toMutableList()
+        val w = words.map { it.replace("y_", "y ") }.toMutableList()
         while (w.isNotEmpty() && w.last() in sobranAlFinal) w.removeAt(w.lastIndex)
         if (w.isEmpty()) return@mapNotNull null
         val first = w.first()
         val qty = first.toIntOrNull() ?: numeros[first]?.takeIf { first != "medio" && first != "media" }
-        val detailWords = if (qty != null) w.drop(1) else w
+        val detailWords = (if (qty != null) w.drop(1) else w).dropWhile { it in sobranAlPrincipio }
         if (detailWords.isEmpty()) return@mapNotNull null
         val detail = detailWords.joinToString(" ").replaceFirstChar { it.uppercase() }
         val low = " ${detail.lowercase()} "
@@ -189,9 +208,8 @@ fun VoiceListCard(needs: List<Need>, onAdd: (List<Triple<Need, Int, String>>) ->
     var err by remember { mutableStateOf<String?>(null) }
     val drafts = remember { mutableStateListOf<Draft>() }
     fun review() { drafts.clear(); parseShoppingList(text, needs).forEach { (n, q, d) -> drafts += Draft(n, q, d) }; if (drafts.isEmpty() && text.isNotBlank()) err = "No he entendido ningún producto. Prueba con «2 barras de pan, leche…»" else err = null }
-    val voice = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { text = if (text.isBlank()) it else "$text, $it"; review() }
-    }
+    var dictating by remember { mutableStateOf(false) }
+    if (dictating) DictationDialog("Di lo que necesitas", { t -> dictating = false; if (t.isNotBlank()) { text = if (text.isBlank()) t else "$text, $t"; review() } }) { dictating = false }
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer)) {
         Column(Modifier.padding(16.dp).animateContentSize()) {
             Text("Escribe o dicta tu lista", style = MaterialTheme.typography.titleMedium)
@@ -199,10 +217,8 @@ fun VoiceListCard(needs: List<Need>, onAdd: (List<Triple<Need, Int, String>>) ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 OutlinedTextField(text, { text = it; drafts.clear() }, Modifier.weight(1f), placeholder = { Text("Tu lista…") }, minLines = 2, shape = MaterialTheme.shapes.medium)
                 Spacer(Modifier.width(8.dp))
-                FilledIconButton({
-                    try { voice.launch(dictationIntent("Di lo que necesitas, por ejemplo: dos barras de pan, cinco bricks de leche")) }
-                    catch (e: ActivityNotFoundException) { err = "Este móvil no tiene dictado por voz. Escribe la lista." }
-                }, Modifier.size(56.dp)) { Icon(Icons.Filled.Mic, "Dictar por voz") }
+                val pulse by rememberInfiniteTransition(label = "mic").animateFloat(1f, 1.08f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "p")
+                FilledIconButton({ dictating = true }, Modifier.size(56.dp).graphicsLayer { scaleX = pulse; scaleY = pulse }) { Icon(Icons.Filled.Mic, "Dictar por voz") }
             }
             if (text.isNotBlank() && drafts.isEmpty()) TextButton(::review) { Icon(Icons.Filled.Checklist, null); Spacer(Modifier.width(6.dp)); Text("Revisar la lista") }
             ErrorText(err)

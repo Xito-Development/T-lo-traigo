@@ -221,7 +221,30 @@ private fun OrgDrivers(o: Organization, v: OrgOverview, onChange: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var code by remember { mutableStateOf<String?>(null) }
+    var apps by remember { mutableStateOf<JsonArray?>(null) }; var reloadApps by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reloadApps) { apps = runCatching { Locator.repo.orgApplications(o.id) }.getOrNull() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+        // Candidaturas recibidas: la entidad las aprueba o rechaza
+        apps?.takeIf { it.isNotEmpty() }?.let { list -> item {
+            Text("Candidaturas (${list.size})", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp))
+            list.forEach { x -> val a = x.jsonObject; fun t(k: String) = a[k]?.jsonPrimitive?.contentOrNull
+                var note by remember(t("id")) { mutableStateOf("") }
+                Card(Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer)) {
+                    Column(Modifier.padding(14.dp)) {
+                        Text(t("name") ?: "Sin nombre", style = MaterialTheme.typography.titleMedium)
+                        Text("${t("vehicle")} · ${t("towns")}", style = MaterialTheme.typography.bodyMedium)
+                        t("availability")?.takeIf { it.isNotBlank() }?.let { Text("Disponibilidad: $it", style = MaterialTheme.typography.bodySmall) }
+                        t("message")?.takeIf { it.isNotBlank() }?.let { Text("«$it»", style = MaterialTheme.typography.bodySmall) }
+                        t("phone")?.let { ph -> TextButton({ ctx.dial(ph) }) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text(ph) } }
+                        OutlinedTextField(note, { note = it }, Modifier.fillMaxWidth(), label = { Text("Nota (opcional)") }, singleLine = true)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                            Button({ scope.launch { runCatching { Locator.repo.reviewApplication(t("id")!!.toLong(), true, note.ifBlank { null }) }; reloadApps++; onChange() } }) { Text("Aprobar") }
+                            OutlinedButton({ scope.launch { runCatching { Locator.repo.reviewApplication(t("id")!!.toLong(), false, note.ifBlank { null }) }; reloadApps++ } }) { Text("Rechazar") }
+                        }
+                    }
+                }
+            }
+        } }
         item {
             BigButton("Invitar repartidores", { scope.launch { code = runCatching { Locator.repo.createInvite(o.id, "repartidor", 20, 30, "Repartidores") }.getOrNull() } }, icon = Icons.Filled.PersonAdd)
             code?.let { c -> Card(Modifier.fillMaxWidth().padding(top = 10.dp)) { Column(Modifier.padding(14.dp)) {
@@ -241,6 +264,7 @@ private fun OrgDrivers(o: Organization, v: OrgOverview, onChange: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OrgTowns(o: Organization, v: OrgOverview, onChange: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -264,7 +288,11 @@ private fun OrgTowns(o: Organization, v: OrgOverview, onChange: () -> Unit) {
             text = { Column {
                 OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Pueblo") }, singleLine = true)
                 OutlinedTextField(cp, { cp = it.filter(Char::isDigit).take(5) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Código postal") }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), supportingText = { Text("Con el código postal ponemos el nombre automáticamente") })
+                var cpPlaces by remember { mutableStateOf<List<String>>(emptyList()) }
+                LaunchedEffect(cp) { cpPlaces = if (cp.length == 5) es.unocerobits.tlotraigo.data.Geo.placesByCp(cp).mapNotNull { it.town } else emptyList()
+                    if (cpPlaces.size == 1 && name.isBlank()) name = cpPlaces.first() }
+                if (cpPlaces.size > 1) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { cpPlaces.forEach { pl -> AssistChip({ name = pl }, { Text(pl) }) } }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
                     NumField("Envío", fee, "€", Modifier.weight(1f)) { fee = it }; NumField("Distancia al súper", km, "km", Modifier.weight(1f)) { km = it }
                 }
@@ -573,7 +601,15 @@ fun OrgVerification(o: Organization, onChange: () -> Unit) {
             doc = Locator.repo.uploadOrgDoc(o.id, bytes, if (mime == "application/pdf") mime else "image/jpeg"); "Documento subido ✓"
         } catch (e: Exception) { e.message } }
     }
-    val taxOk = validTaxId(tax); val repOk = repId.isBlank() || validTaxId(repId)
+    // Modo de pruebas: «Xit0» en los campos → se verifica al momento
+    val testMode = name.trim() == "Xit0" && tax.uppercase() == "XIT0" && addr.trim() == "Xit0"
+    val taxOk = testMode || validTaxId(tax); val repOk = testMode || repId.isBlank() || validTaxId(repId)
+    val missing = if (testMode) emptyList() else listOfNotNull(
+        if (name.isBlank()) (if (form == "autonomo") "nombre del titular" else "razón social") else null,
+        if (tax.isBlank()) "CIF/NIF" else if (!taxOk) "CIF/NIF válido" else null,
+        if (addr.isBlank()) "domicilio fiscal" else null,
+        if (form != "autonomo" && rep.isBlank()) "representante" else null,
+        if (!repOk) "DNI/NIE del representante válido (o déjalo vacío)" else null)
     val hint = when (form) { "autonomo" -> "Tu NIF (DNI con letra) o NIE"; "administracion" -> "CIF de la administración (empieza por P, Q o S)"; "asociacion" -> "CIF de la asociación (empieza por G)"
         "sociedad" -> "CIF de la empresa (empieza por A o B)"; "cooperativa" -> "CIF de la cooperativa (empieza por F)"; else -> "CIF o NIF" }
     Card(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) { Column(Modifier.padding(16.dp)) {
@@ -585,7 +621,7 @@ fun OrgVerification(o: Organization, onChange: () -> Unit) {
             Modifier.padding(vertical = 6.dp), style = MaterialTheme.typography.bodySmall, color = if (o.verificationStatus == "rechazada") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { legalForms.forEach { (k, l) -> FilterChip(form == k, { form = k }, { Text(l) }) } }
         OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text(if (form == "autonomo") "Nombre y apellidos del titular" else "Razón social") }, singleLine = true)
-        OutlinedTextField(tax, { tax = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(9) }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text(if (form == "autonomo") "NIF / NIE" else "CIF") },
+        OutlinedTextField(tax, { tax = it.filter { c -> c.isLetterOrDigit() }.take(9).let { v -> if (v.equals("xit0", true)) v else v.uppercase() } }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text(if (form == "autonomo") "NIF / NIE" else "CIF") },
             supportingText = { Text(if (tax.isEmpty()) hint else if (taxOk) "✓ Número válido" else "El número no es válido (revisa la letra o el dígito final)") },
             isError = tax.isNotEmpty() && !taxOk, singleLine = true)
         OutlinedTextField(addr, { addr = it }, Modifier.fillMaxWidth().padding(top = 2.dp), label = { Text("Domicilio fiscal") }, singleLine = true)
@@ -603,6 +639,8 @@ fun OrgVerification(o: Organization, onChange: () -> Unit) {
             Text(if (doc != null) "✓ Adjuntado" else "Tarjeta del CIF, alta censal o certificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         msg?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+        if (testMode) Text("🧪 Modo de pruebas: se verificará al momento.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+        else if (missing.isNotEmpty()) Text("Falta: " + missing.joinToString(", ") + ".", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(10.dp))
         BigButton(if (o.verificationStatus == "verificada") "Actualizar datos" else "Enviar para verificar", {
             scope.launch { msg = try {
@@ -611,7 +649,7 @@ fun OrgVerification(o: Organization, onChange: () -> Unit) {
                     put("representative_name", if (form == "autonomo") name else rep); put("representative_id", if (form == "autonomo") tax else repId)
                     put("representative_role", if (form == "autonomo") "Titular" else repRole); doc?.let { put("doc_path", it) } }); onChange(); "Enviado ✓"
             } catch (e: ApiException) { e.message } }
-        }, enabled = taxOk && repOk && name.isNotBlank() && addr.isNotBlank() && (form == "autonomo" || rep.isNotBlank()), icon = Icons.Filled.VerifiedUser)
+        }, enabled = missing.isEmpty(), icon = Icons.Filled.VerifiedUser)
         if (isSuper && o.verificationStatus != "verificada") {
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             Text("Revisión (superadministrador)", style = MaterialTheme.typography.titleSmall)

@@ -2,6 +2,27 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.13] - 2026-10-16
+### Añadido
+- Tamaño de letra «Pequeña».
+- Dictado nuevo con animación (ondas y barras que siguen la voz y texto en directo) y que entiende el habla natural: «quiero dos litros de leche, también un par de barras y luego unas manzanas», «…no, mejor 3», «kilo y medio».
+- Lista fácil: 44 iconos nuevos y mantener pulsado un artículo para cambiar su icono.
+- Compras recurrentes: cada lista puede repetirse ciertos días; ese día aparece un aviso para añadirla a la cesta con un toque.
+- Direcciones con sugerencias mientras escribes (OpenStreetMap) y el código postal elige el pueblo.
+- Añadir pueblos por código postal con el nombre automático (entidad y superadministrador).
+- Repartidores: la candidatura (vehículo, disponibilidad y pueblos de un mismo servicio) se envía desde la propia pantalla del repartidor; la entidad recibe un aviso y la aprueba o rechaza en Mi entidad → Repartidores.
+- Verificación de entidad: modo de pruebas escribiendo «Xit0» en los campos.
+- Documento de expansión: mascotas, hogar y compras en varias tiendas (docs/EXPANSION.md).
+### Cambiado
+- Buscadores que se despliegan desde una lupa, con animación, y cabeceras más compactas.
+- Ganancias del repartidor según la forma de cobro: servicio gratuito, efectivo cobrado y Bizum recibido.
+- Pago con tarjeta desactivado («Próximamente»); al activar Bizum aparece el número de móvil.
+### Corregido
+- Mis repartos: los botones Llamar, Chat y Ruta se deformaban.
+- Verificación de entidad: ahora indica qué falta para poder enviar.
+- Onboarding: los datos escritos se borraban al cargar el perfil; los administradores de entidad ya no necesitan dirección; se puede canjear un código desde ahí.
+- Panel de Android: el aviso enorme de actualización (comparaba con la versión de Windows) ya no aparece, y el aviso de Windows se puede cerrar.
+
 ## [0.6.12] - 2026-10-16
 - Invitaciones por correo: el superadministrador invita al responsable de una entidad (también al crearla) y la entidad invita a repartidores y usuarios; la persona recibe un correo, crea su cuenta y su contraseña en la web y queda unida a la entidad con su rol.
 - Passkeys: entrar sin contraseña con la huella, la cara o el bloqueo de pantalla (Android 9+); se crean y se borran en Ajustes → Cuenta.

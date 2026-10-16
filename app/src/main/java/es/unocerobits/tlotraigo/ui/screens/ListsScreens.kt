@@ -55,7 +55,8 @@ fun ListCover(l: ShoppingList, size: androidx.compose.ui.unit.Dp, onOpen: () -> 
             }
         }
         Text(l.name, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(productos(l.items.sumOf { it.qty }), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(if (l.repeatDays.isNotEmpty()) "🔁 " + repeatText(l.repeatDays) else productos(l.items.sumOf { it.qty }), style = MaterialTheme.typography.bodySmall,
+            color = if (l.repeatDays.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
     LaunchedEffect(pressed) { if (pressed) { kotlinx.coroutines.delay(150); pressed = false } }
 }
@@ -68,6 +69,21 @@ fun ListsRow(vm: AppViewModel, onOpen: (Long) -> Unit) {
     var lists by remember { mutableStateOf<List<ShoppingList>?>(null) }
     LaunchedEffect(Unit) { lists = runCatching { Locator.repo.lists() }.getOrDefault(emptyList()) }
     Column(Modifier.padding(vertical = 8.dp)) {
+        val today = java.time.LocalDate.now()
+        lists?.filter { l -> today.dayOfWeek.value in l.repeatDays && l.lastOrderedAt?.take(10) != today.toString() }?.forEach { due ->
+            val c = hex(due.color)
+            Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(c.copy(alpha = 0.14f))) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(due.emoji, fontSize = 28.sp); Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) { Text("Hoy toca tu compra recurrente", style = MaterialTheme.typography.labelMedium, color = c)
+                        Text("«${due.name}» · ${productos(due.items.sumOf { it.qty })}", style = MaterialTheme.typography.titleSmall) }
+                    FilledTonalButton({ scope.launch { val miss = runCatching { Locator.repo.listToCart(due) }.getOrDefault(0)
+                        lists = lists?.map { if (it.id == due.id) it.copy(lastOrderedAt = today.toString()) else it }
+                        celebrate(Celebration("«${due.name}» en la cesta", if (miss > 0) "$miss artículo(s) ya no están disponibles" else "Revísala y haz el pedido", due.emoji)) } }) { Text("Añadir") }
+                }
+            }
+        }
         Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Mis listas", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
             TextButton({ onOpen(-1) }) { Icon(Icons.Filled.Add, null); Spacer(Modifier.width(4.dp)); Text("Nueva") }
@@ -155,6 +171,18 @@ fun ListDetailScreen(vm: AppViewModel, id: Long, initial: List<ListItem> = empty
                     }
                 }
             }
+            item {
+                Column(Modifier.padding(horizontal = 20.dp)) {
+                    Text("Compra recurrente", style = MaterialTheme.typography.titleSmall)
+                    Text("Elige qué días te la recordamos para pedirla con un toque.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("L", "M", "X", "J", "V", "S", "D").forEachIndexed { i, d -> val day = i + 1; val on = day in l.repeatDays
+                            val bg by animateColorAsState(if (on) c else MaterialTheme.colorScheme.surfaceContainerHigh, label = "dia")
+                            Box(Modifier.size(38.dp).clip(CircleShape).background(bg).clickable { list = l.copy(repeatDays = if (on) l.repeatDays - day else l.repeatDays + day) },
+                                Alignment.Center) { Text(d, color = if (on) Color.White else MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelLarge) } }
+                    }
+                }
+            }
             item { ErrorText(err) }
             item {
                 Row(Modifier.padding(horizontal = 20.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -210,4 +238,9 @@ fun mergeItems(a: List<ListItem>, b: List<ListItem>): List<ListItem> {
     b.forEach { n -> val i = out.indexOfFirst { it.productId == n.productId && it.needId == n.needId && (it.detail ?: "") == (n.detail ?: "") }
         if (i >= 0) out[i] = out[i].copy(qty = (out[i].qty + n.qty).coerceAtMost(99)) else out += n }
     return out
+}
+
+fun repeatText(days: List<Int>): String {
+    val n = listOf("lunes", "martes", "miércoles", "jueves", "viernes", "sábados", "domingos")
+    return when { days.size == 7 -> "todos los días"; days.sorted() == listOf(1, 2, 3, 4, 5) -> "de lunes a viernes"; else -> "los " + days.sorted().joinToString(", ") { n[it - 1].let { w -> if (w.endsWith("s")) w else w } } }
 }

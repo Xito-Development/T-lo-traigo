@@ -1,5 +1,7 @@
 package es.unocerobits.tlotraigo.ui.screens
 
+import kotlinx.serialization.json.*
+
 import androidx.compose.animation.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -116,14 +118,10 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                         if (v) pedirPermisosYArrancar() else es.unocerobits.tlotraigo.DriverService.stop(ctxS) } })
                 }
             }
-            if (ds != null && ds?.approved == false) Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium) {
-                Column(Modifier.padding(14.dp)) {
-                    Text("Aún no estás autorizado para repartir. Envía tu candidatura y el responsable la revisará.",
-                        color = MaterialTheme.colorScheme.onTertiaryContainer, style = MaterialTheme.typography.bodyMedium)
-                    TextButton(onApply, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onTertiaryContainer)) {
-                        Icon(Icons.Filled.AssignmentInd, null); Spacer(Modifier.width(6.dp)); Text("Ver mi candidatura")
-                    }
-                }
+            // Sin autorizar: la candidatura (pueblos, vehículo, disponibilidad) está aquí mismo
+            if (ds != null && ds?.approved == false) Card(Modifier.fillMaxWidth().padding(top = 10.dp), shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(Modifier.padding(16.dp)) { DriverApplicationSection(vm) }
             }
             if (ds?.townIds?.isEmpty() == true) Text("Elige tus pueblos en Ajustes para recibir pedidos.", Modifier.padding(top = 10.dp), color = MaterialTheme.colorScheme.error)
         }
@@ -259,10 +257,10 @@ private fun DeliveryCard(o: Order, modifier: Modifier, onChanged: () -> Unit) {
                 ErrorText(err)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    o.customer?.phone?.let { ph -> OutlinedButton({ ctx.dial(ph) }, Modifier.weight(1f)) { Icon(Icons.Filled.Call, null); Spacer(Modifier.width(6.dp)); Text("Llamar") } }
                     val openChat = LocalOpenChat.current
-                    OutlinedButton({ openChat(o.id) }, Modifier.weight(1f)) { Icon(Icons.Filled.Forum, null); Spacer(Modifier.width(6.dp)); Text("Chat") }
-                    OutlinedButton({ ctx.navigateTo(o.address) }, Modifier.weight(1f)) { Icon(Icons.Filled.Navigation, null); Spacer(Modifier.width(6.dp)); Text("Ruta") }
+                    o.customer?.phone?.let { ph -> ActionTile("Llamar", Icons.Filled.Call, Modifier.weight(1f)) { ctx.dial(ph) } }
+                    ActionTile("Chat", Icons.Filled.Forum, Modifier.weight(1f)) { openChat(o.id) }
+                    ActionTile("Ruta", Icons.Filled.Navigation, Modifier.weight(1f)) { ctx.navigateTo(o.address) }
                 }
                 val celebrate = LocalCelebrate.current
                 val locPerm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
@@ -326,32 +324,28 @@ private fun DriverSettingsPanel(vm: AppViewModel) {
         listOf(
             Triple(PayMethod.CASH, s.cash) { v: Boolean -> s.copy(cash = v) },
             Triple(PayMethod.BIZUM, s.bizum) { v: Boolean -> s.copy(bizum = v) },
-            Triple(PayMethod.CARD, s.card) { v: Boolean -> s.copy(card = v) },
         ).forEach { (m, on, upd) ->
             Row(Modifier.fillMaxWidth().clickable { save(upd(!on)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) { Text(m.label, style = MaterialTheme.typography.titleMedium); Text(m.hint, style = MaterialTheme.typography.bodySmall) }
                 AppSwitch(on, { save(upd(it)) })
             }
-        }
-        SectionTitle("Tu Bizum (opcional)")
-        Text("Si tu entidad lo permite, los clientes te devolverán por Bizum lo que adelantes en el súper.", style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        var bz by remember(s.bizumPhone) { mutableStateOf(s.bizumPhone.orEmpty()) }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Bizum activado → su número de móvil justo debajo
+            if (m == PayMethod.BIZUM) androidx.compose.animation.AnimatedVisibility(on) {
+                var bz by remember(s.bizumPhone) { mutableStateOf(s.bizumPhone.orEmpty()) }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)) {
             OutlinedTextField(bz, { bz = it.filter { c -> c.isDigit() || c == '+' || c == ' ' }.take(16) }, Modifier.weight(1f), label = { Text("Teléfono con Bizum") }, singleLine = true,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone), leadingIcon = { Icon(Icons.Filled.Smartphone, null) })
             Spacer(Modifier.width(8.dp))
             Button({ save(s.copy(bizumPhone = bz)) }) { Text("Guardar") }
+                }
+            }
         }
-        SectionTitle("Cobros con tarjeta")
-        val ctxP = androidx.compose.ui.platform.LocalContext.current
-        Text("Para recibir tu parte de los pedidos pagados con tarjeta, conecta tu cuenta de cobro (Stripe). Es gratis y la verificación la hace Stripe.",
-            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        var stripeMsg by remember { mutableStateOf<String?>(null) }
-        OutlinedButton({ scope.launch { try { val u = Locator.repo.connectStripe(); if (u != null) ctxP.openUrl(u) else stripeMsg = "Tu cuenta de cobro ya está lista ✓" } catch (e: ApiException) { stripeMsg = e.message } } }) {
-            Icon(Icons.Filled.AccountBalance, null); Spacer(Modifier.width(6.dp)); Text("Configurar cobros")
+        // Tarjeta: desactivada por ahora (no gestionamos cobros con tarjeta)
+        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) { Text(PayMethod.CARD.label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Próximamente", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            AppSwitch(false, null, enabled = false)
         }
-        stripeMsg?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         SectionTitle("Pueblos donde repartes")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             towns.forEach { t ->
@@ -368,7 +362,8 @@ private fun DriverSettingsPanel(vm: AppViewModel) {
 private fun DriverEarningsScreen() {
     var e by remember { mutableStateOf<Earnings?>(null) }
     var err by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(Unit) { try { e = Locator.repo.earnings() } catch (x: ApiException) { err = x.message } }
+    var cob by remember { mutableStateOf<JsonArray?>(null) }
+    LaunchedEffect(Unit) { try { e = Locator.repo.earnings(); cob = runCatching { Locator.repo.driverCollections(e!!.from) }.getOrNull() } catch (x: ApiException) { err = x.message } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         item { Text("Mis ganancias", style = MaterialTheme.typography.headlineLarge) }
         item { ErrorText(err) }
@@ -377,7 +372,35 @@ private fun DriverEarningsScreen() {
         else {
             item {
                 Text("Desde el ${prettyDay(x.from)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Card(Modifier.fillMaxWidth().padding(vertical = 12.dp), shape = MaterialTheme.shapes.large,
+                // La información se adapta a cómo se cobra en tu servicio
+                val rows = cob?.map { it.jsonObject }.orEmpty()
+                fun num(o: JsonObject, k: String) = o[k]?.jsonPrimitive?.doubleOrNull ?: 0.0
+                val me = Locator.api.uid
+                val gratis = rows.isNotEmpty() && rows.all { it["free_service"]?.jsonPrimitive?.booleanOrNull == true }
+                val cash = rows.filter { it["payment_method"]?.jsonPrimitive?.contentOrNull == "efectivo" && it["paid_by"]?.jsonPrimitive?.contentOrNull == me }
+                    .sumOf { num(it, "final_total").takeIf { v -> v > 0 } ?: num(it, "total") }
+                val bizum = rows.filter { it["payment_method"]?.jsonPrimitive?.contentOrNull == "bizum" && it["bizum_to"]?.jsonPrimitive?.contentOrNull == "repartidor" && it["payment_status"]?.jsonPrimitive?.contentOrNull == "pagado" }
+                    .sumOf { num(it, "final_total").takeIf { v -> v > 0 } ?: num(it, "total") }
+                val adelantado = rows.sumOf { num(it, "ticket_total") }
+                if (gratis) Card(Modifier.fillMaxWidth().padding(top = 12.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer)) {
+                    Column(Modifier.padding(18.dp)) {
+                        Text("Servicio gratuito de tu entidad", style = MaterialTheme.typography.titleMedium)
+                        Text("En tu servicio el reparto no se cobra al usuario: aquí ves tus entregas y lo que has cobrado de las compras.", style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(8.dp)); EarnRow("${rows.size} entregas · compras adelantadas", adelantado)
+                    }
+                }
+                if (rows.isNotEmpty()) Card(Modifier.fillMaxWidth().padding(top = 12.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Column(Modifier.padding(18.dp)) {
+                        Text("Lo que has cobrado", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(6.dp))
+                        if (cash > 0) EarnRow("💶 En efectivo", cash)
+                        if (bizum > 0) EarnRow("📲 Por Bizum a tu móvil", bizum)
+                        if (cash == 0.0 && bizum == 0.0) Text("No has cobrado nada en mano: lo gestiona tu entidad.", style = MaterialTheme.typography.bodySmall)
+                        if (cash + bizum > 0 && adelantado > 0) Text("Incluye el importe de las compras que adelantaste en el súper (${eur(adelantado)}).", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+                if (!gratis) Card(Modifier.fillMaxWidth().padding(vertical = 12.dp), shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)) {
                     Column(Modifier.padding(20.dp)) {
                         Text("A cobrar", style = MaterialTheme.typography.titleMedium)
@@ -403,7 +426,7 @@ private fun DriverEarningsScreen() {
                 }
             }
             item {
-                Text("Eres independiente: aceptas los pedidos que quieras. Los pagos con tarjeta te llegan a tu cuenta de Stripe; el efectivo lo cobras en la entrega.",
+                Text("Aceptas los pedidos que quieras. El efectivo lo cobras en la entrega y el Bizum te llega a tu móvil (o a la entidad, según tu servicio).",
                     Modifier.padding(top = 16.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -472,9 +495,13 @@ fun DriverApplicationSection(vm: AppViewModel) {
         listOf("Coche", "Furgoneta", "Moto", "Bicicleta", "A pie").forEach { v -> FilterChip(vehicle == v, { vehicle = v }, { Text(v) }) }
     }
     Text("Pueblos donde puedes repartir", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp))
+    Text("Solo de un mismo servicio: al elegir el primero, los de otras entidades se desactivan.", style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val chosenOrg = towns.firstOrNull { it.id in sel }?.orgId
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         towns.forEach { t -> val on = t.id in sel
-            FilterChip(on, { if (on) sel.remove(t.id) else sel.add(t.id) }, { Text(t.name) }, leadingIcon = if (on) { { Icon(Icons.Filled.Check, null) } } else null) }
+            FilterChip(on, { if (on) sel.remove(t.id) else sel.add(t.id) }, { Text(t.name) }, leadingIcon = if (on) { { Icon(Icons.Filled.Check, null) } } else null,
+                enabled = on || chosenOrg == null || t.orgId == chosenOrg) }
     }
     OutlinedTextField(availability, { availability = it }, Modifier.fillMaxWidth().padding(top = 10.dp), label = { Text("Disponibilidad (días y horas)") },
         placeholder = { Text("Ej.: lunes a viernes por la mañana") }, shape = MaterialTheme.shapes.medium)

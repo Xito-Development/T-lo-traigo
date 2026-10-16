@@ -366,11 +366,18 @@ class Repository(val api: SupabaseApi) {
         api.rpc("send_invite_email", buildJsonObject { put("p_org", orgId); put("p_role", role); put("p_email", email.trim()); put("p_name", name?.trim()) }).trim('"')
     suspend fun orgEmailInvites(orgId: Long): JsonArray = api.json.parseToJsonElement(api.rpc("org_email_invites", buildJsonObject { put("p_org", orgId) })).jsonArray
 
+    /** Cobros del repartidor desde una fecha: entregas, efectivo cobrado, Bizum recibido y servicios gratuitos. */
+    suspend fun driverCollections(from: String): JsonArray = api.json.parseToJsonElement(api.rest("GET",
+        "orders?driver_id=eq.${api.uid}&status=eq.entregado&updated_at=gte.$from&select=payment_method,payment_status,final_total,total,ticket_total,free_service,paid_by,bizum_to")).jsonArray
+
+    suspend fun orgApplications(orgId: Long): JsonArray = api.json.parseToJsonElement(api.rpc("org_applications", buildJsonObject { put("p_org", orgId) })).jsonArray
+
     // --- Listas guardadas
     suspend fun lists(): List<ShoppingList> = parse(api.rest("GET", "shopping_lists?select=*&order=updated_at.desc"))
     suspend fun saveList(l: ShoppingList): ShoppingList {
         val body = buildJsonObject {
             put("name", l.name.trim().ifBlank { "Mi lista" }); put("emoji", l.emoji); put("color", l.color); put("customer_id", l.customerId)
+            putJsonArray("repeat_days") { l.repeatDays.sorted().forEach { add(it) } }
             put("items", api.json.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(ListItem.serializer()), l.items))
             if (l.id == 0L) put("owner_id", api.uid)
         }.toString()
@@ -381,6 +388,7 @@ class Repository(val api: SupabaseApi) {
     suspend fun deleteList(id: Long) { api.rest("DELETE", "shopping_lists?id=eq.$id") }
     /** Mete toda la lista en la cesta (productos del catálogo y artículos de la lista fácil). Devuelve cuántos no estaban disponibles. */
     suspend fun listToCart(l: ShoppingList): Int {
+        if (l.id > 0) runCatching { api.rest("PATCH", "shopping_lists?id=eq.${l.id}", buildJsonObject { put("last_ordered_at", java.time.Instant.now().toString()) }.toString()) }
         val prodQty = l.items.mapNotNull { i -> i.productId?.let { it to i.qty } }.toMap()
         val prods = productsByIds(prodQty.keys)
         prods.forEach { p -> Locator.cart.set(p, (Locator.cart.lines.value[p.id]?.qty ?: 0) + prodQty.getValue(p.id)) }

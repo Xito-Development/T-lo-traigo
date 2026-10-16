@@ -54,7 +54,7 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         }
         ToggleRow("Leer en voz alta", "Botón de altavoz junto a los productos", s.speak, Icons.Filled.RecordVoiceOver) { v -> vm.updateSettings { it.copy(speak = v) } }
         Text("Tamaño de letra", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-        val steps = listOf(1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme")
+        val steps = listOf(0.85f to "Pequeña", 1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme")
         @OptIn(ExperimentalLayoutApi::class)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(vertical = 8.dp)) {
             steps.forEach { (v, l) ->

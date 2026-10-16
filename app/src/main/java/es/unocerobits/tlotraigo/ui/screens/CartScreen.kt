@@ -203,8 +203,8 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
                     if (av.isEmpty()) Text("Ahora mismo no hay repartidores activos en tu pueblo. Tu pedido quedará en espera y se pagará en efectivo.",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     PayMethod.entries.forEach { m ->
-                        val enabled = when (m) { PayMethod.BIZUM -> quote?.allowBizum == true; PayMethod.CARD -> cardOn && quote?.feesMode != "gratuito"; PayMethod.CASH -> quote?.allowCash != false }
-                        if (!enabled && m != PayMethod.CASH) return@forEach   // solo se muestran las formas que ofrece la entidad
+                        val enabled = when (m) { PayMethod.BIZUM -> quote?.allowBizum == true; PayMethod.CARD -> false; PayMethod.CASH -> quote?.allowCash != false }
+                        if ((!enabled && m != PayMethod.CASH) || m == PayMethod.CARD) return@forEach   // solo se muestran las formas que ofrece la entidad
                         val icon = when (m) { PayMethod.CASH -> Icons.Filled.Payments; PayMethod.BIZUM -> Icons.Filled.Smartphone; PayMethod.CARD -> Icons.Filled.CreditCard }
                         ChoiceRow(m.label, when { m == PayMethod.BIZUM -> "Desde la app de tu banco, cuando el repartidor suba el ticket con el importe real"
                             m == PayMethod.CASH && !enabled -> "No disponible en este servicio"; m == PayMethod.CASH -> "Al recibir la compra, con el importe del ticket"; else -> m.hint }, method == m, enabled, icon) { method = m }

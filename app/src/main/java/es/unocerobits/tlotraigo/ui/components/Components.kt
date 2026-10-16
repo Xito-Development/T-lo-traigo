@@ -264,3 +264,15 @@ fun PayBadge(method: String, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/** Botón de acción compacto (icono arriba, texto abajo): no se deforma con letra grande. */
+@Composable
+fun ActionTile(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Surface(onClick, modifier.heightIn(min = 64.dp), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.secondaryContainer) {
+        Column(Modifier.padding(vertical = 8.dp, horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(icon, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
+        }
+    }
+}

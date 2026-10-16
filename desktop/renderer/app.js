@@ -375,12 +375,14 @@ async function showOrder(id) {
 
 // --- Comprobar si hay versión nueva del programa (Releases «desktop-v…»)
 async function checkDesktopUpdate() {
+  if (document.documentElement.classList.contains('android')) return;   // en Android se actualiza con su propio aviso nativo
   if (state.updChecked && Date.now() - state.updChecked < 6 * 3600e3) return; state.updChecked = Date.now();
   try {
     const cur = await window.tlt.version(); const rel = await fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30').then(r => r.json());
     const d = (rel || []).filter(r => /^desktop-v/.test(r.tag_name)).map(r => ({ v: r.tag_name.slice(9), url: r.html_url }))[0];
     const newer = d && d.v.split('.').map(Number).some((x, i, a) => { const c = cur.split('.').map(Number); for (let j = 0; j < 3; j++) { if ((a[j] || 0) !== (c[j] || 0)) return (a[j] || 0) > (c[j] || 0); } return false; });
-    if (newer) { const b = $('#updateBanner'); b.innerHTML = '⬆️ Hay una versión nueva del programa: <b>' + esc(d.v) + '</b><button class="btn small primary" style="background:#1B2428;color:#fff">Descargar</button>';
+    if (newer) { const b = $('#updateBanner'); b.innerHTML = '⬆️ Hay una versión nueva del programa: <b>' + esc(d.v) + '</b><button class="btn small primary" style="background:#1B2428;color:#fff">Descargar</button><button class="btn small ghost" id="updClose" aria-label="Cerrar">✕</button>';
+      setTimeout(() => { const c = document.getElementById('updClose'); if (c) c.onclick = () => { b.hidden = true; }; }, 0);
       b.hidden = false; b.querySelector('button').onclick = () => window.tlt.open(d.url); }
   } catch {}
 }

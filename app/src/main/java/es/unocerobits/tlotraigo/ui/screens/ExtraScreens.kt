@@ -1,4 +1,7 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package es.unocerobits.tlotraigo.ui.screens
+
+import androidx.compose.foundation.combinedClickable
 
 import android.content.Context
 import android.content.Intent
@@ -150,6 +153,7 @@ private fun FamilyStep(vm: AppViewModel, usage: String, onDone: () -> Unit) {
 fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
     var needs by remember { mutableStateOf<List<Need>?>(null) }
     var sel by remember { mutableStateOf<Need?>(null) }
+    var iconFor by remember { mutableStateOf<Need?>(null) }
     val lines by vm.cart.lines.collectAsState()
     var q by rememberSaveable { mutableStateOf("") }
     var usual by remember { mutableStateOf<List<OrderItem>>(emptyList()) }
@@ -171,13 +175,10 @@ fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val full: androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope.() -> androidx.compose.foundation.lazy.grid.GridItemSpan = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }
             item(span = full) {
-                Text("Toca lo que necesites y dinos cómo lo quieres. Los precios son orientativos: pagarás lo que marque el ticket del súper.",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            item(span = full) {
-                OutlinedTextField(q, { q = it }, Modifier.fillMaxWidth(), placeholder = { Text("Buscar: leche, pan, pañales…") },
-                    leadingIcon = { Icon(Icons.Filled.Search, null) }, trailingIcon = { if (q.isNotEmpty()) IconButton({ q = "" }) { Icon(Icons.Filled.Close, "Borrar búsqueda") } },
-                    singleLine = true, shape = androidx.compose.foundation.shape.CircleShape)
+                ExpandableSearch(q, { q = it }, "Buscar: leche, pan, pañales…") {
+                    Text("Toca lo que necesites · mantén pulsado para cambiar el icono", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                }
             }
             if (q.isBlank()) needs?.let { all -> item(span = full) { VoiceListCard(all) { items -> items.forEach { (nd, qty, d) -> vm.cart.addNeed(nd, d, qty) }; added(productos(items.sumOf { it.second })) } } }
             if (usual.isNotEmpty() && q.isBlank()) item(span = full) {
@@ -197,10 +198,12 @@ fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
                 val inCart = lines.values.filter { it.needId == need.id }.sumOf { it.qty }
                 val tileColor by androidx.compose.animation.animateColorAsState(if (inCart > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer, label = "tile")
                 val pop by androidx.compose.animation.core.animateFloatAsState(if (inCart > 0) 1f else 0f, Motion.bouncy(), label = "pop")
-                Surface(Modifier.animateItem().graphicsLayer { scaleX = 1f + pop * 0.03f; scaleY = 1f + pop * 0.03f }.clip(MaterialTheme.shapes.large).clickable { sel = need },
+                val custom by es.unocerobits.tlotraigo.data.NeedIcons.map.collectAsState()
+                Surface(Modifier.animateItem().graphicsLayer { scaleX = 1f + pop * 0.03f; scaleY = 1f + pop * 0.03f }.clip(MaterialTheme.shapes.large)
+                    .combinedClickable(onClick = { sel = need }, onLongClick = { iconFor = need }),
                     shape = MaterialTheme.shapes.large, color = tileColor) {
                     Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(AppIcons.vector(need.icon), null, Modifier.size(44.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(AppIcons.vector(custom[need.id] ?: need.icon), null, Modifier.size(44.dp), tint = MaterialTheme.colorScheme.primary)
                         Text(need.name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         Text("≈ ${eur(need.estPrice)} / ${need.unitLabel}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (inCart > 0) Text("En la cesta: $inCart", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
@@ -209,6 +212,11 @@ fun NeedsScreen(vm: AppViewModel, onBack: () -> Unit, onCart: () -> Unit) {
             }
         }
     }
+    // Mantener pulsado un artículo: cambiar su icono (solo en este móvil)
+    val ctxI = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) { es.unocerobits.tlotraigo.data.NeedIcons.load(ctxI) }
+    iconFor?.let { nd -> IconPickerDialog(es.unocerobits.tlotraigo.data.NeedIcons.map.value[nd.id] ?: nd.icon, { k ->
+        es.unocerobits.tlotraigo.data.NeedIcons.set(ctxI, nd.id, k); iconFor = null; added("icono de ${nd.name} cambiado".removePrefix("")) }) { iconFor = null } }
     sel?.let { nd -> NeedDialog(nd, { d, qq -> vm.cart.addNeed(nd, d, qq); added("$qq × ${nd.name}"); sel = null }) { sel = null } }
 }
 

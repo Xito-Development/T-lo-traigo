@@ -83,7 +83,7 @@ class AppViewModel : ViewModel() {
             when {
                 p == null -> { api.signOut(); Boot.LoggedOut }
                 p.termsVersion != TERMS_VERSION -> Boot.NeedsTerms
-                p.townId == null || p.fullName.isBlank() -> Boot.NeedsProfile
+                p.fullName.isBlank() || (p.townId == null && !(p.isGestor || p.isAdmin)) -> Boot.NeedsProfile
                 p.isDriver || (p.isAdmin && _driverView.value) -> Boot.Driver
                 else -> Boot.Client
             }

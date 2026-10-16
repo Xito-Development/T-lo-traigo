@@ -67,22 +67,18 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit, onNeeds: () -> Unit 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 120.dp)) {
         item {
             Column(Modifier.padding(horizontal = 20.dp).padding(top = 12.dp)) {
-                Text("${greeting()}${profile?.firstName?.let { if (it.isNotBlank()) ", $it" else "" } ?: ""}",
-                    style = MaterialTheme.typography.headlineLarge)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocationOn, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.secondary)
-                    Spacer(Modifier.width(4.dp))
-                    Text(vm.townName(profile?.townId).let { if (it.isBlank()) "Entrega a domicilio" else "Te lo llevamos a $it" }, style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ExpandableSearch(query, { query = it }, "Buscar: leche, pan, aceite…") {
+                    Column {
+                        Text("${greeting()}${profile?.firstName?.let { if (it.isNotBlank()) ", $it" else "" } ?: ""}",
+                            style = MaterialTheme.typography.headlineMedium, maxLines = 1)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.secondary)
+                            Spacer(Modifier.width(4.dp))
+                            Text(vm.townName(profile?.townId).let { if (it.isBlank()) "Entrega a domicilio" else "Te lo llevamos a $it" }, style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                        }
+                    }
                 }
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    query, { query = it }, Modifier.fillMaxWidth(), placeholder = { Text("Buscar: leche, pan, aceite…") },
-                    leadingIcon = { Icon(Icons.Filled.Search, null) }, singleLine = true, shape = CircleShape,
-                    trailingIcon = { if (query.isNotEmpty()) IconButton({ query = "" }) { Icon(Icons.Filled.Close, "Borrar búsqueda") } },
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer, focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer),
-                )
             }
         }
         item { OrgWelcome(vm) }

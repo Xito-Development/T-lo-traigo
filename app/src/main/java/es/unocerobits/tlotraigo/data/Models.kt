@@ -13,6 +13,7 @@ data class Town(
     @SerialName("distance_km") val distanceKm: Double = 0.0,
     @SerialName("postal_code") val postalCode: String? = null,
     val active: Boolean = true,
+    @SerialName("org_id") val orgId: Long? = null,
 )
 
 @Serializable
@@ -187,7 +188,8 @@ data class OrgNotice(val id: Long, @SerialName("org_id") val orgId: Long, val bo
 @Serializable
 data class ShoppingList(val id: Long = 0, @SerialName("owner_id") val ownerId: String? = null, @SerialName("customer_id") val customerId: String? = null,
     val name: String, val emoji: String = "🛒", val color: String = "#2E6B57", val items: List<ListItem> = emptyList(),
-    @SerialName("updated_at") val updatedAt: String? = null)
+    @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("repeat_days") val repeatDays: List<Int> = emptyList(), @SerialName("last_ordered_at") val lastOrderedAt: String? = null)
 @Serializable
 data class ListItem(@SerialName("product_id") val productId: Long? = null, @SerialName("need_id") val needId: Long? = null,
     val name: String, val detail: String? = null, val qty: Int = 1, val icon: String? = null, val price: Double = 0.0)

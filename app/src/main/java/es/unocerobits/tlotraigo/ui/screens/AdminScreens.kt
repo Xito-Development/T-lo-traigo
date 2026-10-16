@@ -327,10 +327,10 @@ private fun AdminFees() {
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Pagos con tarjeta", style = MaterialTheme.typography.titleMedium)
-                Text("Desactivado: solo efectivo. Actívalo cuando estés dado de alta y tengas Stripe configurado.", style = MaterialTheme.typography.bodySmall,
+                Text("Próximamente: ahora mismo no se gestionan cobros con tarjeta (solo efectivo y Bizum).", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            AppSwitch(card, { card = it; f = f!!.copy(cardEnabled = it) })
+            AppSwitch(false, null, enabled = false)
         }
         var demo by remember { mutableStateOf(f!!.demoPayments) }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -402,6 +402,8 @@ private fun AdminFees() {
         }
         var tName by remember { mutableStateOf("") }; var tCp by remember { mutableStateOf("") }; var tFee by remember { mutableStateOf("1,50") }; var tKm by remember { mutableStateOf("") }
         Text("Añadir pueblo", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp))
+        LaunchedEffect(tCp) { if (tCp.length == 5 && tName.isBlank()) es.unocerobits.tlotraigo.data.Geo.placesByCp(tCp).firstOrNull()?.town?.let { tName = it } }
+        Text("Escribe el código postal y el nombre se rellena solo.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             OutlinedTextField(tName, { tName = it }, Modifier.weight(1.5f), label = { Text("Pueblo") }, singleLine = true)
             OutlinedTextField(tCp, { tCp = it.filter(Char::isDigit).take(5) }, Modifier.weight(1f), label = { Text("CP") }, singleLine = true,

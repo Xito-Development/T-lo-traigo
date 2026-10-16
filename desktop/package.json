@@ -1,7 +1,7 @@
 {
   "name": "tlotraigo-control",
   "productName": "T lo traigo Control",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Panel de control de T lo traigo para el superadministrador: estado de los servicios, errores, actividad y sugerencias.",
   "author": "UNOCEROBITS · Xito Development <info@unocerobits.com>",
   "license": "UNLICENSED",
