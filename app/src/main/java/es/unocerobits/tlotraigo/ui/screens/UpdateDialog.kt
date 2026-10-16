@@ -62,10 +62,19 @@ fun UpdateDialog(info: UpdateInfo, onDismiss: () -> Unit) {
         }
     }
 
+    // En el móvil del superadministrador con el Panel de control instalado, se actualizan los dos a la vez
+    val withControl = remember { info.controlUrl != null && Updater.controlInstalled(ctx) }
+    var controlFile by remember { mutableStateOf<File?>(null) }
+    var controlDone by remember { mutableStateOf(false) }
     fun startDownload() {
         err = null; paso = Paso.Bajando(0f)
         job = scope.launch {
-            try { val f = Updater.download(ctx, info) { paso = Paso.Bajando(it) }; paso = Paso.Listo(f) }
+            try {
+                val share = if (withControl) 0.75f else 1f
+                val f = Updater.download(ctx, info) { paso = Paso.Bajando(it * share) }
+                if (withControl) controlFile = runCatching { Updater.downloadControl(ctx, info) { paso = Paso.Bajando(share + it * (1 - share)) } }.getOrNull()
+                paso = Paso.Listo(f)
+            }
             catch (e: ApiException) { err = e.message; paso = Paso.Info }
         }
     }
@@ -105,7 +114,15 @@ fun UpdateDialog(info: UpdateInfo, onDismiss: () -> Unit) {
                                 if (!Updater.canInstall(ctx)) Text("La primera vez Android te pedirá permitir que T lo traigo instale actualizaciones. Actívalo y vuelve aquí.",
                                     style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.height(16.dp))
-                                BigButton("Instalar ahora", { (paso as? Paso.Listo)?.let { install(it.file) } }, icon = Icons.Filled.InstallMobile)
+                                val cf = controlFile
+                                if (cf != null && !controlDone) {
+                                    Text("También se ha descargado el Panel de control. Instálalo primero y después la app.", style = MaterialTheme.typography.bodyMedium,
+                                        textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 10.dp))
+                                    BigButton("1. Actualizar Panel de control", { controlDone = true; install(cf) }, icon = Icons.Filled.Dashboard)
+                                    Spacer(Modifier.height(8.dp))
+                                }
+                                BigButton(if (cf != null) "2. Actualizar T lo traigo" else "Instalar ahora", { (paso as? Paso.Listo)?.let { install(it.file) } }, icon = Icons.Filled.InstallMobile,
+                                    tonal = cf != null && !controlDone)
                                 TextButton(onDismiss) { Text("Instalar más tarde") }
                             }
                         }

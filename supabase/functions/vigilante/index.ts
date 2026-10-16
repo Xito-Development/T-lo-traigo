@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     const BREVO = Deno.env.get("BREVO_API_KEY") || (await get("app_secrets?key=eq.brevo_api_key&select=value"))[0]?.value || "";
     const { mode } = await req.json().catch(() => ({ mode: "check" }));
     const { alerts, d, extra } = await collect();
-    const to = (d.destinatarios || []).map((x: any) => ({ email: x.correo, name: x.nombre || "" }));
+    const to = (d.destinatarios || []).map((x: any) => x.nombre ? { email: x.correo, name: x.nombre } : { email: x.correo });   // Brevo rechaza nombres vacíos
     const prev: any[] = await get("admin_alerts?select=*&resolved_at=is.null");
     const prevMap = new Map(prev.map((p) => [p.key, p])); const now = new Date().toISOString();
     const nuevos: Alert[] = [], recordar: Alert[] = [];
@@ -106,7 +106,8 @@ Deno.serve(async (req) => {
     if (!BREVO) return new Response("hay avisos pero falta la clave de Brevo");
     if (!to.length) return new Response("hay avisos pero el superadministrador no tiene correo (Ajustes → Cuenta)");
     const r = await fetch("https://api.brevo.com/v3/smtp/email", { method: "POST", headers: { "api-key": BREVO, "Content-Type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ sender: FROM, to, subject, htmlContent: html, tags: ["vigilante", mode] }) });
+      body: JSON.stringify({ sender: FROM, to, subject, htmlContent: html, textContent: html.replace(/<br\s*\/?>/g, "\n").replace(/<\/(p|div|tr|h1)>/g, "\n").replace(/<[^>]+>/g, "").replace(/\n\s*\n\s*\n+/g, "\n\n").trim(),
+        headers: { "X-Entity-Ref-ID": crypto.randomUUID() } }) });
     if (r.ok) {
       const sent = [...nuevos, ...recordar].filter((a) => mode === "resumen" || a.sev === "alta").map((a) => a.key);
       if (mode === "resumen") sent.push(...alerts.map((a) => a.key));

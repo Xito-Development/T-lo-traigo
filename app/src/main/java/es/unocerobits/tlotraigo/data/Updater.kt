@@ -26,7 +26,7 @@ private data class GhAsset(val name: String, @SerialName("browser_download_url")
 @Serializable
 private data class GhRelease(@SerialName("tag_name") val tag: String, val body: String? = null, val assets: List<GhAsset> = emptyList())
 
-data class UpdateInfo(val version: String, val notes: String, val url: String, val size: Long)
+data class UpdateInfo(val version: String, val notes: String, val url: String, val size: Long, val controlUrl: String? = null, val controlSize: Long = 0)
 
 /** Actualizador de la versión de GitHub: consulta la última Release, descarga el APK y lanza el instalador. */
 object Updater {
@@ -47,7 +47,8 @@ object Updater {
                 val rel = json.decodeFromString<GhRelease>(r.body?.string().orEmpty())
                 val v = rel.tag.removePrefix("v")
                 val apk = rel.assets.firstOrNull { it.name == "TLoTraigo.apk" } ?: rel.assets.firstOrNull { it.name.endsWith(".apk") }
-                if (apk != null && isNewer(v, current)) UpdateInfo(v, cleanNotes(rel.body), apk.url, apk.size) else null
+                val ctl = rel.assets.firstOrNull { it.name == "TLoTraigo-Control.apk" }
+                if (apk != null && isNewer(v, current)) UpdateInfo(v, cleanNotes(rel.body), apk.url, apk.size, ctl?.url, ctl?.size ?: 0) else null
             }
         } catch (e: IOException) { null }
     }
@@ -65,15 +66,24 @@ object Updater {
         .filter { it.isNotBlank() }.take(14).joinToString("\n") { if (it in listOf("Añadido", "Cambiado", "Corregido")) "\n$it" else "• $it" }.trim()
 
     /** Descarga el APK informando del progreso (0..1) y comprueba que es de esta app. */
-    suspend fun download(ctx: Context, info: UpdateInfo, onProgress: (Float) -> Unit): File = withContext(Dispatchers.IO) {
-        val dir = File(ctx.getExternalFilesDir(null) ?: ctx.cacheDir, "updates").apply { mkdirs(); listFiles()?.forEach { it.delete() } }
-        val file = File(dir, "TLoTraigo-${info.version}.apk")
-        val req = Request.Builder().url(info.url).header("User-Agent", "TLoTraigo-Android").build()
+    /** ¿Está instalado el Panel de control (superadministrador)? */
+    const val CONTROL_PKG = "es.unocerobits.tlotraigo.control"
+    fun controlInstalled(ctx: Context) = runCatching { ctx.packageManager.getPackageInfo(CONTROL_PKG, 0); true }.getOrDefault(false)
+
+    suspend fun download(ctx: Context, info: UpdateInfo, onProgress: (Float) -> Unit): File =
+        downloadApk(ctx, info.url, info.size, "TLoTraigo-${info.version}.apk", ctx.packageName, clean = true, onProgress)
+    suspend fun downloadControl(ctx: Context, info: UpdateInfo, onProgress: (Float) -> Unit): File =
+        downloadApk(ctx, info.controlUrl!!, info.controlSize, "TLoTraigo-Control-${info.version}.apk", CONTROL_PKG, clean = false, onProgress)
+
+    private suspend fun downloadApk(ctx: Context, url: String, size: Long, name: String, pkgName: String, clean: Boolean, onProgress: (Float) -> Unit): File = withContext(Dispatchers.IO) {
+        val dir = File(ctx.getExternalFilesDir(null) ?: ctx.cacheDir, "updates").apply { mkdirs(); if (clean) listFiles()?.forEach { it.delete() } }
+        val file = File(dir, name)
+        val req = Request.Builder().url(url).header("User-Agent", "TLoTraigo-Android").build()
         try {
             http.newCall(req).execute().use { r ->
                 if (!r.isSuccessful) throw ApiException("No se pudo descargar la actualización (${r.code}).")
                 val body = r.body ?: throw ApiException("Descarga vacía.")
-                val total = body.contentLength().takeIf { it > 0 } ?: info.size
+                val total = body.contentLength().takeIf { it > 0 } ?: size
                 body.byteStream().use { input ->
                     file.outputStream().use { out ->
                         val buf = ByteArray(64 * 1024); var done = 0L
@@ -88,7 +98,7 @@ object Updater {
             }
         } catch (e: IOException) { file.delete(); throw ApiException("Se ha cortado la descarga. Comprueba la conexión e inténtalo otra vez.") }
         val pkg = ctx.packageManager.getPackageArchiveInfo(file.path, 0)
-        if (pkg?.packageName != ctx.packageName) { file.delete(); throw ApiException("El archivo descargado no es válido.") }
+        if (pkg?.packageName != pkgName) { file.delete(); throw ApiException("El archivo descargado no es válido.") }
         onProgress(1f)
         file
     }

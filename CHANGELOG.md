@@ -2,6 +2,17 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.11] - 2026-10-16
+### Añadido
+- En el móvil del superadministrador, el aviso de versión nueva actualiza también el Panel de control.
+- El Panel de control para Android avisa al abrirlo si hay una versión nueva y se actualiza desde ahí.
+### Cambiado
+- El Panel de control para Android lleva el mismo número de versión que la app.
+### Corregido
+- Correos: Brevo rechazaba los envíos sin nombre de destinatario (error 400).
+- Correos más personales (saludo con el nombre, versión en texto y respuesta a soporte) para que lleguen a la bandeja principal.
+- Web: logo para la bandeja de entrada (BIMI) y guía docs/CORREO_ENTREGA.md.
+
 ## [0.6.10] - 2026-10-16
 ### Añadido
 - Panel de control para Android (superadministrador), con la misma estética y funciones que el de Windows: servicios, pedidos, actividad, errores, sugerencias, entidades, pendientes, usuarios y correo. Se publica con cada versión como TLoTraigo-Control.apk.

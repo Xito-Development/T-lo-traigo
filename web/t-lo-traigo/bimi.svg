@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 108 108">
+  <title>T lo traigo</title>
+  <rect width="108" height="108" fill="#2E6B57"/>
+  <path d="M64 46 C62 38 64 33 69 30 C71 35 70 41 64 46Z" fill="#7BC9A4"/>
+  <path d="M66 46 C68 39 73 36 79 36 C78 42 73 46 66 46Z" fill="#5BB08A"/>
+  <path d="M38 47 C38 35 54 35 54 47" fill="none" stroke="#FFF8EC" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M29 46 H79 V74 Q79 80 73 80 H35 Q29 80 29 74Z" fill="#F2B544"/>
+  <path d="M29 46 H79 V51 H29Z" fill="#DE9A2A"/>
+  <path d="M54 54 L67 64 H63.5 V76 H44.5 V64 H41Z" fill="#FFF8EC"/>
+  <path d="M51.5 68 H56.5 V76 H51.5Z" fill="#2E6B57"/>
+</svg>

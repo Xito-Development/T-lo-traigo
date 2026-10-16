@@ -6,7 +6,8 @@ plugins {
 }
 fun env(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
 val keystorePath = env("KEYSTORE_PATH")
-val panelVersion: String = groovy.json.JsonSlurper().parse(rootProject.file("desktop/package.json")).let { (it as Map<*, *>)["version"] as String }
+val panelVersion: String = env("VERSION_NAME")?.removePrefix("v") ?: rootProject.file("version.properties").readText().removePrefix("\uFEFF")
+    .lineSequence().first { it.startsWith("VERSION_NAME=") }.substringAfter("=").trim()
 
 android {
     namespace = "es.unocerobits.tlotraigo.control"

@@ -66,6 +66,57 @@ class PanelActivity : Activity() {
         }
         setContentView(web)
         web.loadUrl("https://appassets.androidplatform.net/assets/panel/index.html")
+        checkUpdate()
+    }
+
+    /** Al abrir: si hay una versión nueva del panel en GitHub, la ofrece y la instala. */
+    private fun checkUpdate() = Executors.newSingleThreadExecutor().execute {
+        runCatching {
+            val http = OkHttpClient()
+            val rel = http.newCall(Request.Builder().url("https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/latest")
+                .header("User-Agent", "TLoTraigo-Control").build()).execute().use { JSONObject(it.body!!.string()) }
+            val tag = rel.getString("tag_name").removePrefix("v")
+            val assets = rel.getJSONArray("assets")
+            val url = (0 until assets.length()).map { assets.getJSONObject(it) }.firstOrNull { it.getString("name") == "TLoTraigo-Control.apk" }?.getString("browser_download_url") ?: return@runCatching
+            val cur = packageManager.getPackageInfo(packageName, 0).versionName ?: "0"
+            if (!newer(tag, cur)) return@runCatching
+            runOnUiThread {
+                android.app.AlertDialog.Builder(this).setTitle("Nueva versión del panel: $tag").setMessage("Tienes la $cur. ¿Actualizar ahora?")
+                    .setPositiveButton("Actualizar") { _, _ -> download(url, tag) }.setNegativeButton("Más tarde", null).show()
+            }
+        }
+    }
+    private fun newer(a: String, b: String): Boolean {
+        val x = a.substringBefore('-').split('.').map { it.toIntOrNull() ?: 0 } + listOf(0, 0, 0)
+        val y = b.substringBefore('-').split('.').map { it.toIntOrNull() ?: 0 } + listOf(0, 0, 0)
+        for (i in 0..2) if (x[i] != y[i]) return x[i] > y[i]
+        return false
+    }
+    private fun download(url: String, tag: String) {
+        val dlg = android.app.ProgressDialog(this).apply { setTitle("Descargando $tag…"); setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL); max = 100; setCancelable(false); show() }
+        Executors.newSingleThreadExecutor().execute {
+            val res = runCatching {
+                val dir = java.io.File(cacheDir, "updates").apply { mkdirs() }; val f = java.io.File(dir, "TLoTraigo-Control.apk")
+                OkHttpClient().newCall(Request.Builder().url(url).header("User-Agent", "TLoTraigo-Control").build()).execute().use { r ->
+                    val total = r.body!!.contentLength(); var done = 0L
+                    r.body!!.byteStream().use { inp -> f.outputStream().use { out -> val buf = ByteArray(65536)
+                        while (true) { val n = inp.read(buf); if (n < 0) break; out.write(buf, 0, n); done += n
+                            if (total > 0) runOnUiThread { dlg.progress = (done * 100 / total).toInt() } } } }
+                }
+                f
+            }
+            runOnUiThread {
+                dlg.dismiss()
+                res.onSuccess { f ->
+                    if (Build.VERSION.SDK_INT >= 26 && !packageManager.canRequestPackageInstalls()) {
+                        android.widget.Toast.makeText(this, "Permite instalar actualizaciones y vuelve a pulsar «Actualizar»", android.widget.Toast.LENGTH_LONG).show()
+                        startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))); return@onSuccess
+                    }
+                    val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.files", f)
+                    startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+                }.onFailure { android.widget.Toast.makeText(this, "No se pudo descargar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
+            }
+        }
     }
 
     @Deprecated("Botón atrás: cierra modales o vuelve al resumen antes de salir")

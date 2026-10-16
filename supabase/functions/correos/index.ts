@@ -17,6 +17,12 @@ async function emailOf(uid: string | null) {
   return u.email && !String(u.email).endsWith("@tlotraigo.app") ? u.email as string : null;   // las cuentas cortas internas no tienen buzón
 }
 
+/** Versión en texto plano (los filtros la valoran y algunos lectores solo muestran esto). */
+function toText(html: string) {
+  return html.replace(/<style[\s\S]*?<\/style>/g, "").replace(/<br\s*\/?>/g, "\n").replace(/<\/(p|tr|h1|div)>/g, "\n").replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
+}
+
 function layout(title: string, intro: string, body: string) {
   return `<!doctype html><html lang="es"><body style="margin:0;background:#F3F7F4;font-family:Verdana,Arial,sans-serif;color:#1C2624">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
@@ -52,7 +58,10 @@ Deno.serve(async (req) => {
     const { order_id, kind, user_id } = await req.json();
     const send = async (to: { email: string; name: string }[], subject: string, html: string) => {
       const r = await fetch("https://api.brevo.com/v3/smtp/email", { method: "POST", headers: { "api-key": BREVO, "Content-Type": "application/json", accept: "application/json" },
-        body: JSON.stringify({ sender: FROM, to, subject, htmlContent: html, tags: ["app", kind] }) });
+        body: JSON.stringify({ sender: FROM, replyTo: { email: "support@tlotraigo.unocerobits.com", name: "Soporte T lo traigo" },
+          to: to.map((t) => t.name ? t : { email: t.email }),   // Brevo rechaza nombres vacíos
+          subject, htmlContent: html, textContent: toText(html),
+          headers: { "X-Entity-Ref-ID": crypto.randomUUID() } }) });
       return new Response(r.ok ? "enviado a " + to.map((t) => t.email).join(", ") : "error de Brevo " + r.status + ": " + (await r.text()).slice(0, 200), { status: r.ok ? 200 : 502 });
     };
     if (kind === "prueba") {
@@ -71,7 +80,8 @@ Deno.serve(async (req) => {
     const fees = Number(o.service_fee) + Number(o.gestion_fee) + Number(o.extra_fee || 0) + Number(o.delivery_fee) + Number(o.express_fee);
     if (kind === "pedido") {
       subject = `Pedido nº ${o.id} recibido`;
-      html = layout("¡Hemos recibido tu pedido!", `Pedido nº ${o.id}. Te avisaremos cuando un repartidor lo acepte. Los precios son orientativos: pagarás lo que marque el ticket del súper.`,
+      const hola = profs.find((p: any) => p.id === o.customer_id)?.full_name?.split(" ")[0];
+      html = layout(hola ? `Hola, ${esc(hola)}: hemos recibido tu pedido` : "¡Hemos recibido tu pedido!", `Pedido nº ${o.id}. Te avisaremos cuando un repartidor lo acepte. Los precios son orientativos: pagarás lo que marque el ticket del súper.`,
         itemsTable(o.order_items, false) + `<table role="presentation" width="100%" style="margin-top:10px">${line("Productos (estimado)", eur(o.subtotal))}${fees > 0 ? line("Servicio, gestión y envío", eur(fees)) : ""}${line("Total estimado", eur(o.total), true)}</table>
         <p style="font-size:13px;color:#5D6B67;margin-top:14px">Entrega en: ${esc(o.delivery_address)}</p>`);
     } else {
@@ -82,7 +92,8 @@ Deno.serve(async (req) => {
         <p style="font-size:12px;color:#5D6B67;margin:8px 0 0">Emisor: ${esc(inv.issuer?.name)} · NIF ${esc(inv.issuer?.nif)}. El PDF está en la app (Pedidos → Ver factura).</p></div>`
         : `<p style="font-size:13px;color:#5D6B67;margin-top:14px">El justificante en PDF está en la app (Pedidos → Justificante del pedido).</p>`;
       const diff = o.ticket_total != null ? Number(o.ticket_total) - Number(o.subtotal) : 0;
-      html = layout("¡Tu compra ya está en casa!", `Pedido nº ${o.id} entregado el ${new Date(o.updated_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.`,
+      const hola2 = profs.find((p: any) => p.id === o.customer_id)?.full_name?.split(" ")[0];
+      html = layout(hola2 ? `Hola, ${esc(hola2)}: tu compra ya está en casa` : "¡Tu compra ya está en casa!", `Pedido nº ${o.id} entregado el ${new Date(o.updated_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.`,
         itemsTable(o.order_items, true) + `<table role="presentation" width="100%" style="margin-top:10px">${line("Ticket del súper", eur(o.ticket_total ?? o.subtotal))}${fees > 0 ? line("Servicio, gestión y envío", eur(fees)) : ""}${line("Total", eur(o.final_total ?? o.total), true)}</table>` +
         (Math.abs(diff) >= 0.01 ? `<p style="font-size:13px;margin-top:8px;color:${diff > 0 ? "#B23A48" : "#2E6B57"}">La compra salió ${eur(Math.abs(diff))} ${diff > 0 ? "más cara" : "más barata"} que lo estimado.</p>` : "") + invBlock);
     }
