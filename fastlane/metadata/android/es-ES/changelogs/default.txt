@@ -1,3 +1,3 @@
-• Web: preguntas frecuentes que se abren y cierran con animación, de una en una.
-• Web: en modo oscuro, los botones «Escríbenos» y «Solicitar una demostración» se volvían ilegibles al pulsarlos.
-• Compilación del programa de Windows en GitHub más robusta (el instalador queda también como archivo de la ejecución).
+• Ajustes → Cuenta: correo de acceso, correo para avisos, correos de compras, cambiar contraseña (con medidor de seguridad) y correo, descargar mis datos, cerrar sesión en todos los dispositivos y eliminar cuenta.
+• Superadministrador: configuración del correo de compras (clave de Brevo), correo de prueba y últimos envíos.
+• Programa de Windows 1.1: pedidos en curso con detalle y filtros, usuarios, correo de compras, acciones sobre entidades (verificar, renovar, activar, paus

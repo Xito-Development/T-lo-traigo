@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('tlt', {
   notify: (t, b) => ipcRenderer.send('notify', t, b),
   trayStatus: (l, t) => ipcRenderer.send('tray:status', l, t),
   open: url => ipcRenderer.send('open', url),
+  version: () => ipcRenderer.invoke('app:version'),
 });

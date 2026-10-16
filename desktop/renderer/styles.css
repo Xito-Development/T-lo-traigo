@@ -137,3 +137,35 @@ tr:last-child td{border-bottom:0}tbody tr{opacity:0;animation:cardIn .4s var(--e
 .toast{background:var(--deep);color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 16px 30px -12px rgba(0,0,0,.5);animation:toastIn .5s var(--spring)}
 @keyframes toastIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition:none!important}}
+
+/* ===== v1.1: modales, paleta de búsqueda, anillo de actualización, historial de servicios ===== */
+.modal{position:fixed;inset:38px 0 0 0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(10,20,17,.55);backdrop-filter:blur(4px)}
+.modal.open{display:flex;animation:fadeIn .25s var(--ease)}@keyframes fadeIn{from{opacity:0}}
+.modal-card,.pal-card{background:var(--card);border-radius:20px;padding:24px 26px;width:min(560px,92vw);max-height:80vh;overflow:auto;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);animation:pop .4s var(--spring)}
+.modal-card h2{font-size:24px;margin-bottom:10px}.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.modal textarea{width:100%;min-height:110px;font:inherit;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+.pal-card{padding:12px;align-self:flex-start;margin-top:12vh}
+#palInput{width:100%;font:inherit;font-size:18px;padding:14px 16px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+#palList{margin-top:8px}.pal-item{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;cursor:pointer}
+.pal-item.sel,.pal-item:hover{background:rgba(46,107,87,.12)}.pal-item small{margin-left:auto;color:var(--muted)}
+.kbd-hint{color:#7FA597;font-size:11px;padding:0 12px 6px}
+.ring{width:18px;height:18px;margin-right:6px;transform:rotate(-90deg)}.ring circle{fill:none;stroke-width:2.5}
+.ring circle:first-child{stroke:rgba(255,255,255,.18)}#ringFill{stroke:var(--mustard);stroke-dasharray:50.3;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar input,.toolbar select{font:inherit;padding:9px 12px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
+.chipf{padding:7px 12px;border-radius:20px;border:1.5px solid var(--line);font-size:13px;transition:all .2s}.chipf.on{background:var(--pine);color:#fff;border-color:var(--pine)}
+.spark{width:100%;height:34px;margin-top:8px}.spark path{fill:none;stroke:var(--pine);stroke-width:1.6}.spark .area{fill:rgba(46,107,87,.12);stroke:none}
+body.dark .spark path{stroke:var(--leaf)}
+.upt{font-size:12px;color:var(--muted);margin-top:2px}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}.row-actions .btn{padding:5px 10px;font-size:12px}
+.order-row{cursor:pointer}.order-row:hover td{background:rgba(46,107,87,.06)}
+.status{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(46,107,87,.12);color:var(--pine)}
+.status.pendiente{background:rgba(224,161,0,.18);color:#9A6E00}.status.reclamado{background:rgba(194,65,59,.14);color:var(--bad)}
+body.dark .status{color:var(--leaf)}
+.upd{position:fixed;left:240px;right:24px;top:52px;z-index:55;background:var(--mustard);color:#1B2428;border-radius:12px;padding:10px 16px;display:flex;gap:12px;align-items:center;animation:toastIn .5s var(--spring)}
+.upd[hidden]{display:none}.upd button{margin-left:auto}
+.donut{display:flex;gap:18px;align-items:center}.donut svg{width:130px;height:130px;transform:rotate(-90deg)}
+.donut circle{fill:none;stroke-width:16;transition:stroke-dasharray 1s var(--ease)}
+.legend div{display:flex;gap:8px;align-items:center;font-size:13px;margin:3px 0}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:1100px){.two{grid-template-columns:1fr}}
+@keyframes barX{from{transform:scaleX(0)}to{transform:scaleX(1)}}

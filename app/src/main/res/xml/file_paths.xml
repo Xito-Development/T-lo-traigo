@@ -3,5 +3,6 @@
     <external-files-path name="updates" path="updates/" />
     <cache-path name="updates_cache" path="updates/" />
     <cache-path name="tickets" path="tickets/" />
+    <cache-path name="exports" path="exports/" />
     <cache-path name="facturas" path="facturas/" />
 </paths>

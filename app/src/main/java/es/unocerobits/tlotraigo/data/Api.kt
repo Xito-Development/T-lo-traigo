@@ -91,6 +91,19 @@ class SupabaseApi(context: Context, private val baseUrl: String, private val key
         call("PUT", "/auth/v1/user", buildJsonObject { put("password", password) }.toString())
     }
 
+    /** Cambia la contraseña comprobando antes la actual. */
+    suspend fun changePassword(current: String, new: String) {
+        val email = session?.user?.email ?: throw ApiException("Sin sesión")
+        try { call("POST", "/auth/v1/token?grant_type=password", buildJsonObject { put("email", email); put("password", current) }.toString(), auth = false) }
+        catch (e: ApiException) { throw ApiException("La contraseña actual no es correcta") }
+        updatePassword(new)
+    }
+    /** Cambia el correo de acceso: Supabase envía un aviso para confirmarlo. */
+    suspend fun changeEmail(new: String) { ensureFresh(); call("PUT", "/auth/v1/user", buildJsonObject { put("email", new.trim().lowercase()) }.toString()) }
+    /** Cierra la sesión en todos los dispositivos. */
+    suspend fun signOutEverywhere() { runCatching { ensureFresh(); call("POST", "/auth/v1/logout?scope=global", "{}") }; save(null) }
+    val email: String? get() = session?.user?.email
+
     fun signOut() = save(null)
 
     /** Llama a una Edge Function de Supabase (pasarela de pago). Devuelve el JSON de respuesta. */

@@ -97,6 +97,18 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         var complaint by remember { mutableStateOf(false) }
         var cmsg by remember { mutableStateOf<String?>(null) }
         if (complaint) ComplaintDialog(vm, null) { m -> complaint = false; cmsg = m }
+        var account by remember { mutableStateOf(false) }
+        if (account) androidx.compose.ui.window.Dialog({ account = false }, androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            Surface(Modifier.fillMaxSize()) { AccountScreen(vm) { account = false } } }
+        Card(Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable { account = true }, shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.ManageAccounts, null, Modifier.size(32.dp)); Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) { Text("Cuenta", style = MaterialTheme.typography.titleMedium)
+                    Text("Correo, contraseña, avisos, mis datos y sesiones", style = MaterialTheme.typography.bodySmall) }
+                Icon(Icons.Filled.ChevronRight, null)
+            }
+        }
         var redeem by remember { mutableStateOf(false) }
         if (redeem) RedeemInviteDialog(vm) { redeem = false }
         BigButton("Tengo un código de invitación", { redeem = true }, tonal = true, icon = Icons.Filled.VpnKey)
@@ -107,9 +119,6 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
         BigButton("Acerca de, créditos y privacidad", { about = true }, tonal = true, icon = Icons.Filled.Info)
         Spacer(Modifier.height(10.dp))
         BigButton("Cerrar sesión", { vm.logout() }, tonal = true, icon = Icons.AutoMirrored.Filled.Logout)
-        if (p?.isSuper != true) TextButton({ askDelete = true }, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp)) {
-            Text("Eliminar mi cuenta", color = MaterialTheme.colorScheme.error)
-        }
         Text("Versión ${BuildConfig.VERSION_NAME} · Xito Development & UNOCEROBITS", Modifier.padding(vertical = 20.dp).align(Alignment.CenterHorizontally),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -217,7 +226,7 @@ fun AppearanceSection(s: UiSettings, update: ((UiSettings) -> UiSettings) -> Uni
 }
 
 @Composable
-private fun DeleteAccountDialog(vm: AppViewModel, onDismiss: () -> Unit) {
+internal fun DeleteAccountDialog(vm: AppViewModel, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var txt by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }

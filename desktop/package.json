@@ -1,7 +1,7 @@
 {
   "name": "tlotraigo-control",
   "productName": "T lo traigo Control",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Panel de control de T lo traigo para el superadministrador: estado de los servicios, errores, actividad y sugerencias.",
   "author": "UNOCEROBITS · Xito Development <info@unocerobits.com>",
   "license": "UNLICENSED",
@@ -21,7 +21,7 @@
     "copyright": "© 2026 UNOCEROBITS y Xito Development",
     "directories": {
       "output": "dist",
-      "buildResources": "build"
+      "buildResources": "recursos"
     },
     "files": [
       "main.js",
@@ -38,18 +38,18 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "recursos/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerSidebar": "build/installerSidebar.bmp",
-      "uninstallerSidebar": "build/installerSidebar.bmp",
-      "installerHeader": "build/installerHeader.bmp",
-      "license": "build/licencia.txt",
+      "installerIcon": "recursos/icon.ico",
+      "uninstallerIcon": "recursos/icon.ico",
+      "installerSidebar": "recursos/installerSidebar.bmp",
+      "uninstallerSidebar": "recursos/installerSidebar.bmp",
+      "installerHeader": "recursos/installerHeader.bmp",
+      "license": "recursos/licencia.txt",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "T lo traigo Control",

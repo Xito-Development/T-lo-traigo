@@ -4,7 +4,7 @@
 <title>T lo traigo Control</title><link rel="stylesheet" href="styles.css"></head>
 <body>
 <header id="titlebar"><div class="tb-brand"><img src="logo.png" alt=""><span>T lo traigo <b>Control</b></span></div>
-  <div class="tb-drag"></div><div id="tbStatus" class="tb-status"><i></i><span>Comprobando…</span></div>
+  <div class="tb-drag"></div><svg id="ring" class="ring" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><circle id="ringFill" cx="10" cy="10" r="8"/></svg><div id="tbStatus" class="tb-status"><i></i><span>Comprobando…</span></div>
   <button class="tb-btn" data-w="min" aria-label="Minimizar">&#xE921;</button><button class="tb-btn" data-w="max" aria-label="Maximizar">&#xE922;</button><button class="tb-btn close" data-w="close" aria-label="Cerrar">&#xE8BB;</button></header>
 
 <!-- Arranque animado -->
@@ -63,17 +63,24 @@
   <nav id="side">
     <button class="nav on" data-page="resumen"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z"/></svg><span>Resumen</span></button>
     <button class="nav" data-page="servicios"><svg viewBox="0 0 24 24"><path d="M4 5h16v4H4zm0 5h16v4H4zm0 5h16v4H4z"/></svg><span>Servicios</span></button>
+    <button class="nav" data-page="pedidos"><svg viewBox="0 0 24 24"><path d="M7 4V2h10v2h4v18H3V4zm2 0v2h6V4zM6 10h12V8H6zm0 4h12v-2H6zm0 4h8v-2H6z"/></svg><span>Pedidos</span><b class="badge" id="badgeOrd"></b></button>
     <button class="nav" data-page="actividad"><svg viewBox="0 0 24 24"><path d="M3 17h2v4H3zm4-6h2v10H7zm4 3h2v7h-2zm4-8h2v15h-2zm4 4h2v11h-2z"/></svg><span>Actividad</span></button>
     <button class="nav" data-page="errores"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2zm1 15h-2v2h2zm0-6h-2v5h2z"/></svg><span>Errores</span><b class="badge" id="badgeErr"></b></button>
     <button class="nav" data-page="sugerencias"><svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9zm3-19a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span>Sugerencias</span><b class="badge" id="badgeSug"></b></button>
     <button class="nav" data-page="entidades"><svg viewBox="0 0 24 24"><path d="M12 3 2 8v2h20V8zM4 12v6h3v-6zm6 0v6h4v-6zm7 0v6h3v-6zM2 20v2h20v-2z"/></svg><span>Entidades</span></button>
     <button class="nav" data-page="pendientes"><svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg><span>Pendientes</span><b class="badge" id="badgePen"></b></button>
+    <button class="nav" data-page="usuarios"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-8 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3zm0 2c-2.7 0-8 1.3-8 4v3h8v-3c0-1.1.4-2.1 1.2-3A11 11 0 0 0 8 13zm8 0c-2.7 0-8 1.3-8 4v3h16v-3c0-2.7-5.3-4-8-4z"/></svg><span>Usuarios</span></button>
+    <button class="nav" data-page="correo"><svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5z"/></svg><span>Correo</span></button>
     <div class="side-sp"></div>
+    <div class="kbd-hint">Ctrl + K · buscar</div>
     <button class="nav" data-page="ajustes"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.3-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg><span>Ajustes</span></button>
     <div class="who" id="who"></div>
   </nav>
   <main id="content"></main>
 </section>
 <div id="toast"></div>
+<div id="modal" class="modal"><div class="modal-card"><h2 id="mTitle"></h2><div id="mBody"></div><div class="modal-actions" id="mActions"></div></div></div>
+<div id="palette" class="modal"><div class="pal-card"><input id="palInput" placeholder="Buscar páginas, pedidos (nº) o entidades…" autocomplete="off"><div id="palList"></div></div></div>
+<div id="updateBanner" class="upd" hidden></div>
 <script src="app.js"></script>
 </body></html>

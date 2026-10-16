@@ -4,6 +4,8 @@ Programa de escritorio para el **superadministrador**: estado de todos los servi
 funciones, web, certificado SSL, compilación y versión de la app), actividad, errores, sugerencias, entidades,
 reclamaciones y reembolsos pendientes. Avisos de Windows cuando algo falla y sigue vigilando en la bandeja.
 
+**1.1:** pedidos en curso, usuarios, correo (Brevo), acciones sobre entidades, reclamaciones y reembolsos, Ctrl+K para buscar, Ctrl+1…9 para cambiar de página, F5 para comprobar, historial de 24 h, exportar a Excel y aviso de versión nueva.
+
 - **Instalar:** descarga `TLoTraigo-Control-Setup-X.Y.Z.exe` de la Release `desktop-vX.Y.Z` en GitHub y ábrelo.
   Windows SmartScreen puede avisar porque el programa no está firmado: «Más información» → «Ejecutar de todas formas».
 - **Primera vez:** asistente con bienvenida → acceso con la cuenta de superadministrador → preferencias → listo.

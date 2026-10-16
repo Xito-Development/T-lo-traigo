@@ -86,4 +86,5 @@ ipcMain.on('notify', (_e, title, body) => {
   n.on('click', () => { win.show(); win.focus(); }); n.show();
 });
 ipcMain.on('tray:status', (_e, level, text) => { if (tray) tray.setToolTip(`T lo traigo Control — ${text}`); });
-ipcMain.on('open', (_e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url); });
+ipcMain.on('open', (_e, url) => { if (/^https:\/\//.test(url) || /^mailto:/.test(url)) shell.openExternal(url); });
+ipcMain.handle('app:version', () => app.getVersion());

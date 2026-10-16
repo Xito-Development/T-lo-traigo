@@ -2,6 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.8] - 2026-10-16
+### Añadido
+- Ajustes → Cuenta: correo de acceso, correo para avisos, correos de compras, cambiar contraseña (con medidor de seguridad) y correo, descargar mis datos, cerrar sesión en todos los dispositivos y eliminar cuenta.
+- Superadministrador: configuración del correo de compras (clave de Brevo), correo de prueba y últimos envíos.
+- Programa de Windows 1.1: pedidos en curso con detalle y filtros, usuarios, correo de compras, acciones sobre entidades (verificar, renovar, activar, pausar), responder reclamaciones y resolver reembolsos, búsqueda rápida (Ctrl+K), gráficas por estado y por entidad, cuotas al mes, historial y disponibilidad de cada servicio en 24 h, exportar a Excel y aviso de versión nueva.
+### Corregido
+- Los correos de compras no se enviaban porque faltaba la clave de Brevo; ahora se puede guardar desde la app o el programa de Windows. Las cuentas creadas con nombre de usuario pueden añadir un correo para recibirlos.
+- La compilación del programa de Windows en GitHub fallaba porque la carpeta de recursos del instalador no se subía al repositorio.
+
 ## [0.6.7] - 2026-10-15
 ### Añadido
 - Web: preguntas frecuentes que se abren y cierran con animación, de una en una.

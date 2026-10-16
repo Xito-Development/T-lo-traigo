@@ -1,0 +1,12 @@
+T lo traigo Control — Licencia de uso
+
+Copyright (c) 2026 UNOCEROBITS y Xito Development. Todos los derechos reservados.
+
+Este programa es de uso exclusivo del equipo de administración de T lo traigo. Permite consultar el estado de los
+servicios de la plataforma con una cuenta de superadministrador. No está permitida su copia, distribución,
+modificación ni ingeniería inversa sin autorización escrita de los titulares.
+
+El programa se conecta a los servidores de T lo traigo (Supabase, UE), a la web tlotraigo.unocerobits.com y a
+GitHub para comprobar su estado. Las credenciales se guardan cifradas en este equipo con la protección de Windows.
+
+Contacto: info@unocerobits.com

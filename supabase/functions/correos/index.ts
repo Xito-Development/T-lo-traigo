@@ -2,7 +2,7 @@
 // Lo llama la base de datos (pg_net) con la cabecera x-tlt-secret. Secreto necesario: BREVO_API_KEY (Brevo → SMTP y API → Claves API).
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SR = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const BREVO = Deno.env.get("BREVO_API_KEY") ?? "";
+const ENV_BREVO = Deno.env.get("BREVO_API_KEY") ?? "";   // o la clave guardada desde la app (app_secrets.brevo_api_key)
 const FROM = { name: "T Lo Traigo UNOCEROBITS", email: "tlotraigo@unocerobits.com" };
 const LOGO = "https://raw.githubusercontent.com/Xito-Development/T-lo-traigo/main/web/t-lo-traigo/email/logo.png";
 const H = { apikey: SR, Authorization: `Bearer ${SR}` };
@@ -47,14 +47,25 @@ Deno.serve(async (req) => {
   try {
     const secret = (await get("app_secrets?key=eq.correos&select=value"))[0]?.value;
     if (!secret || req.headers.get("x-tlt-secret") !== secret) return new Response("no autorizado", { status: 401 });
-    if (!BREVO) return new Response("correo no configurado (falta BREVO_API_KEY)");
-    const { order_id, kind } = await req.json();
+    const BREVO = ENV_BREVO || (await get("app_secrets?key=eq.brevo_api_key&select=value"))[0]?.value || "";
+    if (!BREVO) return new Response("correo no configurado: falta la clave de Brevo");
+    const { order_id, kind, user_id } = await req.json();
+    const send = async (to: { email: string; name: string }[], subject: string, html: string) => {
+      const r = await fetch("https://api.brevo.com/v3/smtp/email", { method: "POST", headers: { "api-key": BREVO, "Content-Type": "application/json", accept: "application/json" },
+        body: JSON.stringify({ sender: FROM, to, subject, htmlContent: html, tags: ["app", kind] }) });
+      return new Response(r.ok ? "enviado a " + to.map((t) => t.email).join(", ") : "error de Brevo " + r.status + ": " + (await r.text()).slice(0, 200), { status: r.ok ? 200 : 502 });
+    };
+    if (kind === "prueba") {
+      const pr = (await get(`profiles?id=eq.${user_id}&select=notify_email`))[0];
+      const e = pr?.notify_email || await emailOf(user_id); if (!e) return new Response("tu cuenta no tiene correo: añádelo en Ajustes → Cuenta", { status: 400 });
+      return send([{ email: e, name: "" }], "Prueba de correo de T lo traigo", layout("¡El correo funciona!", "Si lees esto, los correos de compras y facturas ya se envían correctamente.", ""));
+    }
     const o = (await get(`orders?id=eq.${Number(order_id)}&select=*,order_items(*)`))[0];
     if (!o) return new Response("sin pedido", { status: 404 });
     const people = [...new Set([o.customer_id, o.placed_by].filter(Boolean))];
-    const profs = await get(`profiles?id=in.(${people.join(",")})&select=id,full_name,email_notifications`);
+    const profs = await get(`profiles?id=in.(${people.join(",")})&select=id,full_name,email_notifications,notify_email`);
     const to: { email: string; name: string }[] = [];
-    for (const p of profs) { if (p.email_notifications === false) continue; const e = await emailOf(p.id); if (e) to.push({ email: e, name: p.full_name || "" }); }
+    for (const p of profs) { if (p.email_notifications === false) continue; const e = p.notify_email || await emailOf(p.id); if (e && !to.some((t) => t.email === e)) to.push({ email: e, name: p.full_name || "" }); }
     if (!to.length) return new Response("sin destinatarios");
     let subject: string, html: string;
     const fees = Number(o.service_fee) + Number(o.gestion_fee) + Number(o.extra_fee || 0) + Number(o.delivery_fee) + Number(o.express_fee);
@@ -75,8 +86,6 @@ Deno.serve(async (req) => {
         itemsTable(o.order_items, true) + `<table role="presentation" width="100%" style="margin-top:10px">${line("Ticket del súper", eur(o.ticket_total ?? o.subtotal))}${fees > 0 ? line("Servicio, gestión y envío", eur(fees)) : ""}${line("Total", eur(o.final_total ?? o.total), true)}</table>` +
         (Math.abs(diff) >= 0.01 ? `<p style="font-size:13px;margin-top:8px;color:${diff > 0 ? "#B23A48" : "#2E6B57"}">La compra salió ${eur(Math.abs(diff))} ${diff > 0 ? "más cara" : "más barata"} que lo estimado.</p>` : "") + invBlock);
     }
-    const r = await fetch("https://api.brevo.com/v3/smtp/email", { method: "POST", headers: { "api-key": BREVO, "Content-Type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ sender: FROM, to, subject, htmlContent: html, tags: ["pedido", kind] }) });
-    return new Response(r.ok ? "enviado" : "error brevo " + r.status + " " + (await r.text()).slice(0, 200), { status: r.ok ? 200 : 502 });
+    return send(to, subject, html);
   } catch (e) { return new Response("error " + (e as Error).message, { status: 500 }); }
 });

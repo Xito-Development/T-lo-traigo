@@ -351,6 +351,13 @@ class Repository(val api: SupabaseApi) {
     suspend fun orgDocUrl(path: String) = api.signedUrl("org-docs", path)
     suspend fun setEmailNotifications(on: Boolean) { api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { put("email_notifications", on) }.toString()) }
 
+    // --- Cuenta
+    suspend fun setNotifyEmail(e: String?) { api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject { put("notify_email", e?.trim()?.ifBlank { null }) }.toString()) }
+    suspend fun exportMyData(): String = api.rpc("export_my_data")
+    suspend fun mailStatus(): JsonObject = api.json.parseToJsonElement(api.rpc("mail_status")).jsonObject
+    suspend fun setBrevoKey(k: String) { api.rpc("set_brevo_key", buildJsonObject { put("p_key", k.trim()) }) }
+    suspend fun sendTestEmail() { api.rpc("send_test_email") }
+
     // --- Listas guardadas
     suspend fun lists(): List<ShoppingList> = parse(api.rest("GET", "shopping_lists?select=*&order=updated_at.desc"))
     suspend fun saveList(l: ShoppingList): ShoppingList {

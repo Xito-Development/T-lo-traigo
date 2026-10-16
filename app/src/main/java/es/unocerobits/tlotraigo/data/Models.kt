@@ -64,6 +64,8 @@ data class Profile(
     val usage: String? = null,
     @SerialName("org_id") val orgId: Long? = null,
     @SerialName("email_notifications") val emailNotifications: Boolean = true,
+    @SerialName("notify_email") val notifyEmail: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
     @SerialName("recipient_name") val recipientName: String? = null,
     val street: String? = null,
     @SerialName("street_number") val streetNumber: String? = null,

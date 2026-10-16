@@ -82,12 +82,12 @@ function startApp() {
   $$('.nav').forEach(n => n.onclick = () => { page = n.dataset.page; $$('.nav').forEach(x => x.classList.toggle('on', x === n)); render(); });
   render(); poll();
 }
-function schedule() { clearTimeout(timer); timer = setTimeout(poll, prefs.interval * 60000); }
+function schedule() { clearTimeout(timer); nextAt = Date.now() + prefs.interval * 60000; timer = setTimeout(poll, prefs.interval * 60000); }
 
 async function poll() {
   $('.spin')?.classList.add('on');
   try { await collect(); } catch (e) { console.error(e); }
-  evaluate(); render(); notifyChanges(); schedule();
+  evaluate(); saveHistory(); render(); notifyChanges(); schedule(); checkDesktopUpdate();
 }
 
 // Recoge el estado de todos los servicios y los datos de la plataforma
@@ -108,6 +108,8 @@ async function collect() {
     towns: api('/rest/v1/towns?select=id,name,org_id,active'),
     analytics: api('/rest/v1/rpc/analytics_summary', { method: 'POST', body: JSON.stringify({ p_days: 7 }) }),
     fees: api('/rest/v1/fee_config?id=eq.1&select=card_enabled,demo_payments'),
+    active: api('/rest/v1/orders?status=not.in.(entregado,cancelado)&select=id,status,created_at,updated_at,org_id,town_id,driver_id,claimed_at,claim_deadline,payment_method,payment_status,total,final_total,delivery_address,scheduled_date,order_items(name,qty,detail,substitute,unavailable)&order=created_at'),
+    mail: api('/rest/v1/rpc/mail_status', { method: 'POST', body: '{}' }),
   };
   const now = Date.now();
   if (!state.ghAt || now - state.ghAt > 10 * 60000) {   // GitHub: como mucho cada 10 minutos (límite de su API)
@@ -170,6 +172,7 @@ function evaluate() {
   const errs = s.analytics?.errors || []; if (errs.length >= 5) add('media', errs.length + ' errores registrados esta semana', 'Revisa la pestaña Errores para ver los más repetidos.');
   if (s.fees?.[0]?.demo_payments && s.fees?.[0]?.card_enabled) add('alta', 'Pagos simulados activos con tarjeta encendida', 'Desactiva el modo demostración en Administración → Tarifas.');
   const lastAct = orders[0]?.created_at; if (!lastAct || now - new Date(lastAct) > 6 * 24 * H) add('baja', 'Sin pedidos en los últimos 6 días', 'En el plan gratuito, Supabase pausa el proyecto tras 7 días sin uso. Pasa a Pro con el primer cliente.');
+  if (s.mail?.db_key === false && (s.mail?.last?.[0]?.msg || '').includes('falta')) add('alta', 'Los correos de compras no se envían', 'Falta la clave de Brevo: pégala en la página Correo.');
   state.sug = sug;
   const worst = svcs.some(v => v.level === 'bad') ? 'bad' : svcs.some(v => v.level === 'warn') || sug.some(x => x.sev === 'alta') ? 'warn' : 'ok';
   state.level = worst;
@@ -202,7 +205,7 @@ function header(t, sub) { return '<div class="page-h"><div><h1>' + t + '</h1><p>
 function svcCard(v, i) { return '<div class="card svc" ' + stag(i) + (v.url ? ' data-url="' + esc(v.url) + '"' : '') + '><span class="dot ' + v.level + '"></span><div><h3>' + esc(v.name) + '</h3><div class="s">' + esc(v.desc) + '</div><div class="m">' + esc(v.msg) + '</div></div></div>'; }
 function counter(el) { const to = +el.dataset.to; const t0 = performance.now(); const f = t => { const k = Math.min((t - t0) / 900, 1), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(to * e).toLocaleString('es-ES'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
 
-function render() {
+function renderBase() {
   const c = $('#content'), s = state;
   if (!s.svcs) { c.innerHTML = header('Resumen', 'Comprobando todos los servicios…') + '<div class="grid">' + '<div class="skel"></div>'.repeat(8) + '</div>'; return; }
   const orders = Array.isArray(s.orders) ? s.orders : [], today = new Date().toDateString();
@@ -282,4 +285,200 @@ function chart(orders) {
     return '<rect class="bar" style="animation-delay:' + (i * 40) + 'ms" x="' + (i * bw + 6) + '" y="' + (H - h) + '" width="' + (bw - 12) + '" height="' + Math.max(h, 2) + '" rx="6" fill="' + (i === 13 ? '#F2B544' : '#2E6B57') + '"/>' +
       (n ? '<text x="' + (i * bw + bw / 2) + '" y="' + (H - h - 6) + '" text-anchor="middle" font-size="12" fill="currentColor">' + n + '</text>' : '') +
       '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 20) + '" text-anchor="middle" font-size="11" fill="#7A8A85">' + days[i].getDate() + '/' + (days[i].getMonth() + 1) + '</text>'; }).join('') + '</svg></div>';
+}
+
+
+// ======================= v1.1: más funciones =======================
+let nextAt = 0, users = null, orderFilter = 'todos', orderQuery = '';
+const statusName = { pendiente: 'Pendiente', aceptado: 'Aceptado', comprando: 'En el súper', en_camino: 'En reparto', entregado: 'Entregado', cancelado: 'Cancelado' };
+const ago = d => { const m = Math.round((Date.now() - new Date(d)) / 60000); return m < 60 ? m + ' min' : m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d'; };
+async function rpc(fn, args = {}) { return api('/rest/v1/rpc/' + fn, { method: 'POST', body: JSON.stringify(args) }); }
+
+// --- Anillo de cuenta atrás hasta la próxima comprobación
+setInterval(() => { const f = $('#ringFill'); if (!f || !nextAt) return; const total = prefs.interval * 60000, left = Math.max(0, nextAt - Date.now());
+  f.style.strokeDashoffset = String(50.3 * (1 - left / total)); }, 1000);
+
+// --- Historial de cada servicio (24 h) para gráficas y % de disponibilidad
+function saveHistory() {
+  const h = JSON.parse(localStorage.getItem('hist') || '{}'), now = Date.now();
+  (state.svcs || []).forEach(v => { const m = /(\d+) ms/.exec(v.msg); (h[v.id] = h[v.id] || []).push([now, v.level === 'ok' || v.level === 'warn' ? 1 : 0, m ? +m[1] : null]);
+    h[v.id] = h[v.id].filter(x => now - x[0] < 864e5).slice(-300); });
+  localStorage.setItem('hist', JSON.stringify(h)); state.hist = h;
+}
+function spark(id) {
+  const pts = (state.hist?.[id] || []).filter(x => x[2] != null); if (pts.length < 2) return '';
+  const max = Math.max(...pts.map(x => x[2])), W = 200, H = 34, step = W / (pts.length - 1);
+  const d = pts.map((x, i) => (i ? 'L' : 'M') + (i * step).toFixed(1) + ' ' + (H - 2 - (x[2] / max) * (H - 6)).toFixed(1)).join(' ');
+  return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none"><path class="area" d="' + d + ' L' + W + ' ' + H + ' L0 ' + H + 'Z"/><path d="' + d + '"/></svg>';
+}
+function uptime(id) { const h = state.hist?.[id] || []; if (!h.length) return ''; const up = h.filter(x => x[1]).length / h.length * 100;
+  return '<div class="upt">Disponibilidad 24 h: <b>' + up.toFixed(up === 100 ? 0 : 1) + ' %</b> · ' + h.length + ' comprobaciones</div>'; }
+
+// --- Modales
+function modal(title, body, actions) {
+  $('#mTitle').textContent = title; $('#mBody').innerHTML = body; const a = $('#mActions'); a.innerHTML = '';
+  actions.concat([{ t: actions.length ? 'Cancelar' : 'Cerrar', cls: 'ghost' }]).forEach(x => { const b = document.createElement('button'); b.className = 'btn ' + (x.cls || 'primary'); b.textContent = x.t;
+    b.onclick = async () => { if (x.fn) { b.disabled = true; try { await x.fn(); } catch (e) { toast('Error: ' + e.message); b.disabled = false; return; } } closeModal(); }; a.appendChild(b); });
+  $('#modal').classList.add('open');
+}
+function closeModal() { $('#modal').classList.remove('open'); }
+$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+
+// --- Exportar a CSV (Excel)
+function csv(name, rows) {
+  const txt = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv' })); a.download = name; a.click(); toast('Exportado ' + name);
+}
+
+// --- Paleta de búsqueda (Ctrl+K)
+const pages = [['resumen', 'Resumen'], ['servicios', 'Servicios'], ['pedidos', 'Pedidos'], ['actividad', 'Actividad'], ['errores', 'Errores'], ['sugerencias', 'Sugerencias'],
+  ['entidades', 'Entidades'], ['pendientes', 'Pendientes'], ['usuarios', 'Usuarios'], ['correo', 'Correo'], ['ajustes', 'Ajustes']];
+let palSel = 0, palItems = [];
+function go(pg) { page = pg; $$('.nav').forEach(x => x.classList.toggle('on', x.dataset.page === pg)); render(); }
+function openPalette() { if (!session) return; $('#palette').classList.add('open'); $('#palInput').value = ''; palFill(''); setTimeout(() => $('#palInput').focus(), 50); }
+function palFill(q) {
+  q = q.trim().toLowerCase(); palItems = [];
+  pages.filter(([, n]) => !q || n.toLowerCase().includes(q)).forEach(([k, n]) => palItems.push({ t: n, k: 'página', fn: () => go(k) }));
+  const num = q.replace(/\D/g, '');
+  if (num) (state.orders || []).filter?.(o => String(o.id).startsWith(num)).slice(0, 6).forEach(o => palItems.push({ t: 'Pedido nº ' + o.id + ' · ' + (statusName[o.status] || o.status), k: 'pedido', fn: () => showOrder(o.id) }));
+  if (q.length > 1) (state.orgs || []).filter?.(o => o.name.toLowerCase().includes(q)).slice(0, 5).forEach(o => palItems.push({ t: o.name, k: 'entidad', fn: () => { go('entidades'); } }));
+  palSel = 0; drawPal();
+}
+function drawPal() { $('#palList').innerHTML = palItems.map((x, i) => '<div class="pal-item' + (i === palSel ? ' sel' : '') + '" data-i="' + i + '">' + esc(x.t) + '<small>' + x.k + '</small></div>').join('') || '<p class="empty">Sin resultados</p>';
+  $$('.pal-item').forEach(e => e.onclick = () => { $('#palette').classList.remove('open'); palItems[+e.dataset.i].fn(); }); }
+$('#palInput').oninput = e => palFill(e.target.value);
+$('#palInput').onkeydown = e => {
+  if (e.key === 'ArrowDown') { palSel = Math.min(palSel + 1, palItems.length - 1); drawPal(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { palSel = Math.max(palSel - 1, 0); drawPal(); e.preventDefault(); }
+  else if (e.key === 'Enter' && palItems[palSel]) { $('#palette').classList.remove('open'); palItems[palSel].fn(); }
+};
+$('#palette').onclick = e => { if (e.target.id === 'palette') $('#palette').classList.remove('open'); };
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); }
+  else if (e.key === 'Escape') { closeModal(); $('#palette').classList.remove('open'); }
+  else if (e.key === 'F5') { e.preventDefault(); poll(); }
+  else if (e.ctrlKey && /^[1-9]$/.test(e.key) && session) go(pages[+e.key - 1][0]);
+});
+
+// --- Detalle de un pedido
+async function showOrder(id) {
+  const o = (state.active || []).find?.(x => x.id === id) || (await api('/rest/v1/orders?id=eq.' + id + '&select=*,order_items(name,qty,detail,substitute,unavailable)'))[0];
+  if (!o) return toast('Pedido no encontrado');
+  const msgs = await api('/rest/v1/order_messages?order_id=eq.' + id + '&select=sender_role,body,created_at&order=id.desc&limit=6').catch(() => []);
+  const org = (state.orgs || []).find?.(x => x.id === o.org_id);
+  modal('Pedido nº ' + o.id, '<p><span class="status ' + (o.claimed_at ? 'reclamado' : o.status) + '">' + (o.claimed_at ? 'Reclamado' : statusName[o.status]) + '</span> · ' + fmtDate(o.created_at) + (org ? ' · ' + esc(org.name) : '') + '</p>' +
+    '<p style="margin:8px 0;color:var(--muted)">' + esc(o.delivery_address) + '</p><table><tbody>' + (o.order_items || []).map(i => '<tr><td><b>' + i.qty + ' ×</b> ' + (i.unavailable ? '<s>' + esc(i.name) + '</s> (no había)' : esc(i.name) + (i.substitute ? ' → <b>' + esc(i.substitute) + '</b>' : '')) +
+      (i.detail ? '<br><small>' + esc(i.detail) + '</small>' : '') + '</td></tr>').join('') + '</tbody></table>' +
+    '<p style="margin-top:10px"><b>Total:</b> ' + eur(o.final_total || o.total) + ' · ' + esc(o.payment_method) + ' · ' + (o.payment_status === 'pagado' ? 'cobrado' : 'pendiente de cobro') + '</p>' +
+    (msgs.length ? '<h3 style="margin-top:14px;font-size:16px">Últimos mensajes</h3>' + msgs.map(m => '<p style="font-size:13px"><b>' + esc(m.sender_role) + ':</b> ' + esc(m.body) + ' <small style="color:var(--muted)">' + ago(m.created_at) + '</small></p>').join('') : ''), []);
+}
+
+// --- Comprobar si hay versión nueva del programa (Releases «desktop-v…»)
+async function checkDesktopUpdate() {
+  if (state.updChecked && Date.now() - state.updChecked < 6 * 3600e3) return; state.updChecked = Date.now();
+  try {
+    const cur = await window.tlt.version(); const rel = await fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30').then(r => r.json());
+    const d = (rel || []).filter(r => /^desktop-v/.test(r.tag_name)).map(r => ({ v: r.tag_name.slice(9), url: r.html_url }))[0];
+    const newer = d && d.v.split('.').map(Number).some((x, i, a) => { const c = cur.split('.').map(Number); for (let j = 0; j < 3; j++) { if ((a[j] || 0) !== (c[j] || 0)) return (a[j] || 0) > (c[j] || 0); } return false; });
+    if (newer) { const b = $('#updateBanner'); b.innerHTML = '⬆️ Hay una versión nueva del programa: <b>' + esc(d.v) + '</b><button class="btn small primary" style="background:#1B2428;color:#fff">Descargar</button>';
+      b.hidden = false; b.querySelector('button').onclick = () => window.tlt.open(d.url); }
+  } catch {}
+}
+
+// --- Páginas nuevas y páginas con acciones
+function render() {
+  const c = $('#content'), s = state;
+  if (!s.svcs || !['pedidos', 'usuarios', 'correo', 'entidades', 'pendientes', 'servicios', 'actividad'].includes(page)) { renderBase(); afterBase(); return; }
+  const orders = Array.isArray(s.orders) ? s.orders : [], active = Array.isArray(s.active) ? s.active : [];
+  let h = '';
+  if (page === 'servicios') {
+    h = header('Servicios', 'Comprobación cada ' + prefs.interval + ' min · historial de las últimas 24 h') + '<div class="grid">' + s.svcs.map((v, i) =>
+      '<div class="card svc" ' + stag(i) + (v.url ? ' data-url="' + esc(v.url) + '"' : '') + '><span class="dot ' + v.level + '"></span><div style="flex:1;min-width:0"><h3>' + esc(v.name) + '</h3><div class="s">' + esc(v.desc) + '</div><div class="m">' + esc(v.msg) + '</div>' + uptime(v.id) + spark(v.id) + '</div></div>').join('') + '</div>';
+  } else if (page === 'pedidos') {
+    const list = active.filter(o => (orderFilter === 'todos' || (orderFilter === 'reclamados' ? o.claimed_at : o.status === orderFilter)) &&
+      (!orderQuery || String(o.id).includes(orderQuery) || (o.delivery_address || '').toLowerCase().includes(orderQuery.toLowerCase())));
+    h = header('Pedidos en curso', active.length + ' pedidos sin terminar · toca uno para ver el detalle') +
+      '<div class="toolbar">' + ['todos', 'pendiente', 'aceptado', 'comprando', 'en_camino', 'reclamados'].map(f => '<button class="chipf' + (orderFilter === f ? ' on' : '') + '" data-f="' + f + '">' + (f === 'todos' ? 'Todos' : f === 'reclamados' ? 'Reclamados' : statusName[f]) + '</button>').join('') +
+      '<input id="oq" placeholder="Buscar nº o dirección" value="' + esc(orderQuery) + '"><button class="btn ghost small" id="expOrders">Exportar 30 días</button></div>' +
+      (list.length ? '<table><thead><tr><th>Nº</th><th>Estado</th><th>Entidad</th><th>Hace</th><th>Dirección</th><th>Total</th></tr></thead><tbody>' + list.map((o, i) => {
+        const org = (s.orgs || []).find?.(x => x.id === o.org_id); const late = o.status === 'pendiente' && Date.now() - new Date(o.created_at) > 2 * 3600e3;
+        return '<tr class="order-row" data-o="' + o.id + '" ' + stag(i) + '><td><b>' + o.id + '</b></td><td><span class="status ' + (o.claimed_at ? 'reclamado' : o.status) + '">' + (o.claimed_at ? 'Reclamado' : statusName[o.status]) + '</span></td><td>' + esc(org?.name || '—') +
+          '</td><td' + (late ? ' style="color:var(--bad);font-weight:700"' : '') + '>' + ago(o.created_at) + '</td><td>' + esc((o.delivery_address || '').slice(0, 48)) + '</td><td>' + eur(o.final_total || o.total) + '</td></tr>'; }).join('') + '</tbody></table>'
+        : empty('Sin pedidos en curso', 'Cuando alguien pida, aparecerá aquí.'));
+  } else if (page === 'actividad') {
+    const byStatus = {}; orders.forEach(o => byStatus[o.status] = (byStatus[o.status] || 0) + 1);
+    const cols = { pendiente: '#E0A100', aceptado: '#7BC9A4', comprando: '#5BB08A', en_camino: '#2E6B57', entregado: '#1F4D3F', cancelado: '#C2413B' };
+    const total = orders.length || 1; let off = 0; const C = 2 * Math.PI * 50;
+    const donut = '<div class="chart donut"><svg viewBox="0 0 120 120">' + Object.keys(cols).map(k => { const v = (byStatus[k] || 0) / total * C; const el = '<circle cx="60" cy="60" r="50" stroke="' + cols[k] + '" stroke-dasharray="' + v + ' ' + (C - v) + '" stroke-dashoffset="' + (-off) + '"/>'; off += v; return el; }).join('') +
+      '</svg><div class="legend">' + Object.keys(cols).map(k => '<div><i style="background:' + cols[k] + '"></i>' + statusName[k] + ': <b>' + (byStatus[k] || 0) + '</b></div>').join('') + '</div></div>';
+    const perOrg = (s.orgs || []).map?.(o => [o.name, orders.filter(x => x.org_id === o.id).length]).sort((a, b) => b[1] - a[1]).slice(0, 8) || [];
+    const maxO = Math.max(1, ...perOrg.map(x => x[1]));
+    const bars = '<div class="chart">' + perOrg.map(([n, v], i) => '<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>' + esc(n) + '</span><b>' + v + '</b></div><div style="height:10px;border-radius:10px;background:var(--line);overflow:hidden"><div class="bar" style="height:100%;width:' + (v / maxO * 100) + '%;background:var(--pine);transform-origin:left;animation:barX .9s var(--spring) ' + (i * 60) + 'ms both"></div></div></div>').join('') + '</div>';
+    const mrr = (s.orgs || []).filter?.(o => o.active && o.verification_status === 'verificada').reduce((a, o) => a + Number(o.price_month || 0), 0) || 0;
+    h = header('Actividad', 'Últimos 30 días') + '<div class="grid"><div class="card kpi"><div class="n" data-to="' + orders.length + '">0</div><div class="l">Pedidos</div></div>' +
+      '<div class="card kpi" ' + stag(1) + '><div class="n" data-to="' + Math.round(orders.filter(o => o.status === 'entregado').reduce((a, o) => a + Number(o.final_total || o.total || 0), 0)) + '">0</div><div class="l">€ en compras entregadas</div></div>' +
+      '<div class="card kpi" ' + stag(2) + '><div class="n" data-to="' + Math.round(mrr) + '">0</div><div class="l">€/mes en cuotas (entidades activas)</div></div></div>' +
+      '<h2 class="sec">Pedidos por día</h2>' + chart(orders) + '<div class="two" style="margin-top:16px"><div><h2 class="sec">Por estado</h2>' + donut + '</div><div><h2 class="sec">Por entidad</h2>' + bars + '</div></div>';
+  } else if (page === 'entidades') {
+    const orgs = Array.isArray(s.orgs) ? s.orgs : [];
+    h = header('Entidades', orgs.length + ' entidades') + '<div class="toolbar"><button class="btn ghost small" id="expOrgs">Exportar a Excel</button></div><table><thead><tr><th>Entidad</th><th>Verificación</th><th>Cuota</th><th>Pagada hasta</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>' +
+      orgs.map((o, i) => { const ver = o.verification_status === 'verificada' ? '<span class="pill ok">Verificada</span>' : o.verification_status === 'pendiente' ? '<span class="pill warn">En revisión</span>' : o.verification_status === 'rechazada' ? '<span class="pill bad">Rechazada</span>' : '<span class="pill">Sin datos</span>';
+        const st = !o.active ? '<span class="pill bad">Desactivada</span>' : !o.accepting_orders ? '<span class="pill warn">En pausa</span>' : '<span class="pill ok">Activa</span>';
+        return '<tr ' + stag(i) + '><td><b>' + esc(o.name) + '</b><br><small>' + esc(o.kind) + (o.tax_id ? ' · ' + esc(o.tax_id) : '') + '</small></td><td>' + ver + '</td><td>' + eur(o.price_month) + '</td><td>' + (o.subscription_until ? new Date(o.subscription_until).toLocaleDateString('es-ES') : '—') + '</td><td>' + st +
+          '</td><td><div class="row-actions">' + (o.verification_status === 'pendiente' ? '<button class="btn primary" data-act="verify" data-id="' + o.id + '">Verificar</button><button class="btn ghost" data-act="reject" data-id="' + o.id + '">Rechazar</button>' : '') +
+          '<button class="btn ghost" data-act="month" data-id="' + o.id + '">+1 mes</button><button class="btn ghost" data-act="' + (o.active ? 'off' : 'on') + '" data-id="' + o.id + '">' + (o.active ? 'Desactivar' : 'Activar') + '</button>' +
+          (o.active ? '<button class="btn ghost" data-act="' + (o.accepting_orders ? 'pause' : 'resume') + '" data-id="' + o.id + '">' + (o.accepting_orders ? 'Pausar' : 'Reanudar') + '</button>' : '') + '</div></td></tr>'; }).join('') + '</tbody></table>';
+  } else if (page === 'pendientes') {
+    const cs = Array.isArray(s.complaints) ? s.complaints : [], rs = Array.isArray(s.refunds) ? s.refunds : [];
+    h = header('Pendientes', 'Responde reclamaciones y resuelve reembolsos desde aquí') + '<h2 class="sec">Hojas de reclamaciones (' + cs.length + ')</h2>' +
+      (cs.length ? '<div class="list">' + cs.map((c, i) => '<div class="item" ' + stag(i) + '><span class="sev ' + (Date.now() - new Date(c.created_at) > 7 * 864e5 ? 'alta' : 'media') + '">' + esc(c.number || c.id) + '</span><div style="flex:1"><h4>' + esc(c.subject) + '</h4><p>' + fmtDate(c.created_at) + (c.order_id ? ' · pedido nº ' + c.order_id : '') + '</p></div><button class="btn primary small" data-cmp="' + c.id + '">Responder</button></div>').join('') + '</div>' : empty('Sin reclamaciones', 'Todas respondidas.')) +
+      '<h2 class="sec">Reembolsos (' + rs.length + ')</h2>' + (rs.length ? '<div class="list">' + rs.map((r, i) => '<div class="item" ' + stag(i) + '><span class="sev media">' + eur(r.amount) + '</span><div style="flex:1"><h4>Pedido nº ' + r.order_id + '</h4><p>' + esc(r.reason) + ' · ' + fmtDate(r.created_at) + '</p></div><div class="row-actions"><button class="btn primary small" data-ref="' + r.id + '" data-ok="1">Aprobar</button><button class="btn ghost small" data-ref="' + r.id + '" data-ok="0">Denegar</button></div></div>').join('') + '</div>' : empty('Sin reembolsos', 'No hay solicitudes pendientes.'));
+  } else if (page === 'usuarios') {
+    h = header('Usuarios', 'Cuentas registradas') + (users ? (() => {
+      const q = (state.uq || '').toLowerCase(), roles = {}; users.forEach(u => roles[u.role] = (roles[u.role] || 0) + 1);
+      const list = users.filter(u => !q || (u.full_name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
+      return '<div class="grid">' + Object.entries(roles).map(([r, n], i) => '<div class="card kpi" ' + stag(i) + '><div class="n" data-to="' + n + '">0</div><div class="l">' + esc(r) + '</div></div>').join('') + '</div>' +
+        '<div class="toolbar" style="margin-top:16px"><input id="uq" placeholder="Buscar nombre o correo" value="' + esc(state.uq || '') + '"><button class="btn ghost small" id="expUsers">Exportar</button></div>' +
+        '<table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Teléfono</th></tr></thead><tbody>' + list.slice(0, 300).map((u, i) => '<tr ' + stag(Math.min(i, 20)) + '><td>' + esc(u.full_name) + '</td><td>' + esc(u.email) + '</td><td><span class="pill">' + esc(u.role) + '</span></td><td>' + esc(u.phone || '—') + '</td></tr>').join('') + '</tbody></table>'; })()
+      : '<div class="grid">' + '<div class="skel"></div>'.repeat(4) + '</div>');
+    if (!users) rpc('admin_users').then(u => { users = Array.isArray(u) ? u : []; if (page === 'usuarios') render(); }).catch(e => toast('No se pudieron cargar los usuarios: ' + e.message));
+  } else if (page === 'correo') {
+    const m = s.mail || {}; const last = m.last || [];
+    h = header('Correo de compras', 'Brevo: pedidos recibidos y facturas al entregar') + '<div class="card" style="max-width:640px"><h3 style="font-family:Atkinson;font-size:16px">' + (m.db_key ? '✓ Clave de Brevo guardada' : '⚠️ Falta la clave de Brevo') + '</h3>' +
+      '<p style="color:var(--muted);font-size:13px;margin:6px 0 12px">Brevo → ⚙ → SMTP y API → Claves API → «Generar una nueva clave API» (no la de MCP). Empieza por xkeysib-.</p>' +
+      '<label>Clave API<input id="bkey" type="password" placeholder="xkeysib-…"></label><div class="row-actions"><button class="btn primary" id="saveKey">Guardar clave</button><button class="btn ghost" id="testMail">Enviar correo de prueba</button></div></div>' +
+      '<h2 class="sec">Últimos envíos</h2>' + (last.length ? '<div class="list">' + last.map((r, i) => { const ok = r.status === 200 && /^enviado/.test(r.msg || '');
+        return '<div class="item" ' + stag(i) + '><span class="sev ' + (ok ? 'baja' : 'media') + '">' + (ok ? 'enviado' : (r.status || '—')) + '</span><div><h4>' + esc(r.msg) + '</h4><p>' + fmtDate(r.at) + '</p></div></div>'; }).join('') + '</div>' : empty('Sin envíos todavía', 'Aparecerán al crear o entregar pedidos.'));
+  }
+  c.innerHTML = '<div class="page">' + h + '</div>'; afterBase();
+}
+
+function afterBase() {
+  $$('.kpi .n').forEach(n => { if (n.textContent === '0' && +n.dataset.to) counter(n); });
+  $$('[data-url]').forEach(e => { e.style.cursor = 'pointer'; e.onclick = () => window.tlt.open(e.dataset.url); });
+  const rb = $('#refreshBtn'); if (rb) rb.onclick = poll;
+  if (page === 'ajustes') bindSettings();
+  $$('[data-f]').forEach(b => b.onclick = () => { orderFilter = b.dataset.f; render(); });
+  const oq = $('#oq'); if (oq) { oq.oninput = e => { orderQuery = e.target.value; clearTimeout(oq._t); oq._t = setTimeout(() => { render(); $('#oq').focus(); $('#oq').setSelectionRange(99, 99); }, 300); }; }
+  $$('.order-row').forEach(r => r.onclick = () => showOrder(+r.dataset.o));
+  const eo = $('#expOrders'); if (eo) eo.onclick = () => csv('pedidos-30-dias.csv', [['Nº', 'Fecha', 'Estado', 'Entidad', 'Pago', 'Cobrado', 'Total']].concat((state.orders || []).map(o => [o.id, new Date(o.created_at).toLocaleString('es-ES'), statusName[o.status], ((state.orgs || []).find?.(x => x.id === o.org_id) || {}).name, o.payment_method, o.payment_status === 'pagado' ? 'Sí' : 'No', String(o.final_total || o.total).replace('.', ',')])));
+  const eg = $('#expOrgs'); if (eg) eg.onclick = () => csv('entidades.csv', [['Entidad', 'Tipo', 'CIF/NIF', 'Verificación', 'Plan', 'Cuota', 'Pagada hasta', 'Activa']].concat((state.orgs || []).map(o => [o.name, o.kind, o.tax_id, o.verification_status, o.plan, o.price_month, o.subscription_until, o.active ? 'Sí' : 'No'])));
+  const eu = $('#expUsers'); if (eu) eu.onclick = () => csv('usuarios.csv', [['Nombre', 'Correo', 'Rol', 'Teléfono']].concat((users || []).map(u => [u.full_name, u.email, u.role, u.phone])));
+  const uq = $('#uq'); if (uq) uq.oninput = e => { state.uq = e.target.value; clearTimeout(uq._t); uq._t = setTimeout(() => { render(); $('#uq').focus(); $('#uq').setSelectionRange(99, 99); }, 300); };
+  // Acciones de entidades
+  $$('[data-act]').forEach(b => b.onclick = () => { const id = +b.dataset.id, o = state.orgs.find(x => x.id === id), act = b.dataset.act;
+    const upd = (p, msg) => modal(msg.t, '<p>' + msg.d + '</p>', [{ t: msg.ok, fn: async () => { await rpc('update_organization', { p_org: id, p }); toast(msg.done); poll(); } }]);
+    if (act === 'verify') modal('Verificar ' + o.name, '<p>CIF/NIF: <b>' + esc(o.tax_id || '—') + '</b>. Compruébalo en la sede de la AEAT antes de verificar. El documento está en la app (Admin → Entidades → Ajustes).</p>', [{ t: 'Verificar', fn: async () => { await rpc('review_org_verification', { p_org: id, p_ok: true }); toast('Entidad verificada'); poll(); } }]);
+    else if (act === 'reject') modal('Rechazar ' + o.name, '<label>Motivo<textarea id="mNote"></textarea></label>', [{ t: 'Rechazar', cls: 'ghost', fn: async () => { await rpc('review_org_verification', { p_org: id, p_ok: false, p_note: $('#mNote').value }); toast('Verificación rechazada'); poll(); } }]);
+    else if (act === 'month') { const base = o.subscription_until && new Date(o.subscription_until) > new Date() ? new Date(o.subscription_until) : new Date(); base.setMonth(base.getMonth() + 1);
+      upd({ subscription_until: base.toISOString().slice(0, 10), active: true }, { t: 'Renovar un mes', d: 'Pagada hasta el ' + base.toLocaleDateString('es-ES') + '.', ok: 'Renovar', done: 'Suscripción renovada' }); }
+    else if (act === 'off' || act === 'on') upd({ active: act === 'on' }, { t: (act === 'on' ? 'Activar ' : 'Desactivar ') + o.name, d: act === 'on' ? 'Sus usuarios podrán volver a pedir.' : 'Sus usuarios no podrán pedir hasta que la actives.', ok: act === 'on' ? 'Activar' : 'Desactivar', done: 'Hecho' });
+    else upd({ accepting_orders: act === 'resume' }, { t: (act === 'resume' ? 'Reanudar' : 'Pausar') + ' pedidos', d: o.name, ok: act === 'resume' ? 'Reanudar' : 'Pausar', done: 'Hecho' });
+  });
+  $$('[data-cmp]').forEach(b => b.onclick = () => modal('Responder reclamación', '<label>Respuesta<textarea id="mNote" placeholder="Explica la solución adoptada…"></textarea></label>', [{ t: 'Enviar respuesta', fn: async () => { await rpc('answer_complaint', { p_id: +b.dataset.cmp, p_response: $('#mNote').value }); toast('Respuesta guardada'); poll(); } }]));
+  $$('[data-ref]').forEach(b => b.onclick = () => { const ok = b.dataset.ok === '1';
+    modal(ok ? 'Aprobar reembolso' : 'Denegar reembolso', '<label>Nota (opcional)<textarea id="mNote"></textarea></label>', [{ t: ok ? 'Aprobar' : 'Denegar', cls: ok ? 'primary' : 'ghost', fn: async () => { await rpc('resolve_refund', { p_id: +b.dataset.ref, p_approve: ok, p_note: $('#mNote').value || null }); toast('Reembolso resuelto'); poll(); } }]); });
+  const sk = $('#saveKey'); if (sk) sk.onclick = async () => { try { await rpc('set_brevo_key', { p_key: $('#bkey').value.trim() }); toast('Clave guardada'); poll(); } catch (e) { toast(e.message); } };
+  const tm = $('#testMail'); if (tm) tm.onclick = async () => { try { await rpc('send_test_email'); toast('Enviando prueba…'); setTimeout(poll, 4000); } catch (e) { toast(e.message); } };
+  const ordN = (state.active || []).length || 0; const bo = $('#badgeOrd'); if (bo) { bo.textContent = ordN; bo.classList.toggle('show', ordN > 0); }
 }
