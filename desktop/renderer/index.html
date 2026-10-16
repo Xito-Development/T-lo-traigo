@@ -61,6 +61,10 @@
 
 <!-- Panel -->
 <section id="app" class="screen">
+  <header id="mbar"><img src="logo.png" alt=""><div class="mb-t"><b id="mbTitle">Resumen</b><span id="mbStatus"><i></i>Comprobando…</span></div>
+    <button id="mbSearch" aria-label="Buscar"><svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg></button>
+    <button id="mbRefresh" aria-label="Actualizar"><svg viewBox="0 0 24 24"><path d="M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.8-4.2L13 11h7V4z"/></svg></button></header>
+  <div id="ptr"><svg viewBox="0 0 24 24"><path d="M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.8-4.2L13 11h7V4z"/></svg></div>
   <nav id="side">
     <button class="nav on" data-page="resumen"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z"/></svg><span>Resumen</span></button>
     <button class="nav" data-page="servicios"><svg viewBox="0 0 24 24"><path d="M4 5h16v4H4zm0 5h16v4H4zm0 5h16v4H4z"/></svg><span>Servicios</span></button>
@@ -83,6 +87,7 @@
 <div id="modal" class="modal"><div class="modal-card"><h2 id="mTitle"></h2><div id="mBody"></div><div class="modal-actions" id="mActions"></div></div></div>
 <div id="palette" class="modal"><div class="pal-card"><input id="palInput" placeholder="Buscar páginas, pedidos (nº) o entidades…" autocomplete="off"><div id="palList"></div></div></div>
 <div id="updateBanner" class="upd" hidden></div>
+<div id="more" class="modal"><div class="sheet"><div class="grab"></div><div id="moreList"></div></div></div>
 <script src="bridge.js"></script>
 <script src="app.js"></script>
 </body></html>

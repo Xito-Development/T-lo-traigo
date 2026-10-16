@@ -103,6 +103,28 @@ fun AccountScreen(vm: AppViewModel, onBack: () -> Unit) {
                     catch (e: ApiException) { err = e.message }; busy = false } }, enabled = !busy && cur.isNotEmpty() && nw.length >= 8 && nw == rep && nw != cur) { Text("Cambiar contraseña") }
             }
 
+            // Passkeys: entrar con la huella, la cara o el PIN
+            if (es.unocerobits.tlotraigo.data.Passkeys.supported) Section("Passkeys", Icons.Filled.Fingerprint) {
+                val act = ctx as android.app.Activity
+                var keys by remember { mutableStateOf<List<es.unocerobits.tlotraigo.data.Passkey>?>(null) }
+                var err by remember { mutableStateOf<String?>(null) }; var busy by remember { mutableStateOf(false) }
+                var reload by remember { mutableIntStateOf(0) }
+                LaunchedEffect(reload) { keys = runCatching { es.unocerobits.tlotraigo.data.Passkeys.list() }.getOrDefault(emptyList()) }
+                Text("Entra sin contraseña con la huella, la cara o el bloqueo de pantalla. La llave se guarda en este móvil o en tu Gestor de contraseñas de Google.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                keys?.forEach { k -> Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Key, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) { Text(k.name, style = MaterialTheme.typography.bodyLarge)
+                        Text("Creada ${prettyDay(k.createdAt.take(10))}" + (k.lastUsed?.let { " · usada ${prettyDay(it.take(10))}" } ?: ""), style = MaterialTheme.typography.bodySmall) }
+                    IconButton({ scope.launch { runCatching { es.unocerobits.tlotraigo.data.Passkeys.delete(k.id) }; reload++ } }) { Icon(Icons.Filled.DeleteOutline, "Borrar passkey") }
+                } }
+                ErrorText(err)
+                Button({ scope.launch { busy = true; err = null
+                    try { es.unocerobits.tlotraigo.data.Passkeys.register(act); reload++; celebrate(Celebration("Passkey creada", "La próxima vez entra con «Entrar con passkey»", "🔑")) }
+                    catch (e: ApiException) { if (e.message != "Cancelado") err = e.message }; busy = false } }, enabled = !busy, modifier = Modifier.padding(top = 8.dp)) {
+                    Icon(Icons.Filled.Add, null); Spacer(Modifier.width(6.dp)); Text("Crear una passkey") }
+            }
+
             // Correo de acceso (solo cuentas con correo real)
             if (!internal && email.isNotBlank()) Section("Correo de acceso", Icons.Filled.AlternateEmail) {
                 var ne by remember { mutableStateOf("") }; var err by remember { mutableStateOf<String?>(null) }

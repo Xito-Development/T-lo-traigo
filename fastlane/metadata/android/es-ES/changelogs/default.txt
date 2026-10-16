@@ -1,5 +1,4 @@
-• En el móvil del superadministrador, el aviso de versión nueva actualiza también el Panel de control.
-• El Panel de control para Android avisa al abrirlo si hay una versión nueva y se actualiza desde ahí.
-• El Panel de control para Android lleva el mismo número de versión que la app.
-• Correos: Brevo rechazaba los envíos sin nombre de destinatario (error 400).
-• Correos más personales (saludo con el nombre, versión en texto y respuesta a soporte) para que lleguen a la bandej
+• Invitaciones por correo: el superadministrador invita al responsable de una entidad (también al crearla) y la entidad invita a repartidores y usuarios; la persona recibe un correo, crea su cuenta y su contraseña en la web y queda unida a la entidad con su rol.
+• Passkeys: entrar sin contraseña con la huella, la cara o el bloqueo de pantalla (Android 9+); se crean y se borran en Ajustes → Cuenta.
+• Panel de control 1.2: invitar por correo desde Entidades.
+• Panel de control 

@@ -2,6 +2,17 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.12] - 2026-10-16
+- Invitaciones por correo: el superadministrador invita al responsable de una entidad (también al crearla) y la entidad invita a repartidores y usuarios; la persona recibe un correo, crea su cuenta y su contraseña en la web y queda unida a la entidad con su rol.
+- Passkeys: entrar sin contraseña con la huella, la cara o el bloqueo de pantalla (Android 9+); se crean y se borran en Ajustes → Cuenta.
+- Panel de control 1.2: invitar por correo desde Entidades.
+### Cambiado / ### Corregido y líneas '- ') serán las notas de la próxima versión. publicar.bat lo vacía al publicar. -->
+### Cambiado
+- Panel de control para Android rediseñado: barra superior con el estado y botones de buscar y actualizar, menú inferior con «Más», tablas como tarjetas, ventanas que suben desde abajo, gráfica de 7 días legible y «tirar hacia abajo para actualizar».
+### Corregido
+- Soporte: la dirección pasa a tlotraigo@unocerobits.com (la anterior no recibía correos).
+- Panel de Android: tablas cortadas, menú inferior incompleto, tarjetas de servicios apretadas y versión incorrecta en Ajustes.
+
 ## [0.6.11] - 2026-10-16
 ### Añadido
 - En el móvil del superadministrador, el aviso de versión nueva actualiza también el Panel de control.

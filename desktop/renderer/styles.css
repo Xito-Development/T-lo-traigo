@@ -195,3 +195,66 @@ html.android .upd{left:12px;right:12px;top:12px}
   .toolbar input{flex:1;min-width:0}
 }
 html.android label.switch:has(#prefAuto),html.android label.switch:has(#prefTray),html.android label.switch:has(#setAuto),html.android label.switch:has(#setTray){display:none}
+
+/* ===== Móvil (panel de Android) v2: barra superior, «Más», tarjetas en vez de tablas, hojas inferiores ===== */
+#mbar,#ptr{display:none}
+.nav.morebtn{display:none}
+@media (max-width: 760px){
+  #mbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:30;padding:10px 12px;background:var(--deep);color:#fff;box-shadow:0 8px 24px -16px rgba(0,0,0,.6)}
+  #mbar img{width:30px;height:30px}
+  .mb-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
+  .mb-t b{font:800 18px "Baloo",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mbStatus{font-size:12px;color:#CFE3DA;display:flex;align-items:center;gap:6px}
+  #mbStatus i{width:8px;height:8px;border-radius:50%;background:#9db0a9}
+  #mbStatus.ok i{background:var(--leaf);animation:pulse 2.4s infinite}#mbStatus.warn i{background:var(--mustard);animation:pulse 1.6s infinite}#mbStatus.bad i{background:#ff6b5e;animation:pulse 1s infinite}
+  #mbar button{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;transition:background .2s}
+  #mbar button:active{background:rgba(255,255,255,.15)}#mbar svg{width:22px;height:22px;fill:#fff}
+  #mbRefresh.spin svg{animation:rot .8s linear infinite}
+  #app.screen.show{display:block;overflow:auto}
+  #content{padding:14px 12px 96px;overflow:visible}
+  .page-h{margin-bottom:12px}.page-h h1{display:none}.page-h p{font-size:13px}.refresh{display:none}
+  .hero{margin-bottom:14px;border-radius:18px}.hero p{font-size:13px}
+  .grid{grid-template-columns:1fr 1fr}
+  .grid:has(.svc){grid-template-columns:1fr}
+  .card{padding:14px;border-radius:14px}.kpi .n{font-size:28px}.kpi .l{font-size:12px}
+  .sec{font-size:18px;margin:20px 0 10px}
+  /* Navegación inferior: 5 accesos + «Más» */
+  #side{justify-content:space-around;overflow:hidden}
+  #side .nav{min-width:0;flex:1}
+  #side .nav.extra{display:none}
+  #side .nav.morebtn{display:flex}
+  .nav span{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Tablas como tarjetas */
+  table.cards{display:block;border:0;background:none;white-space:normal}
+  table.cards thead{display:none}
+  table.cards tbody{display:flex;flex-direction:column;gap:10px}
+  table.cards tr{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow)}
+  table.cards td{display:flex;justify-content:space-between;gap:12px;align-items:center;border:0;padding:5px 0;font-size:14px;text-align:right}
+  table.cards td::before{content:attr(data-label);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;text-align:left;flex:none}
+  table.cards td:first-child{font-size:16px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  table.cards td:first-child::before{display:none}table.cards td:first-child{display:block;text-align:left}
+  table.cards td:first-child small{display:block;color:var(--muted);margin-top:2px}
+  table.cards .row-actions{justify-content:flex-end}
+  /* Listas */
+  .list .item{flex-wrap:wrap;padding:12px}.list .item>div{flex:1;min-width:60%}
+  .list .item>.btn,.list .item>.row-actions{width:100%;justify-content:flex-end;display:flex;gap:6px}
+  .toolbar{gap:8px}.toolbar input{width:100%;flex:1 1 100%}
+  .chipf{padding:6px 11px}
+  /* Hojas inferiores */
+  .modal{align-items:flex-end}
+  .modal-card,.sheet{width:100%;max-width:100%;border-radius:22px 22px 0 0;max-height:86vh;padding:18px 18px calc(18px + env(safe-area-inset-bottom));animation:sheetUp .38s var(--ease)}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+  .modal-actions{flex-direction:column-reverse}.modal-actions .btn{width:100%}
+  .pal-card{width:100%;margin-top:0;border-radius:0 0 22px 22px;align-self:flex-start}
+  .sheet{background:var(--card)}.grab{width:44px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 14px}
+  #moreList{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .more-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:16px;background:var(--bg);font-size:13px;position:relative}
+  .more-item svg{width:26px;height:26px;fill:var(--pine)}body.dark .more-item svg{fill:var(--leaf)}
+  .more-item .badge{position:absolute;top:6px;right:10px}
+  #toast{left:12px;right:12px;bottom:84px}.toast{text-align:center}
+  .upd{left:12px;right:12px;top:auto;bottom:84px}
+  /* Tirar hacia abajo para actualizar */
+  #ptr{display:grid;place-items:center;position:fixed;left:50%;top:64px;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);z-index:35;opacity:0;transform:translateY(-40px)}
+  #ptr svg{width:22px;height:22px;fill:var(--pine)}#ptr.go svg{animation:rot .8s linear infinite}
+  .card:hover,.ent-card:hover{transform:none}
+}

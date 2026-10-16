@@ -34,7 +34,7 @@ function layout(title: string, intro: string, body: string) {
 <tr><td style="padding:28px 30px 6px"><h1 style="margin:0 0 10px;font-size:24px;color:#1F4D3F">${title}</h1><p style="margin:0 0 16px;font-size:16px;line-height:1.55">${intro}</p></td></tr>
 <tr><td style="padding:0 30px 24px">${body}</td></tr>
 <tr><td align="center" style="background:#17382E;padding:18px;font-size:12.5px;line-height:1.7;color:#B9C7C2">
-¿Dudas? <a href="mailto:support@tlotraigo.unocerobits.com" style="color:#F2B544">support@tlotraigo.unocerobits.com</a><br>
+¿Dudas? Responde a este correo o escribe a <a href="mailto:tlotraigo@unocerobits.com" style="color:#F2B544">tlotraigo@unocerobits.com</a><br>
 <a href="https://tlotraigo.unocerobits.com" style="color:#fff">tlotraigo.unocerobits.com</a> · Puedes desactivar estos correos en Ajustes de la app.</td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const { order_id, kind, user_id } = await req.json();
     const send = async (to: { email: string; name: string }[], subject: string, html: string) => {
       const r = await fetch("https://api.brevo.com/v3/smtp/email", { method: "POST", headers: { "api-key": BREVO, "Content-Type": "application/json", accept: "application/json" },
-        body: JSON.stringify({ sender: FROM, replyTo: { email: "support@tlotraigo.unocerobits.com", name: "Soporte T lo traigo" },
+        body: JSON.stringify({ sender: FROM, replyTo: { email: "tlotraigo@unocerobits.com", name: "T lo traigo" },
           to: to.map((t) => t.name ? t : { email: t.email }),   // Brevo rechaza nombres vacíos
           subject, htmlContent: html, textContent: toText(html),
           headers: { "X-Entity-Ref-ID": crypto.randomUUID() } }) });

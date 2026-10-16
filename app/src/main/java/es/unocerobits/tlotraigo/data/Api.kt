@@ -104,6 +104,9 @@ class SupabaseApi(context: Context, private val baseUrl: String, private val key
     suspend fun signOutEverywhere() { runCatching { ensureFresh(); call("POST", "/auth/v1/logout?scope=global", "{}") }; save(null) }
     val email: String? get() = session?.user?.email
 
+    /** Usa una sesión obtenida por otra vía (passkey). */
+    fun adoptSession(obj: JsonObject) = save(json.decodeFromJsonElement<Session>(obj))
+
     fun signOut() = save(null)
 
     /** Llama a una Edge Function de Supabase (pasarela de pago). Devuelve el JSON de respuesta. */

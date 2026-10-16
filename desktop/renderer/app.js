@@ -426,7 +426,7 @@ function render() {
         const st = !o.active ? '<span class="pill bad">Desactivada</span>' : !o.accepting_orders ? '<span class="pill warn">En pausa</span>' : '<span class="pill ok">Activa</span>';
         return '<tr ' + stag(i) + '><td><b>' + esc(o.name) + '</b><br><small>' + esc(o.kind) + (o.tax_id ? ' · ' + esc(o.tax_id) : '') + '</small></td><td>' + ver + '</td><td>' + eur(o.price_month) + '</td><td>' + (o.subscription_until ? new Date(o.subscription_until).toLocaleDateString('es-ES') : '—') + '</td><td>' + st +
           '</td><td><div class="row-actions">' + (o.verification_status === 'pendiente' ? '<button class="btn primary" data-act="verify" data-id="' + o.id + '">Verificar</button><button class="btn ghost" data-act="reject" data-id="' + o.id + '">Rechazar</button>' : '') +
-          '<button class="btn ghost" data-act="month" data-id="' + o.id + '">+1 mes</button><button class="btn ghost" data-act="' + (o.active ? 'off' : 'on') + '" data-id="' + o.id + '">' + (o.active ? 'Desactivar' : 'Activar') + '</button>' +
+          '<button class="btn ghost" data-act="invite" data-id="' + o.id + '">Invitar</button><button class="btn ghost" data-act="month" data-id="' + o.id + '">+1 mes</button><button class="btn ghost" data-act="' + (o.active ? 'off' : 'on') + '" data-id="' + o.id + '">' + (o.active ? 'Desactivar' : 'Activar') + '</button>' +
           (o.active ? '<button class="btn ghost" data-act="' + (o.accepting_orders ? 'pause' : 'resume') + '" data-id="' + o.id + '">' + (o.accepting_orders ? 'Pausar' : 'Reanudar') + '</button>' : '') + '</div></td></tr>'; }).join('') + '</tbody></table>';
   } else if (page === 'pendientes') {
     const cs = Array.isArray(s.complaints) ? s.complaints : [], rs = Array.isArray(s.refunds) ? s.refunds : [];
@@ -468,7 +468,11 @@ function afterBase() {
   // Acciones de entidades
   $$('[data-act]').forEach(b => b.onclick = () => { const id = +b.dataset.id, o = state.orgs.find(x => x.id === id), act = b.dataset.act;
     const upd = (p, msg) => modal(msg.t, '<p>' + msg.d + '</p>', [{ t: msg.ok, fn: async () => { await rpc('update_organization', { p_org: id, p }); toast(msg.done); poll(); } }]);
-    if (act === 'verify') modal('Verificar ' + o.name, '<p>CIF/NIF: <b>' + esc(o.tax_id || '—') + '</b>. Compruébalo en la sede de la AEAT antes de verificar. El documento está en la app (Admin → Entidades → Ajustes).</p>', [{ t: 'Verificar', fn: async () => { await rpc('review_org_verification', { p_org: id, p_ok: true }); toast('Entidad verificada'); poll(); } }]);
+    if (act === 'invite') modal('Invitar a ' + o.name, '<label>Correo<input id="mMail" type="email" placeholder="persona@ejemplo.com"></label><label>Nombre (opcional)<input id="mName"></label>' +
+      '<label>Rol<select id="mRole" style="display:block;width:100%;font:inherit;padding:10px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);margin-top:6px"><option value="gestor">Administrador de la entidad</option><option value="repartidor">Repartidor</option><option value="cliente">Usuario</option></select></label>' +
+      '<p style="color:var(--muted);font-size:13px">Le llegará un correo para crear su cuenta y su contraseña; al terminar ya estará dentro de la entidad.</p>',
+      [{ t: 'Enviar invitación', fn: async () => { await rpc('send_invite_email', { p_org: id, p_role: $('#mRole').value, p_email: $('#mMail').value.trim(), p_name: $('#mName').value.trim() || null }); toast('Invitación enviada'); } }]);
+    else if (act === 'verify') modal('Verificar ' + o.name, '<p>CIF/NIF: <b>' + esc(o.tax_id || '—') + '</b>. Compruébalo en la sede de la AEAT antes de verificar. El documento está en la app (Admin → Entidades → Ajustes).</p>', [{ t: 'Verificar', fn: async () => { await rpc('review_org_verification', { p_org: id, p_ok: true }); toast('Entidad verificada'); poll(); } }]);
     else if (act === 'reject') modal('Rechazar ' + o.name, '<label>Motivo<textarea id="mNote"></textarea></label>', [{ t: 'Rechazar', cls: 'ghost', fn: async () => { await rpc('review_org_verification', { p_org: id, p_ok: false, p_note: $('#mNote').value }); toast('Verificación rechazada'); poll(); } }]);
     else if (act === 'month') { const base = o.subscription_until && new Date(o.subscription_until) > new Date() ? new Date(o.subscription_until) : new Date(); base.setMonth(base.getMonth() + 1);
       upd({ subscription_until: base.toISOString().slice(0, 10), active: true }, { t: 'Renovar un mes', d: 'Pagada hasta el ' + base.toLocaleDateString('es-ES') + '.', ok: 'Renovar', done: 'Suscripción renovada' }); }
@@ -482,3 +486,69 @@ function afterBase() {
   const tm = $('#testMail'); if (tm) tm.onclick = async () => { try { await rpc('send_test_email'); toast('Enviando prueba…'); setTimeout(poll, 4000); } catch (e) { toast(e.message); } };
   const ordN = (state.active || []).length || 0; const bo = $('#badgeOrd'); if (bo) { bo.textContent = ordN; bo.classList.toggle('show', ordN > 0); }
 }
+
+
+// ======================= Móvil (Android) v2 =======================
+const mobile = () => innerWidth <= 760;
+const MAIN = ['resumen', 'servicios', 'pedidos', 'sugerencias'];
+(function setupMobileNav() {
+  const side = document.getElementById('side');
+  side.querySelectorAll('.nav').forEach(n => { if (!MAIN.includes(n.dataset.page)) n.classList.add('extra'); });
+  const more = document.createElement('button'); more.className = 'nav morebtn';
+  more.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Más</span><b class="badge" id="badgeMore"></b>';
+  side.insertBefore(more, side.querySelector('.side-sp'));
+  window.openMore = () => {
+    document.getElementById('moreList').innerHTML = [...side.querySelectorAll('.nav.extra')].map(n => '<button class="more-item" data-p="' + n.dataset.page + '">' + n.querySelector('svg').outerHTML +
+      '<span>' + n.querySelector('span').textContent + '</span>' + (n.querySelector('.badge.show') ? '<b class="badge show">' + n.querySelector('.badge').textContent + '</b>' : '') + '</button>').join('');
+    document.querySelectorAll('.more-item').forEach(b => b.onclick = () => { document.getElementById('more').classList.remove('open'); go(b.dataset.p); });
+    document.getElementById('more').classList.add('open');
+  };
+  more.onclick = window.openMore;
+  document.getElementById('more').onclick = e => { if (e.target.id === 'more') e.currentTarget.classList.remove('open'); };
+  document.getElementById('mbSearch').onclick = () => openPalette();
+  document.getElementById('mbRefresh').onclick = () => poll();
+})();
+
+// Título, estado y botón «Más» marcados según la página
+const pageTitles = { resumen: 'Resumen', servicios: 'Servicios', pedidos: 'Pedidos en curso', actividad: 'Actividad', errores: 'Errores', sugerencias: 'Sugerencias',
+  entidades: 'Entidades', pendientes: 'Pendientes', usuarios: 'Usuarios', correo: 'Correo de compras', ajustes: 'Ajustes' };
+function mobileChrome() {
+  const t = document.getElementById('mbTitle'); if (t) t.textContent = pageTitles[page] || 'T lo traigo';
+  const st = document.getElementById('mbStatus'), tb = document.getElementById('tbStatus');
+  if (st && tb) { st.className = tb.className.replace('tb-status', '').trim(); st.innerHTML = '<i></i>' + esc(tb.querySelector('span').textContent); }
+  const mb = document.querySelector('.morebtn'); if (mb) { mb.onclick = window.openMore; mb.classList.toggle('on', !MAIN.includes(page)); document.querySelectorAll('#side .nav').forEach(n => { if (n !== mb && !MAIN.includes(n.dataset.page)) n.classList.remove('on'); }); }
+  const extraBadges = [...document.querySelectorAll('#side .nav.extra .badge.show')].reduce((a, b) => a + (+b.textContent || 0), 0);
+  const bm = document.getElementById('badgeMore'); if (bm) { bm.textContent = extraBadges; bm.classList.toggle('show', extraBadges > 0); }
+  // Tablas → tarjetas: cada celda lleva el nombre de su columna
+  document.querySelectorAll('#content table').forEach(tbl => { const ths = [...tbl.querySelectorAll('thead th')].map(x => x.textContent);
+    tbl.classList.add('cards'); tbl.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => td.setAttribute('data-label', ths[i] || ''))); });
+  if (mobile()) document.querySelectorAll('#content .sec').forEach(h => { h.textContent = h.textContent.replace('últimos 14 días', 'últimos 7 días'); });
+  // Versión real en Ajustes
+  if (page === 'ajustes') window.tlt.version().then(v => { const p = [...document.querySelectorAll('#content p')].find(x => x.textContent.includes('Control 1.0')); if (p) p.textContent = p.textContent.replace('Control 1.0', 'Control ' + v); });
+}
+const _afterBase = afterBase; afterBase = function () { _afterBase(); mobileChrome(); };
+const _poll = poll; poll = async function () { document.getElementById('mbRefresh')?.classList.add('spin'); try { await _poll(); } finally { document.getElementById('mbRefresh')?.classList.remove('spin'); mobileChrome(); } };
+
+// Gráfica: en el móvil, 7 días con números más grandes
+const _chart = chart; chart = function (orders) {
+  if (!mobile()) return _chart(orders);
+  const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 6 + i); return d; });
+  const counts = days.map(d => orders.filter(o => { const x = new Date(o.created_at); return x >= d && x < new Date(d.getTime() + 864e5); }).length);
+  const max = Math.max(1, ...counts), W = 350, H = 150, bw = W / 7, dn = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + (H + 34) + '" style="height:auto">' + counts.map((n, i) => { const h = n / max * (H - 26);
+    return '<rect class="bar" style="animation-delay:' + (i * 50) + 'ms" x="' + (i * bw + 8) + '" y="' + (H - h) + '" width="' + (bw - 16) + '" height="' + Math.max(h, 3) + '" rx="8" fill="' + (i === 6 ? '#F2B544' : '#2E6B57') + '"/>' +
+      (n ? '<text x="' + (i * bw + bw / 2) + '" y="' + (H - h - 7) + '" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">' + n + '</text>' : '') +
+      '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 18) + '" text-anchor="middle" font-size="13" fill="#7A8A85">' + dn[days[i].getDay()] + '</text>' +
+      '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 32) + '" text-anchor="middle" font-size="10" fill="#9AA8A3">' + days[i].getDate() + '/' + (days[i].getMonth() + 1) + '</text>'; }).join('') + '</svg></div>';
+};
+
+// Tirar hacia abajo para actualizar
+(function pullToRefresh() {
+  const app = document.getElementById('app'), ptr = document.getElementById('ptr'); let y0 = null, dy = 0;
+  app.addEventListener('touchstart', e => { y0 = app.scrollTop <= 0 ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  app.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, Math.min(120, e.touches[0].clientY - y0));
+    ptr.style.opacity = String(dy / 80); ptr.style.transform = 'translateY(' + (dy / 2 - 40) + 'px) rotate(' + dy * 3 + 'deg)'; }, { passive: true });
+  app.addEventListener('touchend', async () => { if (y0 == null) return; y0 = null;
+    if (dy > 80) { ptr.classList.add('go'); await poll(); ptr.classList.remove('go'); }
+    ptr.style.transition = 'all .3s'; ptr.style.opacity = '0'; ptr.style.transform = 'translateY(-40px)'; setTimeout(() => ptr.style.transition = '', 300); });
+})();

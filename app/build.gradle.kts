@@ -32,7 +32,7 @@ android {
         buildConfigField("String", "SUPABASE_KEY", "\"$supabaseKey\"")
         buildConfigField("String", "SUPPORT_PHONE", "\"+34600000000\"")
         buildConfigField("String", "CONTACT_EMAIL", "\"info@unocerobits.com\"")
-        buildConfigField("String", "SUPPORT_EMAIL", "\"support@tlotraigo.unocerobits.com\"")
+        buildConfigField("String", "SUPPORT_EMAIL", "\"tlotraigo@unocerobits.com\"")
         buildConfigField("String", "WEB_URL", "\"https://tlotraigo.unocerobits.com/\"")
         // Cambiar a true cuando la app esté publicada en Google Play
         buildConfigField("Boolean", "PLAY_PUBLISHED", "false")
@@ -87,6 +87,9 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    // Passkeys (Credential Manager)
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     // Solo en la versión de Google Play: actualizaciones desde la tienda (In-App Updates)
     "playImplementation"("com.google.android.play:app-update-ktx:2.1.0")
     // Versiones fijadas: últimas compatibles con minSdk 21.

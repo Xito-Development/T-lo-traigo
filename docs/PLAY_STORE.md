@@ -44,7 +44,7 @@ Vídeo para la declaración: grabar el flujo «Estoy disponible → aviso → ac
 Cifrado en tránsito: sí (HTTPS). Eliminación: sí, desde la app y por correo.
 
 ## Ficha
-Correo de contacto de la ficha: **support@tlotraigo.unocerobits.com** · Web: https://tlotraigo.unocerobits.com · Privacidad: https://tlotraigo.unocerobits.com/privacidad.html
+Correo de contacto de la ficha: **tlotraigo@unocerobits.com** · Web: https://tlotraigo.unocerobits.com · Privacidad: https://tlotraigo.unocerobits.com/privacidad.html
 
 ## Revisión
 Facilitar a Google una cuenta de pruebas de cliente (no la del superadministrador).

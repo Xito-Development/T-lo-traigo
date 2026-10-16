@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "es.unocerobits.tlotraigo",
+      "sha256_cert_fingerprints": [
+        "C2:C2:7B:2D:8E:40:94:09:70:9C:13:DA:A6:C2:EB:A3:AD:5F:8B:47:F5:F3:19:72:C2:DC:D3:3B:54:13:BD:2A"
+      ]
+    }
+  }
+]

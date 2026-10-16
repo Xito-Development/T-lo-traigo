@@ -95,9 +95,9 @@ fun AboutDialog(onDismiss: () -> Unit, vm: es.unocerobits.tlotraigo.AppViewModel
                         leadingContent = { Icon(Icons.Filled.Email, null) },
                         modifier = Modifier.fillMaxWidth().padding(0.dp).let { it },
                         trailingContent = { TextButton({ open("mailto:${BuildConfig.CONTACT_EMAIL}?subject=T%20lo%20traigo") }) { Text("Escribir") } })
-                    ListItem(headlineContent = { Text("support@tlotraigo.unocerobits.com") }, supportingContent = { Text("Soporte de la app") },
+                    ListItem(headlineContent = { Text("tlotraigo@unocerobits.com") }, supportingContent = { Text("Soporte de la app") },
                         leadingContent = { Icon(Icons.Filled.SupportAgent, null) },
-                        trailingContent = { TextButton({ open("mailto:support@tlotraigo.unocerobits.com?subject=Ayuda%20T%20lo%20traigo") }) { Text("Escribir") } })
+                        trailingContent = { TextButton({ open("mailto:tlotraigo@unocerobits.com?subject=Ayuda%20T%20lo%20traigo") }) { Text("Escribir") } })
                     ListItem(headlineContent = { Text("xito@unocerobits.com") }, supportingContent = { Text("Xito Development") },
                         leadingContent = { Icon(Icons.Filled.Code, null) },
                         trailingContent = { TextButton({ open("mailto:xito@unocerobits.com") }) { Text("Escribir") } })

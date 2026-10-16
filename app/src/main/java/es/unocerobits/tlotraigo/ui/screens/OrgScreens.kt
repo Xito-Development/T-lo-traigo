@@ -114,7 +114,9 @@ fun AdminOrgs(vm: AppViewModel, onOpen: (Long) -> Unit) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { towns.forEach { t -> FilterChip(t.id in sel, { if (t.id in sel) sel.remove(t.id) else sel.add(t.id) }, { Text(t.name) }) } }
                 ErrorText(err)
             } },
-            confirmButton = { Button({ scope.launch { try { val (_, code) = Locator.repo.createOrganization(name, kind, cn, ce, cp, sel.toList()); created = name to code; creating = false; reload++ } catch (e: ApiException) { err = e.message } } },
+            confirmButton = { Button({ scope.launch { try { val (newId, code) = Locator.repo.createOrganization(name, kind, cn, ce, cp, sel.toList())
+                    if (Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$").matches(ce.trim())) runCatching { Locator.repo.sendInviteEmail(newId, "gestor", ce, cn) }
+                    created = name to code; creating = false; reload++ } catch (e: ApiException) { err = e.message } } },
                 enabled = name.trim().length >= 2) { Text("Crear") } },
             dismissButton = { TextButton({ creating = false }) { Text("Cancelar") } })
     }
@@ -276,6 +278,8 @@ private fun OrgTowns(o: Organization, v: OrgOverview, onChange: () -> Unit) {
 
 @Composable
 private fun OrgInvites(o: Organization) {
+    EmailInviteCard(o)
+
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var list by remember { mutableStateOf<List<OrgInvite>>(emptyList()) }
@@ -620,4 +624,50 @@ fun OrgVerification(o: Organization, onChange: () -> Unit) {
             }
         }
     } }
+}
+
+/** Invitar por correo: la persona recibe un enlace para crear su cuenta con contraseña y queda unida a la entidad con su rol. */
+@Composable
+fun EmailInviteCard(o: Organization) {
+    val scope = rememberCoroutineScope()
+    val celebrate = LocalCelebrate.current
+    val isSuper = LocalIsSuper.current
+    var email by remember { mutableStateOf("") }; var name by remember { mutableStateOf("") }
+    var role by remember { mutableStateOf("repartidor") }
+    var err by remember { mutableStateOf<String?>(null) }; var busy by remember { mutableStateOf(false) }
+    var sent by remember { mutableStateOf<JsonArray?>(null) }; var reload by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reload) { sent = runCatching { Locator.repo.orgEmailInvites(o.id) }.getOrNull() }
+    Card(Modifier.fillMaxWidth().padding(16.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.ForwardToInbox, null); Spacer(Modifier.width(10.dp)); Text("Invitar por correo", style = MaterialTheme.typography.titleMedium) }
+            Text("Le llegará un correo para crear su cuenta y su contraseña; al terminar ya estará dentro de ${o.name}.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                (listOfNotNull(if (isSuper) "gestor" to "Administrador" else null, "repartidor" to "Repartidor", "cliente" to "Usuario")).forEach { (k, l) ->
+                    FilterChip(role == k, { role = k }, { Text(l) }) }
+            }
+            OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Nombre (opcional)") }, singleLine = true)
+            OutlinedTextField(email, { email = it.trim() }, Modifier.fillMaxWidth().padding(top = 6.dp), label = { Text("Correo") }, singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Email))
+            ErrorText(err)
+            Button({ scope.launch { busy = true; err = null
+                try { Locator.repo.sendInviteEmail(o.id, role, email, name); celebrate(Celebration("Invitación enviada", email, "✉️")); email = ""; name = ""; reload++ }
+                catch (e: ApiException) { err = e.message }; busy = false } },
+                enabled = !busy && Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$").matches(email), modifier = Modifier.padding(top = 8.dp)) {
+                Icon(Icons.Filled.Send, null); Spacer(Modifier.width(6.dp)); Text("Enviar invitación") }
+            sent?.takeIf { it.isNotEmpty() }?.let { list ->
+                Text("Invitaciones enviadas", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp))
+                list.take(10).forEach { x -> val j = x.jsonObject
+                    val used = j["used"]?.jsonPrimitive?.booleanOrNull == true
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(j["email"]?.jsonPrimitive?.contentOrNull.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+                            Text(when (j["role"]?.jsonPrimitive?.contentOrNull) { "gestor" -> "Administrador"; "repartidor" -> "Repartidor"; else -> "Usuario" }, style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text(if (used) "✓ Aceptada" else "Pendiente", style = MaterialTheme.typography.labelMedium,
+                            color = if (used) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
 }

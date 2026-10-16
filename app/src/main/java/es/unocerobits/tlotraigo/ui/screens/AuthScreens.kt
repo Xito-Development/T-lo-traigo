@@ -119,6 +119,16 @@ fun LoginScreen(vm: AppViewModel, onRegister: () -> Unit, onVerify: (email: Stri
                 busy = false
             }
         }, Modifier.align(Alignment.CenterHorizontally)) { Text("He olvidado mi contraseña") }
+        if (es.unocerobits.tlotraigo.data.Passkeys.supported) {
+            val act = androidx.compose.ui.platform.LocalContext.current as android.app.Activity
+            Spacer(Modifier.height(4.dp))
+            OutlinedButton({ scope.launch {
+                busy = true; err = null
+                try { es.unocerobits.tlotraigo.data.Passkeys.login(act); vm.start() } catch (e: ApiException) { if (e.message != "Cancelado") err = e.message }
+                busy = false
+            } }, Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy, shape = MaterialTheme.shapes.medium) {
+                Icon(Icons.Filled.Fingerprint, null); Spacer(Modifier.width(8.dp)); Text("Entrar con passkey (huella o cara)") }
+        }
         Spacer(Modifier.height(10.dp))
         BigButton("Crear una cuenta nueva", onRegister, tonal = true, icon = Icons.Filled.PersonAdd)
     }
@@ -327,7 +337,7 @@ fun VerifyScreen(vm: AppViewModel, email: String, mode: String, onBack: () -> Un
                                 } catch (e: ApiException) { err = e.message }
                             }
                         }, enabled = cooldown == 0) { Text(if (cooldown > 0) "Reenviar código en $cooldown s" else "Reenviar código") }
-                        Text("Llega desde tlotraigo@unocerobits.com. ¿No te llega? Mira en correo no deseado o escribe a support@tlotraigo.unocerobits.com.", style = MaterialTheme.typography.bodySmall,
+                        Text("Llega desde tlotraigo@unocerobits.com. ¿No te llega? Mira en correo no deseado o escribe a tlotraigo@unocerobits.com.", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                     } else {
                         Text("Elige tu nueva contraseña", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
