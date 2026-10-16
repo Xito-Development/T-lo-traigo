@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https://qqqudthqgpojbipsevna.supabase.co https://api.github.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'">
 <title>T lo traigo Control</title><link rel="stylesheet" href="styles.css"></head>
 <body>
@@ -44,7 +45,7 @@
     <div class="wz-page" data-step="2">
       <h1>Tus preferencias</h1><p>Podrás cambiarlas cuando quieras en Ajustes.</p>
       <div class="pref"><span>Comprobar cada</span><div class="seg" id="intervalSeg"><button data-v="1">1 min</button><button data-v="5" class="on">5 min</button><button data-v="15">15 min</button></div></div>
-      <label class="switch"><input type="checkbox" id="prefNotify" checked><i></i> Avisos de Windows cuando algo falle</label>
+      <label class="switch"><input type="checkbox" id="prefNotify" checked><i></i> Avisos cuando algo falle</label>
       <label class="switch"><input type="checkbox" id="prefAuto"><i></i> Iniciar con Windows (en la bandeja)</label>
       <label class="switch"><input type="checkbox" id="prefTray" checked><i></i> Al cerrar, seguir vigilando en la bandeja</label>
       <label class="switch"><input type="checkbox" id="prefDark"><i></i> Modo oscuro</label>
@@ -82,5 +83,6 @@
 <div id="modal" class="modal"><div class="modal-card"><h2 id="mTitle"></h2><div id="mBody"></div><div class="modal-actions" id="mActions"></div></div></div>
 <div id="palette" class="modal"><div class="pal-card"><input id="palInput" placeholder="Buscar páginas, pedidos (nº) o entidades…" autocomplete="off"><div id="palList"></div></div></div>
 <div id="updateBanner" class="upd" hidden></div>
+<script src="bridge.js"></script>
 <script src="app.js"></script>
 </body></html>

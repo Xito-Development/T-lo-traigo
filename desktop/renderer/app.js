@@ -255,7 +255,7 @@ function renderBase() {
   } else if (page === 'ajustes') {
     h = header('Ajustes', 'Preferencias del panel') + '<div class="card" style="max-width:560px">' +
       '<div class="pref"><span>Comprobar cada</span><div class="seg" id="setInterval">' + [1, 5, 15].map(v => '<button data-v="' + v + '" class="' + (prefs.interval === v ? 'on' : '') + '">' + v + ' min</button>').join('') + '</div></div>' +
-      sw('setNotify', 'Avisos de Windows cuando algo falle', prefs.notify) + sw('setAuto', 'Iniciar con Windows (en la bandeja)', prefs.autostart) + sw('setTray', 'Al cerrar, seguir vigilando en la bandeja', prefs.tray !== false) + sw('setDark', 'Modo oscuro', prefs.dark) +
+      sw('setNotify', 'Avisos cuando algo falle', prefs.notify) + sw('setAuto', 'Iniciar con Windows (en la bandeja)', prefs.autostart) + sw('setTray', 'Al cerrar, seguir vigilando en la bandeja', prefs.tray !== false) + sw('setDark', 'Modo oscuro', prefs.dark) +
       '<button class="btn ghost" id="logout" style="margin-top:8px">Cerrar sesión</button></div>' +
       '<p style="margin-top:16px;color:var(--muted);font-size:13px">T lo traigo Control 1.0 · UNOCEROBITS · Xito Development · info@unocerobits.com</p>';
   }

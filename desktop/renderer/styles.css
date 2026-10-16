@@ -169,3 +169,29 @@ body.dark .status{color:var(--leaf)}
 .legend div{display:flex;gap:8px;align-items:center;font-size:13px;margin:3px 0}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:1100px){.two{grid-template-columns:1fr}}
 @keyframes barX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ===== Android (y ventanas estrechas): misma estética, navegación abajo ===== */
+html.android #titlebar{display:none}
+html.android .screen{inset:0;padding-top:env(safe-area-inset-top)}
+html.android .modal{inset:0}
+html.android .upd{left:12px;right:12px;top:12px}
+@media (max-width: 760px){
+  #app{flex-direction:column}
+  #side{position:fixed;left:0;right:0;bottom:0;width:auto;height:66px;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:2px;overflow-x:auto;z-index:40;box-shadow:0 -10px 30px -12px rgba(0,0,0,.5)}
+  #side .side-sp,#side .who,#side .kbd-hint{display:none}
+  .nav{flex-direction:column;gap:2px;padding:6px 10px;min-width:64px;font-size:10.5px;flex:none}
+  .nav svg{width:22px;height:22px}.nav.on::before{left:14px;right:14px;top:-6px;bottom:auto;width:auto;height:3px}
+  .badge{position:absolute;top:2px;right:8px;margin:0;min-width:16px;height:16px;font-size:10px;padding:0 4px}
+  #content{padding:18px 14px 90px}
+  .page-h{flex-direction:column;align-items:flex-start}.page-h h1{font-size:26px}
+  .refresh span:not(.spin){display:none}
+  .hero{padding:16px}.hero h2{font-size:20px}.hero .orb{width:44px;height:44px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .kpi .n{font-size:30px}
+  table{display:block;overflow-x:auto;white-space:nowrap}
+  .two{grid-template-columns:1fr}
+  .wz-card{padding:24px 20px}.wz-page h1{font-size:24px}
+  .pal-card{margin-top:6vh}
+  .toolbar input{flex:1;min-width:0}
+}
+html.android label.switch:has(#prefAuto),html.android label.switch:has(#prefTray),html.android label.switch:has(#setAuto),html.android label.switch:has(#setTray){display:none}

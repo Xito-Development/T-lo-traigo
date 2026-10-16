@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.10] - 2026-10-16
+### Añadido
+- Panel de control para Android (superadministrador), con la misma estética y funciones que el de Windows: servicios, pedidos, actividad, errores, sugerencias, entidades, pendientes, usuarios y correo. Se publica con cada versión como TLoTraigo-Control.apk.
+- Ajustes (superadministrador): «Panel de control» para descargarlo en Android o Windows.
+
 ## [0.6.9] - 2026-10-16
 ### Añadido
 - Vigilante: el superadministrador recibe por correo las caídas de la web o de la compilación, errores de la app, pedidos sin repartidor o reclamados, reclamaciones, reembolsos, entidades por verificar o vencidas y fallos de correo (lo urgente al momento, recordatorio cada 24 h y aviso de «resuelto») y un resumen cada mañana.

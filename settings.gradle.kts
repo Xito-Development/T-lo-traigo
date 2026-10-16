@@ -4,4 +4,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "TLoTraigo"
-include(":app")
+include(":app", ":control")

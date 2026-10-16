@@ -109,6 +109,25 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
                 Icon(Icons.Filled.ChevronRight, null)
             }
         }
+        if (p?.isSuper == true) Card(Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(androidx.compose.ui.graphics.Color(0xFF1F4D3F), androidx.compose.ui.graphics.Color.White)) {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Dashboard, null, tint = androidx.compose.ui.graphics.Color(0xFFF2B544)); Spacer(Modifier.width(10.dp))
+                    Text("Panel de control", style = MaterialTheme.typography.titleMedium, color = androidx.compose.ui.graphics.Color.White)
+                }
+                Text("Vigila servicios, pedidos, errores y entidades desde el móvil o el ordenador.", style = MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.ui.graphics.Color(0xFFE4F1EA), modifier = Modifier.padding(vertical = 6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button({ ctx.openUrl("https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo-Control.apk") },
+                        colors = ButtonDefaults.buttonColors(androidx.compose.ui.graphics.Color(0xFFF2B544), androidx.compose.ui.graphics.Color(0xFF1B2428))) {
+                        Icon(Icons.Filled.PhoneAndroid, null); Spacer(Modifier.width(6.dp)); Text("Android") }
+                    OutlinedButton({ ctx.openUrl("https://github.com/Xito-Development/T-lo-traigo/releases?q=desktop&expanded=true") },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)) {
+                        Icon(Icons.Filled.DesktopWindows, null); Spacer(Modifier.width(6.dp)); Text("Windows") }
+                }
+            }
+        }
         var redeem by remember { mutableStateOf(false) }
         if (redeem) RedeemInviteDialog(vm) { redeem = false }
         BigButton("Tengo un código de invitación", { redeem = true }, tonal = true, icon = Icons.Filled.VpnKey)

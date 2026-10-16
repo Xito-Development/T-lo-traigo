@@ -1,0 +1,8 @@
+<resources>
+    <style name="Panel" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/pino_hondo</item>
+        <item name="android:statusBarColor">@color/pino_hondo</item>
+        <item name="android:navigationBarColor">@color/pino_hondo</item>
+    </style>
+    <color name="pino_hondo">#1F4D3F</color>
+</resources>
