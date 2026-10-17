@@ -186,7 +186,7 @@ fun CartScreen(vm: AppViewModel, onBack: () -> Unit, onPlaced: (Long) -> Unit) {
             }
             item {
                 SectionTitle("Entrega")
-                OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth(), label = { Text("Dirección en ${vm.townName(target?.townId)}") },
+                OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth(), label = { Text("Dirección de entrega") },
                     minLines = 2, textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium)
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(notes, { notes = it.take(500) }, Modifier.fillMaxWidth(), label = { Text("Notas para el repartidor (opcional)") },

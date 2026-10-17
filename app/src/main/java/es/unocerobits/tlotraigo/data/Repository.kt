@@ -199,12 +199,12 @@ class Repository(val api: SupabaseApi) {
         api.rest("POST", "extra_fees", buildJsonObject { put("name", name.trim()); put("kind", kind); put("amount", amount) }.toString())
     }
     suspend fun deleteExtraFee(id: Long) { api.rest("DELETE", "extra_fees?id=eq.$id") }
-    suspend fun saveAddress(a: Profile, fullName: String, phone: String) {
+    suspend fun saveAddress(a: Profile, fullName: String, phone: String, townName: String? = null) {
         api.rest("PATCH", "profiles?id=eq.${api.uid}", buildJsonObject {
             put("full_name", fullName.trim()); put("phone", phone.trim()); put("recipient_name", a.recipientName?.trim())
             put("street", a.street?.trim()); put("street_number", a.streetNumber?.trim()); put("floor_door", a.floorDoor?.trim()?.ifBlank { null })
             put("postal_code", a.postalCode?.trim()?.ifBlank { null }); put("province", a.province ?: "León"); put("directions", a.directions?.trim()?.ifBlank { null })
-            put("town_id", a.townId); put("address", composeAddress(a))
+            put("town_id", a.townId); put("address", composeAddress(a, townName))
         }.toString())
     }
     suspend fun saveTown(id: Long, fee: Double, km: Double) {
@@ -404,11 +404,12 @@ class Repository(val api: SupabaseApi) {
 }
 
 /** Dirección completa para el repartidor: «Calle Mayor 12, 1º B — 24760 Villaquejida (León). Indicaciones». */
+/** Dirección en formato español: «Calle Mayor 1, 2º B, 24235 Villaquejida (León). Indicaciones». */
 fun composeAddress(p: Profile, townName: String? = null): String = buildString {
-    append(listOfNotNull(p.street?.trim()?.ifBlank { null }, p.streetNumber?.trim()?.ifBlank { null }).joinToString(" "))
+    append(listOfNotNull(p.street?.trim()?.ifBlank { null }?.replaceFirstChar { it.uppercase() }, p.streetNumber?.trim()?.ifBlank { null }).joinToString(" "))
     p.floorDoor?.trim()?.ifBlank { null }?.let { append(", ").append(it) }
-    val loc = listOfNotNull(p.postalCode?.ifBlank { null }, townName).joinToString(" ")
-    if (loc.isNotBlank()) append(" — ").append(loc)
-    p.province?.ifBlank { null }?.let { append(" (").append(it).append(")") }
+    val loc = listOfNotNull(p.postalCode?.trim()?.ifBlank { null }, townName?.ifBlank { null }).joinToString(" ")
+    if (loc.isNotBlank()) { if (isNotEmpty()) append(", "); append(loc) }
+    (p.province?.ifBlank { null } ?: "León").let { if (isNotEmpty()) append(" (").append(it).append(")") }
     p.directions?.trim()?.ifBlank { null }?.let { append(". ").append(it) }
 }.trim().ifBlank { p.address.orEmpty() }

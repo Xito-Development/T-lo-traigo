@@ -2,6 +2,10 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.17] - 2026-10-17
+### Corregido
+- Dirección de entrega: se corrigen los códigos postales de los pueblos (eran incorrectos), la dirección siempre incluye el pueblo y se avisa si el código postal no coincide.
+
 ## [0.6.16] - 2026-10-17
 ### Añadido
 - Saludos que cambian según la hora, el día y la época del año, y tu papel en la app (cliente, repartidor…) debajo del saludo.

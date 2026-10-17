@@ -229,7 +229,8 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onBack: (() -> Uni
     val steps = listOf("Tus datos", "Pueblo", "Calle", "Piso e indicaciones", "Revisar")
     val valid = when (step) {
         0 -> name.isNotBlank() && phone.filter(Char::isDigit).length >= 9
-        1 -> town != null && (cp.isBlank() || Regex("^[0-9]{5}$").matches(cp))
+        1 -> town != null && (cp.isBlank() || Regex("^[0-9]{5}$").matches(cp)) &&
+            towns.firstOrNull { it.id == town }?.postalCode.let { tc -> tc == null || cp.isBlank() || cp == tc }
         2 -> street.isNotBlank() && number.isNotBlank()
         else -> true
     }
@@ -260,6 +261,11 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onBack: (() -> Uni
                         field(cp, { v -> cp = v.filter(Char::isDigit).take(5)
                             if (cp.length == 5) towns.firstOrNull { it.postalCode == cp }?.let { town = it.id } }, "Código postal", KeyboardType.Number,
                             ph = "Al escribirlo elegimos tu pueblo")
+                        val townCp = towns.firstOrNull { it.id == town }?.postalCode
+                        if (cp.length == 5 && townCp != null && cp != townCp) Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("El código postal de ${townName.orEmpty()} es $townCp.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            TextButton({ cp = townCp }) { Text("Usar $townCp") } }
+                        else if (cp.length == 5 && !cp.startsWith("24")) Text("Ese código no es de la provincia de León.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                         field(province, { province = it }, "Provincia", cap = KeyboardCapitalization.Words)
                     }
                     2 -> {
@@ -292,12 +298,12 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onBack: (() -> Uni
             else BigButton(cta, {
                 scope.launch {
                     busy = true; err = null
-                    try { Locator.repo.saveAddress(draft, name, phone); vm.refreshProfile(); step = 0; onSaved() } catch (e: ApiException) { err = e.message }
+                    try { Locator.repo.saveAddress(draft, name, phone, townName); vm.refreshProfile(); step = 0; onSaved() } catch (e: ApiException) { err = e.message }
                     busy = false
                 }
             }, Modifier.weight(1f), loading = busy, icon = Icons.Filled.Save)
         }
-        if (!valid && step < steps.lastIndex) Text(when (step) { 0 -> "Pon tu nombre y un teléfono de 9 cifras."; 1 -> "Elige tu pueblo (el código postal es opcional)."
+        if (!valid && step < steps.lastIndex) Text(when (step) { 0 -> "Pon tu nombre y un teléfono de 9 cifras."; 1 -> "Elige tu pueblo y revisa el código postal."
             else -> "Escribe la calle y el número (o «s/n»)." }, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -1,5 +1,1 @@
-• Saludos que cambian según la hora, el día y la época del año, y tu papel en la app (cliente, repartidor…) debajo del saludo.
-• Al crear la cuenta: comprobación en directo del correo, el teléfono y la contraseña (8 caracteres con letras y números), repetir la contraseña y consejos.
-• Los pueblos de cada repartidor los asigna su entidad; en la candidatura el repartidor solo indica dónde vive.
-• Buscador más accesible (etiqueta para lectores de pantalla y tecla «Buscar»).
-• Bi
+• Dirección de entrega: se corrigen los códigos postales de los pueblos (eran incorrectos), la dirección siempre incluye el pueblo y se avisa si el código postal no coincide.
