@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.15] - 2026-10-17
+### Corregido
+- Mejoras de seguridad y estabilidad.
+- Web: las tablas de las páginas legales ya no se salen de la pantalla en el móvil.
+
 ## [0.6.14] - 2026-10-17
 ### Añadido
 - «Novedades de la versión»: tras actualizar, la app muestra una vez lo que trae la versión nueva.
