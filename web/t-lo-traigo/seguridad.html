@@ -1,0 +1,29 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condiciones de uso: T lo traigo</title><meta name="theme-color" content="#2E6B57"><link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>@font-face{font-family:"Atkinson Hyperlegible";src:url(fonts/atkinson-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Atkinson Hyperlegible";src:url(fonts/atkinson-700.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"Baloo 2";src:url(fonts/baloo2-800.woff2) format("woff2");font-weight:800}
+body{font:1.08rem/1.65 "Atkinson Hyperlegible",system-ui,sans-serif;color:#1C2624;background:#F3F7F4;margin:0}
+main{max-width:780px;margin:0 auto;padding:2rem 1.25rem 4rem} h1,h2{font-family:"Baloo 2",sans-serif;color:#1F4D3F;line-height:1.1}
+h1{font-size:2.4rem} h2{margin-top:2rem;font-size:1.45rem} a{color:#2E6B57} .todo{background:#FFF1C7;padding:0 .3rem;border-radius:4px}
+.box{background:#fff;border:2px solid #D5E0DA;border-radius:16px;padding:1rem 1.2rem} li{margin:.3rem 0}
+nav{display:flex;gap:1rem;flex-wrap:wrap;font-weight:700}html[data-theme="dark"] body{background:#101715;color:#E3EBE7} html[data-theme="dark"] h1,html[data-theme="dark"] h2{color:#9ED8BE}
+html[data-theme="dark"] a{color:#8FD3B6} html[data-theme="dark"] .box{background:#1C2723;border-color:#2B3A35} html[data-theme="dark"] td,html[data-theme="dark"] th{border-color:#2B3A35}
+html[data-theme="dark"] .todo{background:#5C4100;color:#FFDE9E} html[data-theme="dark"] img[src="wordmark.svg"]{content:url(wordmark-claro.svg)}
+</style><script>(function(){try{var t=localStorage.getItem('tlt_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script></head><body><main>
+<p><a href="./"><img src="wordmark.svg" alt="T lo traigo" style="height:42px"></a></p>
+<h1>Seguridad de la app</h1>
+<p>Cada versión de T lo traigo se analiza automáticamente con <strong>VirusTotal</strong>, que la revisa con más de 60 antivirus. Así puedes comprobar que el archivo que descargas es seguro.</p>
+<p><a id="vt" href="https://www.virustotal.com/gui/file/0c486efcef467d09d8bc15227ebe198504f38eb602b58a293ab609ccb6fdf9d9" style="display:inline-block;background:#F2B544;color:#1B2428;padding:.8rem 1.4rem;border-radius:14px;font-weight:700;text-decoration:none">Ver el informe de la última versión</a></p>
+<p id="info" style="color:#5D6B67"></p>
+<h2>Cómo comprobarlo tú</h2><ol><li>Descarga la app desde esta web o desde GitHub.</li><li>En el informe de VirusTotal, la huella <strong>SHA-256</strong> debe coincidir con la de las notas de la versión.</li></ol>
+<script>
+fetch('https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/latest').then(function (r) { return r.json(); }).then(function (rel) {
+  var m = /virustotal\.com\/gui\/file\/([a-f0-9]{64})/.exec(rel.body || '');
+  if (m) document.getElementById('vt').href = 'https://www.virustotal.com/gui/file/' + m[1];
+  document.getElementById('info').textContent = 'Última versión: ' + rel.tag_name.replace(/^v/, '') + (m ? ' · SHA-256: ' + m[1] : '');
+}).catch(function () {});
+</script><p style="margin-top:3rem"><nav><a href="aviso-legal.html">Aviso legal</a><a href="condiciones.html">Condiciones de uso</a><a href="repartidores.html">Repartidores</a><a href="privacidad.html">Privacidad</a></nav></p>
+<p style="font-size:.9rem;color:#4F5D59">© 2026 UNOCEROBITS y Xito Development. Este texto es una base de trabajo y debe revisarlo un abogado antes del lanzamiento.</p></main></body></html>

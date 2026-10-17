@@ -13,6 +13,9 @@
     notify: (t, b) => A.notify(t, b), trayStatus: () => {}, open: url => A.open(url), version: async () => A.version(),
   };
   document.documentElement.classList.add('android');
+  const fitViewport = () => { const m = document.querySelector('meta[name=viewport]'); const w = screen.width || innerWidth;
+    if (m) m.setAttribute('content', w > 760 ? 'width=740, viewport-fit=cover, user-scalable=no' : 'width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no'); };
+  fitViewport(); addEventListener('orientationchange', () => setTimeout(fitViewport, 200));
   // Botón atrás de Android: cierra ventanas abiertas o vuelve al resumen
   window.__tltBack = () => {
     const m = document.querySelector('.modal.open'); if (m) { m.classList.remove('open'); return true; }

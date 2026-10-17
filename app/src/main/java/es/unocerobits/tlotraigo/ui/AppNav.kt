@@ -125,6 +125,20 @@ fun AppNav(vm: AppViewModel) {
             }
         }
     }
+    // «Novedades»: tras actualizar, una vez, lo que trae la versión nueva
+    val ctxN = androidx.compose.ui.platform.LocalContext.current
+    var novedades by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(boot) {
+        if (boot != Boot.Client && boot != Boot.Driver) return@LaunchedEffect
+        val prefs = ctxN.getSharedPreferences("app", android.content.Context.MODE_PRIVATE)
+        val seen = prefs.getString("version_vista", null); val now = es.unocerobits.tlotraigo.BuildConfig.VERSION_NAME
+        if (seen != now) { prefs.edit().putString("version_vista", now).apply()
+            if (seen != null) novedades = es.unocerobits.tlotraigo.data.Updater.notesFor(now) }
+    }
+    novedades?.let { n -> AlertDialog(onDismissRequest = { novedades = null }, icon = { Text("✨", style = MaterialTheme.typography.headlineMedium) },
+        title = { Text("Novedades de la versión ${es.unocerobits.tlotraigo.BuildConfig.VERSION_NAME}") },
+        text = { Text(n, Modifier.verticalScroll(rememberScrollState()), style = MaterialTheme.typography.bodyMedium) },
+        confirmButton = { Button({ novedades = null }) { Text("¡Genial!") } }) }
     CelebrationOverlay(celebration) { celebration = null }
     }
     }

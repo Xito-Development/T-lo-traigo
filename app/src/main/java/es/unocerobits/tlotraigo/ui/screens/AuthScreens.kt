@@ -120,7 +120,7 @@ fun LoginScreen(vm: AppViewModel, onRegister: () -> Unit, onVerify: (email: Stri
             }
         }, Modifier.align(Alignment.CenterHorizontally)) { Text("He olvidado mi contraseña") }
         if (es.unocerobits.tlotraigo.data.Passkeys.supported) {
-            val act = androidx.compose.ui.platform.LocalContext.current as android.app.Activity
+            val act = androidx.compose.ui.platform.LocalContext.current.findActivity() ?: return@Column
             Spacer(Modifier.height(4.dp))
             OutlinedButton({ scope.launch {
                 busy = true; err = null
@@ -186,7 +186,7 @@ fun RegisterScreen(vm: AppViewModel, onBack: () -> Unit, onVerify: (email: Strin
 
 /** Datos y dirección de entrega paso a paso: nombre → pueblo (CP y provincia) → calle y número → piso e indicaciones → revisar. */
 @Composable
-fun ProfileForm(vm: AppViewModel, title: String, cta: String, onSaved: () -> Unit) {
+fun ProfileForm(vm: AppViewModel, title: String, cta: String, onBack: (() -> Unit)? = null, onSaved: () -> Unit) {
     val p by vm.profile.collectAsState()
     val towns by vm.towns.collectAsState()
     var step by rememberSaveable { mutableIntStateOf(0) }
@@ -227,7 +227,9 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onSaved: () -> Uni
         if (title.isNotEmpty()) Text(title, style = MaterialTheme.typography.headlineMedium)
         Text("Paso ${step + 1} de ${steps.size}: ${steps[step]}", Modifier.padding(top = 4.dp), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
         LinearProgressIndicator({ (step + 1f) / steps.size }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
-        AnimatedContent(step, transitionSpec = { (slideInHorizontally { it / 4 } + fadeIn()) togetherWith fadeOut() }, label = "addr") { st ->
+        androidx.activity.compose.BackHandler(step > 0 || onBack != null) { if (step > 0) step-- else onBack?.invoke() }   // atrás del sistema = paso anterior
+        AnimatedContent(step, transitionSpec = { (slideInHorizontally { (if (targetState > initialState) 1 else -1) * it / 4 } + fadeIn(tween(220))) togetherWith ExitTransition.None },
+            label = "addr") { st ->
             Column {
                 when (st) {
                     0 -> {
@@ -269,27 +271,32 @@ fun ProfileForm(vm: AppViewModel, title: String, cta: String, onSaved: () -> Uni
         }
         ErrorText(err)
         Spacer(Modifier.height(16.dp))
-        if (step < steps.lastIndex) BigButton("Siguiente", { step++ }, enabled = valid, icon = Icons.Filled.ArrowForward)
-        else BigButton(cta, {
-            scope.launch {
-                busy = true; err = null
-                try { Locator.repo.saveAddress(draft, name, phone); vm.refreshProfile(); step = 0; onSaved() } catch (e: ApiException) { err = e.message }
-                busy = false
-            }
-        }, loading = busy, icon = Icons.Filled.Save)
-        if (step > 0) TextButton({ step-- }, Modifier.align(Alignment.CenterHorizontally)) { Text("Atrás") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (step > 0 || onBack != null) OutlinedButton({ if (step > 0) step-- else onBack?.invoke() }, Modifier.heightIn(min = 56.dp), shape = MaterialTheme.shapes.medium) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, null); Spacer(Modifier.width(4.dp)); Text("Atrás") }
+            if (step < steps.lastIndex) BigButton("Siguiente", { step++ }, Modifier.weight(1f), enabled = valid, icon = Icons.Filled.ArrowForward)
+            else BigButton(cta, {
+                scope.launch {
+                    busy = true; err = null
+                    try { Locator.repo.saveAddress(draft, name, phone); vm.refreshProfile(); step = 0; onSaved() } catch (e: ApiException) { err = e.message }
+                    busy = false
+                }
+            }, Modifier.weight(1f), loading = busy, icon = Icons.Filled.Save)
+        }
+        if (!valid && step < steps.lastIndex) Text(when (step) { 0 -> "Pon tu nombre y un teléfono de 9 cifras."; 1 -> "Elige tu pueblo (el código postal es opcional)."
+            else -> "Escribe la calle y el número (o «s/n»)." }, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 fun OnboardingScreen(vm: AppViewModel) {
     Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(24.dp)) {
-        Spacer(Modifier.height(16.dp))
-        Text("Un último paso", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Un último paso", Modifier.weight(1f), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+            TextButton({ vm.logout() }) { Text("Salir") }
+        }
         val driver = vm.profile.collectAsState().value?.isDriver == true
         ProfileForm(vm, if (driver) "¿Dónde vives y repartes?" else "¿Dónde te llevamos la compra?", "Guardar y continuar") { vm.start() }
-        Spacer(Modifier.height(12.dp))
-        TextButton({ vm.logout() }, Modifier.align(Alignment.CenterHorizontally)) { Text("Salir") }
     }
 }
 

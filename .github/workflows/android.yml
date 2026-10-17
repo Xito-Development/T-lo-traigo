@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 30
     env:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      VT_API_KEY: ${{ secrets.VT_API_KEY }}
       PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
       VERSION_CODE: ${{ github.run_number }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
@@ -78,8 +79,9 @@ jobs:
           # Nombre fijo: la web y la app descargan siempre .../releases/latest/download/TLoTraigo.apk
           cp app/build/outputs/apk/github/release/app-github-release.apk "dist/TLoTraigo.apk"
           cp app/build/outputs/bundle/playRelease/app-play-release.aab "dist/TLoTraigo-${VERSION_NAME}.aab"
-          # Panel de control para Android (superadministrador): nombre fijo para .../releases/latest/download/TLoTraigo-Control.apk
-          cp control/build/outputs/apk/release/control-release.apk "dist/TLoTraigo-Control.apk"
+          # Herramienta interna: va en su propia pre-release «panel-vX.Y.Z», no en la versión pública
+          mkdir -p dist-panel
+          cp control/build/outputs/apk/release/control-release.apk "dist-panel/TLoTraigo-Control.apk"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -91,8 +93,10 @@ jobs:
         if: steps.v.outputs.release == 'true'
         run: |
           V="${{ steps.v.outputs.version }}"
-          awk -v v="$V" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > dist/NOTES.md
-          [ -s dist/NOTES.md ] || echo "Versión $V" > dist/NOTES.md
+          awk -v v="$V" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md \
+            | awk 'tolower($0) ~ /^### *interno/ {skip=1; next} /^### / {skip=0} !skip' > dist/NOTES.md   # nunca se publica la sección «Interno»
+          [ -s dist/NOTES.md ] || echo "Mejoras y correcciones." > dist/NOTES.md
+          printf '\n---\n**Descarga:** `TLoTraigo.apk` (Android 5.0 o superior). Si ya tienes la app, se actualiza sola.\n' >> dist/NOTES.md
 
       - name: Publicar Release (crea el tag si no existe)
         if: steps.v.outputs.release == 'true'
@@ -106,7 +110,32 @@ jobs:
             dist/*.apk
             dist/*.aab
           prerelease: ${{ contains(steps.v.outputs.version, '-') }}
-          make_latest: true
+          make_latest: ${{ !contains(steps.v.outputs.version, '-') }}
+
+      - name: Análisis de VirusTotal (enlace y huella en las notas)
+        if: steps.v.outputs.release == 'true' && env.VT_API_KEY != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          SHA=$(sha256sum dist/TLoTraigo.apk | cut -d' ' -f1)
+          curl -s -o /dev/null -w "VirusTotal: %{http_code}\n" --request POST --url https://www.virustotal.com/api/v3/files \
+            --header "x-apikey: $VT_API_KEY" --form file=@dist/TLoTraigo.apk || true
+          gh release view "v$V" --json body -q .body > body.md
+          printf '\n🛡️ **Análisis de seguridad:** [VirusTotal](https://www.virustotal.com/gui/file/%s) · SHA-256 `%s`\n' "$SHA" "$SHA" >> body.md
+          gh release edit "v$V" --notes-file body.md
+
+      - name: Publicar herramienta interna (pre-release)
+        if: steps.v.outputs.release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: panel-v${{ steps.v.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: Herramienta interna ${{ steps.v.outputs.version }}
+          body: Uso interno del equipo. No es necesaria para usar T lo traigo.
+          files: dist-panel/*.apk
+          prerelease: true
+          make_latest: false
 
       - name: Subir a Google Play (pruebas internas)
         if: steps.v.outputs.release == 'true' && env.PLAY_JSON != '' && env.KEYSTORE_BASE64 != ''

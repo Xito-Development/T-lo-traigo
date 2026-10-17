@@ -1,5 +1,5 @@
-• Tamaño de letra «Pequeña».
-• Dictado nuevo con animación (ondas y barras que siguen la voz y texto en directo) y que entiende el habla natural: «quiero dos litros de leche, también un par de barras y luego unas manzanas», «…no, mejor 3», «kilo y medio».
-• Lista fácil: 44 iconos nuevos y mantener pulsado un artículo para cambiar su icono.
-• Compras recurrentes: cada lista puede repetirse ciertos días; ese día aparece un aviso para añadirla a la cesta con un toque.
-• Direccio
+• «Novedades de la versión»: tras actualizar, la app muestra una vez lo que trae la versión nueva.
+• Cada versión se analiza con VirusTotal; el enlace al informe está en la web y en las notas.
+• El logo del arranque se quedaba aplastado de los lados.
+• La app podía cerrarse al abrir Ajustes → Cuenta en Android 9 o superior.
+• Dirección paso a paso: ya no se ven dos pasos a la vez al avanzar, «Atrás» y «Siguiente» van juntos, el botón atrás del móvil vuelve al paso anterior y 

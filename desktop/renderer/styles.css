@@ -12,7 +12,7 @@ h1,h2,h3{font-family:"Baloo","Atkinson",sans-serif;font-weight:800;line-height:1
 button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 
 /* Barra de título propia */
-#titlebar{position:fixed;inset:0 0 auto 0;height:38px;display:flex;align-items:center;z-index:50;background:var(--deep);color:#fff;-webkit-app-region:drag;user-select:none}
+#titlebar{position:fixed;top:0;right:0;bottom:auto;left:0;height:38px;display:flex;align-items:center;z-index:50;background:var(--deep);color:#fff;-webkit-app-region:drag;user-select:none}
 .tb-brand{display:flex;align-items:center;gap:8px;padding-left:12px;font-size:13px}.tb-brand img{width:20px;height:20px}
 .tb-brand b{color:var(--mustard)}
 .tb-drag{flex:1}
@@ -23,7 +23,7 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 .tb-btn{-webkit-app-region:no-drag;width:46px;height:38px;font-family:"Segoe MDL2 Assets","Segoe Fluent Icons";font-size:10px;color:#fff;transition:background .2s}
 .tb-btn:hover{background:rgba(255,255,255,.12)}.tb-btn.close:hover{background:#C42B1C}
 
-.screen{position:fixed;inset:38px 0 0 0;display:none;opacity:0}
+.screen{position:fixed;top:38px;right:0;bottom:0;left:0;display:none;opacity:0}
 .screen.show{display:flex;animation:screenIn .6s var(--ease) forwards}
 @keyframes screenIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
 
@@ -52,7 +52,7 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 .wz-card{width:min(620px,92vw);background:var(--card);border-radius:24px;padding:34px 40px 36px;box-shadow:0 40px 80px -30px rgba(0,0,0,.6);position:relative;overflow:hidden}
 .wz-steps{display:flex;list-style:none;padding:0;gap:6px;margin-bottom:26px;counter-reset:s}
 .wz-steps li{flex:1;font-size:12px;color:var(--muted);counter-increment:s;position:relative;padding-top:12px}
-.wz-steps li::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;border-radius:5px;background:var(--line);transition:background .5s var(--ease)}
+.wz-steps li::before{content:"";position:absolute;top:0;right:0;bottom:auto;left:0;height:5px;border-radius:5px;background:var(--line);transition:background .5s var(--ease)}
 .wz-steps li.on{color:var(--pine);font-weight:700}.wz-steps li.on::before,.wz-steps li.done::before{background:var(--pine)}
 .wz-page{display:none}.wz-page.on{display:block;animation:pageIn .5s var(--ease)}
 @keyframes pageIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
@@ -139,7 +139,7 @@ tr:last-child td{border-bottom:0}tbody tr{opacity:0;animation:cardIn .4s var(--e
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition:none!important}}
 
 /* ===== v1.1: modales, paleta de búsqueda, anillo de actualización, historial de servicios ===== */
-.modal{position:fixed;inset:38px 0 0 0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(10,20,17,.55);backdrop-filter:blur(4px)}
+.modal{position:fixed;top:38px;right:0;bottom:0;left:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(10,20,17,.55);backdrop-filter:blur(4px)}
 .modal.open{display:flex;animation:fadeIn .25s var(--ease)}@keyframes fadeIn{from{opacity:0}}
 .modal-card,.pal-card{background:var(--card);border-radius:20px;padding:24px 26px;width:min(560px,92vw);max-height:80vh;overflow:auto;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);animation:pop .4s var(--spring)}
 .modal-card h2{font-size:24px;margin-bottom:10px}.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
@@ -172,8 +172,8 @@ body.dark .status{color:var(--leaf)}
 
 /* ===== Android (y ventanas estrechas): misma estética, navegación abajo ===== */
 html.android #titlebar{display:none}
-html.android .screen{inset:0;padding-top:env(safe-area-inset-top)}
-html.android .modal{inset:0}
+html.android .screen{top:0;right:0;bottom:0;left:0;padding-top:env(safe-area-inset-top)}
+html.android .modal{top:0;right:0;bottom:0;left:0}
 html.android .upd{left:12px;right:12px;top:12px}
 @media (max-width: 760px){
   #app{flex-direction:column}

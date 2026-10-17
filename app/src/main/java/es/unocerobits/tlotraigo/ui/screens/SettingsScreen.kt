@@ -119,7 +119,7 @@ fun SettingsScreen(vm: AppViewModel, showFamily: Boolean = true, onDebug: (() ->
                 Text("Vigila servicios, pedidos, errores y entidades desde el móvil o el ordenador.", style = MaterialTheme.typography.bodySmall,
                     color = androidx.compose.ui.graphics.Color(0xFFE4F1EA), modifier = Modifier.padding(vertical = 6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button({ ctx.openUrl("https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo-Control.apk") },
+                    Button({ ctx.openUrl("https://github.com/Xito-Development/T-lo-traigo/releases/download/panel-v${BuildConfig.VERSION_NAME.substringBefore('-')}/TLoTraigo-Control.apk") },
                         colors = ButtonDefaults.buttonColors(androidx.compose.ui.graphics.Color(0xFFF2B544), androidx.compose.ui.graphics.Color(0xFF1B2428))) {
                         Icon(Icons.Filled.PhoneAndroid, null); Spacer(Modifier.width(6.dp)); Text("Android") }
                     OutlinedButton({ ctx.openUrl("https://github.com/Xito-Development/T-lo-traigo/releases?q=desktop&expanded=true") },

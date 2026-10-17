@@ -62,7 +62,7 @@ fun OnboardingWizard(vm: AppViewModel) {
     Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(24.dp)) {
         Wordmark(width = 170.dp)
         LinearProgressIndicator({ (step + 1f) / total }, Modifier.fillMaxWidth().padding(vertical = 16.dp))
-        AnimatedContent(step, transitionSpec = { (slideInHorizontally { it / 3 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 3 } + fadeOut()) }, label = "ob") { st ->
+        AnimatedContent(step, transitionSpec = { (slideInHorizontally { (if (targetState > initialState) 1 else -1) * it / 3 } + fadeIn(androidx.compose.animation.core.tween(220))) togetherWith ExitTransition.None }, label = "ob") { st ->
             Column {
                 when (st) {
                     0 -> {
@@ -105,7 +105,8 @@ fun OnboardingWizard(vm: AppViewModel) {
                         BigButton("No, gracias", { Analytics.consent = false; scope.launch { runCatching { Locator.repo.saveUsage(usage, false) } }; step = 3 }, tonal = true)
                     }
                     3 -> {
-                        ProfileForm(vm, if (driver) "¿Dónde vives y repartes?" else if (usage == "familiar") "Tus datos" else "¿Dónde te llevamos la compra?", "Guardar y continuar") {
+                        ProfileForm(vm, if (driver) "¿Dónde vives y repartes?" else if (usage == "familiar") "Tus datos" else "¿Dónde te llevamos la compra?", "Guardar y continuar",
+                            onBack = if (driver) null else ({ step = 2 })) {
                             if (usage == "propio" || driver) vm.start() else step = 4
                         }
                         if (usage == "familiar") Text("Después podrás vincular a tu familiar para pedir a su casa.", Modifier.padding(top = 8.dp),
@@ -115,7 +116,7 @@ fun OnboardingWizard(vm: AppViewModel) {
                 }
             }
         }
-        if (step > 0 && !(driver && step == 1)) TextButton({ step -= 1 }, Modifier.align(Alignment.CenterHorizontally)) { Text("Atrás") }
+        if (step > 0 && step != 3 && !(driver && step == 1)) TextButton({ step -= 1 }, Modifier.align(Alignment.CenterHorizontally)) { Text("Atrás") }
     }
 }
 

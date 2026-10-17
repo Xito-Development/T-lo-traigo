@@ -105,7 +105,7 @@ fun AccountScreen(vm: AppViewModel, onBack: () -> Unit) {
 
             // Passkeys: entrar con la huella, la cara o el PIN
             if (es.unocerobits.tlotraigo.data.Passkeys.supported) Section("Passkeys", Icons.Filled.Fingerprint) {
-                val act = ctx as android.app.Activity
+                val act = ctx.findActivity() ?: return@Section
                 var keys by remember { mutableStateOf<List<es.unocerobits.tlotraigo.data.Passkey>?>(null) }
                 var err by remember { mutableStateOf<String?>(null) }; var busy by remember { mutableStateOf(false) }
                 var reload by remember { mutableIntStateOf(0) }

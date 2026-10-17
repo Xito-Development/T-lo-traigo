@@ -1,0 +1,11 @@
+name: 💡 Idea o mejora
+description: Propón algo que haría la app más útil
+labels: [mejora]
+body:
+  - type: textarea
+    id: idea
+    attributes: { label: ¿Qué te gustaría?, description: Cuéntalo con un ejemplo. }
+    validations: { required: true }
+  - type: textarea
+    id: porque
+    attributes: { label: ¿A quién ayudaría y por qué? }

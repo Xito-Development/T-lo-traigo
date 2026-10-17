@@ -63,7 +63,7 @@ fun AnimatedSplash(onDone: () -> Unit) {
                 }
                 drawCircle(Color.White.copy(alpha = 0.08f), size.minDimension * 0.42f, c)
                 val dy = drop.value * size.height * 0.9f
-                val squash = 1f + (if (drop.value > -0.05f) (0.05f - kotlin.math.abs(drop.value)).coerceAtLeast(0f) * 2f else 0f)
+                val squash = if (drop.isRunning && drop.value > -0.05f) 1f + (0.05f - kotlin.math.abs(drop.value)).coerceAtLeast(0f) * 2f else 1f
                 fun pt(x: Float, y: Float) = Offset(c.x + (x - 56f) * u, c.y + (y - 62f) * u + dy)
                 // Estela de reparto
                 for (i in 0..2) {

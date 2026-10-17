@@ -2,6 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.14] - 2026-10-17
+### Añadido
+- «Novedades de la versión»: tras actualizar, la app muestra una vez lo que trae la versión nueva.
+- Cada versión se analiza con VirusTotal; el enlace al informe está en la web y en las notas.
+### Corregido
+- El logo del arranque se quedaba aplastado de los lados.
+- La app podía cerrarse al abrir Ajustes → Cuenta en Android 9 o superior.
+- Dirección paso a paso: ya no se ven dos pasos a la vez al avanzar, «Atrás» y «Siguiente» van juntos, el botón atrás del móvil vuelve al paso anterior y no se repite el botón «Atrás».
+
 ## [0.6.13] - 2026-10-16
 ### Añadido
 - Tamaño de letra «Pequeña».

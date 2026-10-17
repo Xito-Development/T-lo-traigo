@@ -47,10 +47,18 @@ object Updater {
                 val rel = json.decodeFromString<GhRelease>(r.body?.string().orEmpty())
                 val v = rel.tag.removePrefix("v")
                 val apk = rel.assets.firstOrNull { it.name == "TLoTraigo.apk" } ?: rel.assets.firstOrNull { it.name.endsWith(".apk") }
-                val ctl = rel.assets.firstOrNull { it.name == "TLoTraigo-Control.apk" }
-                if (apk != null && isNewer(v, current)) UpdateInfo(v, cleanNotes(rel.body), apk.url, apk.size, ctl?.url, ctl?.size ?: 0) else null
+                // La herramienta interna va en su propia pre-release «panel-vX.Y.Z»
+                val ctl = "https://github.com/Xito-Development/T-lo-traigo/releases/download/panel-v$v/TLoTraigo-Control.apk"
+                if (apk != null && isNewer(v, current)) UpdateInfo(v, cleanNotes(rel.body), apk.url, apk.size, ctl, 0) else null
             }
         } catch (e: IOException) { null }
+    }
+
+    /** Notas de una versión publicada (para «Novedades» tras actualizar). Vale también para la versión de Google Play. */
+    suspend fun notesFor(version: String): String? = withContext(Dispatchers.IO) {
+        val url = "https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/tags/v${version.substringBefore('-')}"
+        runCatching { http.newCall(Request.Builder().url(url).header("Accept", "application/vnd.github+json").header("User-Agent", "TLoTraigo-Android").build()).execute().use { r ->
+            if (!r.isSuccessful) null else cleanNotes(json.decodeFromString<GhRelease>(r.body?.string().orEmpty()).body).ifBlank { null } } }.getOrNull()
     }
 
     /** 0.4.1 > 0.4.0; una versión de desarrollo (0.4.1-dev.7) es anterior a su versión final (0.4.1). */
@@ -61,7 +69,7 @@ object Updater {
         return local.contains('-') && !remote.contains('-')
     }
 
-    private fun cleanNotes(md: String?): String = md.orEmpty().lines()
+    private fun cleanNotes(md: String?): String = md.orEmpty().lines().takeWhile { it.trim() != "---" }
         .map { it.trim().removePrefix("###").removePrefix("##").removePrefix("#").trim().removePrefix("- ").let { l -> if (l.isEmpty()) l else l } }
         .filter { it.isNotBlank() }.take(14).joinToString("\n") { if (it in listOf("Añadido", "Cambiado", "Corregido")) "\n$it" else "• $it" }.trim()
 

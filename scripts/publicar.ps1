@@ -80,7 +80,11 @@ if (-not $SoloSubir) {
   # Notas: CAMBIOS_PENDIENTES.md (lo rellena Claude) y/o tu mensaje
   $pend = ''
   if (Test-Path CAMBIOS_PENDIENTES.md) {
-    $pend = ((Get-Content CAMBIOS_PENDIENTES.md -Raw -Encoding utf8) -split "`n" | Where-Object { $_ -match '^\s*(###|- )' }) -join "`n"
+    $skip = $false
+    $pend = ((Get-Content CAMBIOS_PENDIENTES.md -Raw -Encoding utf8) -split "`n" | Where-Object {
+      if ($_ -match '^\s*###\s*Interno') { $skip = $true; return $false }
+      if ($_ -match '^\s*###') { $skip = $false }
+      (-not $skip) -and ($_ -match '^\s*(###|- )') }) -join "`n"
   }
   if ($Auto -and -not $Mensaje -and -not $pend) { $Mensaje = 'Mejoras y correcciones.' }
   if (-not $Mensaje -and -not $pend) { $Mensaje = Read-Host "¿Qué ha cambiado en la versión $nueva? (una frase)" }

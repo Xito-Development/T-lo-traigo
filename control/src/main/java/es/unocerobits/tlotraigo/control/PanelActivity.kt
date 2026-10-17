@@ -54,6 +54,14 @@ class PanelActivity : Activity() {
             settings.domStorageEnabled = true
             settings.allowFileAccess = false
             settings.allowContentAccess = false
+            // Misma vista en todos los móviles: sin ampliar el texto con el tamaño de letra del sistema (rompía la maquetación)
+            // y respetando la etiqueta viewport de la página
+            settings.textZoom = 100
+            settings.useWideViewPort = true
+            settings.loadWithOverviewMode = true
+            settings.setSupportZoom(false)
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+            isVerticalScrollBarEnabled = false
             setBackgroundColor(0xFF1F4D3F.toInt())
             addJavascriptInterface(Bridge(this@PanelActivity, this), "AndroidTLT")
             webViewClient = object : WebViewClient() {
@@ -76,8 +84,8 @@ class PanelActivity : Activity() {
             val rel = http.newCall(Request.Builder().url("https://api.github.com/repos/Xito-Development/T-lo-traigo/releases/latest")
                 .header("User-Agent", "TLoTraigo-Control").build()).execute().use { JSONObject(it.body!!.string()) }
             val tag = rel.getString("tag_name").removePrefix("v")
-            val assets = rel.getJSONArray("assets")
-            val url = (0 until assets.length()).map { assets.getJSONObject(it) }.firstOrNull { it.getString("name") == "TLoTraigo-Control.apk" }?.getString("browser_download_url") ?: return@runCatching
+            // La herramienta va en una pre-release propia con el mismo número de versión que la app
+            val url = "https://github.com/Xito-Development/T-lo-traigo/releases/download/panel-v$tag/TLoTraigo-Control.apk"
             val cur = packageManager.getPackageInfo(packageName, 0).versionName ?: "0"
             if (!newer(tag, cur)) return@runCatching
             runOnUiThread {

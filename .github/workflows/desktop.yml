@@ -38,7 +38,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: desktop-v${{ steps.v.outputs.version }}
-          name: T lo traigo Control ${{ steps.v.outputs.version }} (Windows)
-          body: Panel de control para el superadministrador. Descarga el instalador .exe y ábrelo.
+          name: Herramienta interna para Windows ${{ steps.v.outputs.version }}
+          body: Uso interno del equipo. No es necesaria para usar T lo traigo.
+          prerelease: true
           make_latest: false
           files: desktop/dist/*.exe

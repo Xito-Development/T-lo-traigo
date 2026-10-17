@@ -1,7 +1,7 @@
 # Claude Code en GitHub: escribe «@claude …» en una incidencia (issue) o en un PR y Claude trabaja en el repositorio
 # (lee CLAUDE.md para el contexto del proyecto) y abre un PR con los cambios.
 # Requisitos: instalar la app de GitHub de Claude en el repositorio y añadir el secreto ANTHROPIC_API_KEY
-# (o CLAUDE_CODE_OAUTH_TOKEN si usas tu suscripción). Ver docs/CLAUDE_CODE.md.
+# (o CLAUDE_CODE_OAUTH_TOKEN si usas tu suscripción). Ver docs/interno/CLAUDE_CODE.md.
 name: Claude Code
 on:
   issue_comment: { types: [created] }

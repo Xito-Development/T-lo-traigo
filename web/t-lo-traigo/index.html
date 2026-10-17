@@ -311,6 +311,8 @@ html{scrollbar-color:var(--pino) transparent;scrollbar-width:thin}
 :root[data-theme="dark"] ::-webkit-scrollbar-track{background:#101715}
 :root[data-theme="dark"] ::-webkit-scrollbar-thumb{border-color:#101715}
 @media (prefers-reduced-motion:reduce){.marquee-track,.btn-main::after,.stats::before,.stats::after{animation:none}}
+.vt{margin-top:.8rem;font-size:.95rem}.vt a{display:inline-flex;align-items:center;gap:.45rem;color:inherit;opacity:.9;text-decoration:none;border-bottom:1px dashed currentColor;padding-bottom:1px}
+.vt a:hover{opacity:1}.vt svg{width:1.15rem;height:1.15rem;fill:var(--hoja)}
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto cuesta para el usuario?", "acceptedAnswer": {"@type": "Answer", "text": "Depende de la entidad de tu pueblo: muchas lo ofrecen gratis y solo pagas lo que marque el ticket del súper. Antes de pedir siempre ves el importe estimado."}}, {"@type": "Question", "name": "¿Cómo se paga la compra?", "acceptedAnswer": {"@type": "Answer", "text": "En efectivo al recibirla o por Bizum desde la app de tu banco, según lo que ofrezca tu entidad. La app no guarda datos bancarios."}}, {"@type": "Question", "name": "¿Y si el precio cambia en el súper?", "acceptedAnswer": {"@type": "Answer", "text": "Los precios son orientativos: el repartidor hace una foto del ticket y pagas el importe real, que ves en la app antes de que salga hacia tu casa."}}, {"@type": "Question", "name": "¿Puede pedir mi hijo o mi hija por mí?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Con el código de seis cifras de tu app, un familiar puede hacer los pedidos desde su móvil y seguirlos."}}, {"@type": "Question", "name": "¿Qué pasa si el pedido no llega?", "acceptedAnswer": {"@type": "Answer", "text": "Desde la app puedes reclamarlo: hay un plazo de 6 horas para entregarlo, y un botón para llamar al 112 si hay una emergencia."}}, {"@type": "Question", "name": "Soy un ayuntamiento o una asociación, ¿cómo empiezo?", "acceptedAnswer": {"@type": "Answer", "text": "Escríbenos a info@unocerobits.com: creamos tu entidad, te enviamos un código y configuras pueblos, repartidores, horarios y formas de pago desde tu panel."}}]}</script>
 </head>
@@ -531,6 +533,8 @@ html{scrollbar-color:var(--pino) transparent;scrollbar-width:thin}
       </div>
       <p class="alt-apk" hidden style="margin-top:1rem"><a id="apkAlt" href="https://github.com/Xito-Development/T-lo-traigo/releases/latest/download/TLoTraigo.apk">¿No tienes Google Play? Descarga el APK desde GitHub</a></p>
       <span id="dlInfo"></span>
+      <p class="vt"><a id="vtLink" href="seguridad.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.9-4.9 1.4 1.4-6.3 6.3z"/></svg>
+        Analizada con VirusTotal · ver el informe de seguridad</a></p>
       <p class="edit-only">Enlace de Google Play (déjalo vacío hasta que esté publicada): <span data-k="config.play_url"></span></p>
     </div>
   </section>
@@ -617,6 +621,9 @@ html{scrollbar-color:var(--pino) transparent;scrollbar-width:thin}
       $$('a.dl').forEach(function (l) { if (!/play\.google/.test(l.href)) { l.href = a.browser_download_url; l.setAttribute('download', ''); } });
       var alt = $('#apkAlt'); if (alt) alt.href = a.browser_download_url;
       var mb = (a.size / 1048576).toFixed(1).replace('.', ',');
+      // Informe de VirusTotal de esta versión (el enlace lo añade la publicación automática a las notas)
+      var vt = /virustotal\.com\/gui\/file\/([a-f0-9]{64})/.exec(rel.body || '');
+      $('#vtLink').href = 'https://www.virustotal.com/gui/file/' + (vt ? vt[1] : '0c486efcef467d09d8bc15227ebe198504f38eb602b58a293ab609ccb6fdf9d9');
       $('#dlInfo').textContent = 'Versión ' + rel.tag_name.replace(/^v/, '') + ' · ' + mb + ' MB · publicada el ' + new Date(rel.published_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     }).catch(function () {});
 

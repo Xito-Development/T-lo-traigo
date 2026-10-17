@@ -276,3 +276,10 @@ fun ActionTile(label: String, icon: androidx.compose.ui.graphics.vector.ImageVec
         }
     }
 }
+
+/** La Activity real aunque estemos dentro de un diálogo (su contexto es un envoltorio). */
+tailrec fun Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
