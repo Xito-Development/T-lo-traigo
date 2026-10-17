@@ -255,7 +255,14 @@ private fun OrgDrivers(o: Organization, v: OrgOverview, onChange: () -> Unit) {
         }
         if (v.drivers.isEmpty()) item { Message(Icons.Filled.DeliveryDining, "Aún no hay repartidores", "Envía el código a los vecinos o al personal que vaya a repartir.") }
         items(v.drivers, key = { it.id }) { d ->
-            ListItem(headlineContent = { Text(d.name) }, supportingContent = { Text((if (d.available) "🟢 Disponible" else "⚪ No disponible") + (d.phone?.let { " · $it" } ?: "")) },
+            var editTowns by remember { mutableStateOf(false) }
+            if (editTowns) DriverTownsDialog(d, v.towns.filter { it.active }, { editTowns = false; onChange() }) { editTowns = false }
+            val tn = v.towns.filter { it.id in d.townIds }.joinToString(", ") { it.name }.ifBlank { "Sin pueblos asignados" }
+            ListItem(headlineContent = { Text(d.name) }, supportingContent = { Column {
+                    Text((if (d.available) "🟢 Disponible" else "⚪ No disponible") + (d.phone?.let { " · $it" } ?: ""))
+                    TextButton({ editTowns = true }, contentPadding = PaddingValues(0.dp)) { Icon(Icons.Filled.Map, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp))
+                        Text(tn, maxLines = 2, color = if (d.townIds.isEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary) }
+                } },
                 trailingContent = { Row(verticalAlignment = Alignment.CenterVertically) {
                     AppSwitch(d.approved, { a -> scope.launch { runCatching { Locator.repo.orgSetDriver(d.id, a) }; onChange() } })
                     IconButton({ scope.launch { runCatching { Locator.repo.orgSetDriver(d.id, false, remove = true) }; onChange() } }) { Icon(Icons.Filled.PersonRemove, "Quitar de la entidad") }
@@ -337,7 +344,7 @@ private fun OrgInvites(o: Organization) {
 private fun OrgSettings(o: Organization, onSaved: () -> Unit) {
     val scope = rememberCoroutineScope()
     val isSuper = LocalIsSuper.current
-    var x by remember(o) { mutableStateOf(o) }
+    var x by remember(o.id) { mutableStateOf(o) }
     var msg by remember { mutableStateOf<String?>(null) }
     @Composable fun sw(t: String, d: String, v: Boolean, set: (Boolean) -> Unit) = Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) { Text(t, style = MaterialTheme.typography.titleMedium); Text(d, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -582,14 +589,14 @@ fun OrgVerification(o: Organization, onChange: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val isSuper = LocalIsSuper.current
-    var form by remember(o) { mutableStateOf(o.legalForm ?: if (o.kind == "ayuntamiento" || o.kind == "diputacion") "administracion" else "asociacion") }
-    var name by remember(o) { mutableStateOf(o.legalName ?: o.name) }
-    var tax by remember(o) { mutableStateOf(o.taxId.orEmpty()) }
-    var addr by remember(o) { mutableStateOf(o.fiscalAddress.orEmpty()) }
-    var rep by remember(o) { mutableStateOf(o.representativeName.orEmpty()) }
-    var repId by remember(o) { mutableStateOf(o.representativeId.orEmpty()) }
-    var repRole by remember(o) { mutableStateOf(o.representativeRole.orEmpty()) }
-    var doc by remember(o) { mutableStateOf(o.docPath) }
+    var form by remember(o.id) { mutableStateOf(o.legalForm ?: if (o.kind == "ayuntamiento" || o.kind == "diputacion") "administracion" else "asociacion") }
+    var name by remember(o.id) { mutableStateOf(o.legalName ?: o.name) }
+    var tax by remember(o.id) { mutableStateOf(o.taxId.orEmpty()) }
+    var addr by remember(o.id) { mutableStateOf(o.fiscalAddress.orEmpty()) }
+    var rep by remember(o.id) { mutableStateOf(o.representativeName.orEmpty()) }
+    var repId by remember(o.id) { mutableStateOf(o.representativeId.orEmpty()) }
+    var repRole by remember(o.id) { mutableStateOf(o.representativeRole.orEmpty()) }
+    var doc by remember(o.id) { mutableStateOf(o.docPath) }
     var msg by remember { mutableStateOf<String?>(null) }
     var note by remember { mutableStateOf("") }
     val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { uri ->
@@ -708,4 +715,23 @@ fun EmailInviteCard(o: Organization) {
             }
         }
     }
+}
+
+/** La entidad decide en qué pueblos reparte cada repartidor. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DriverTownsDialog(d: OrgDriver, towns: List<Town>, onSaved: () -> Unit, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val sel = remember { mutableStateListOf<Long>().apply { addAll(d.townIds) } }
+    var err by remember { mutableStateOf<String?>(null) }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Pueblos de ${d.name}") }, text = { Column {
+        Text("Elige en qué pueblos recibe pedidos.", style = MaterialTheme.typography.bodyMedium)
+        FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            towns.forEach { t -> val on = t.id in sel
+                FilterChip(on, { if (on) sel.remove(t.id) else sel.add(t.id) }, { Text(t.name) }, leadingIcon = if (on) { { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) } } else null) }
+        }
+        TextButton({ sel.clear(); sel.addAll(towns.map { it.id }) }) { Text("Todos") }
+        ErrorText(err)
+    } }, confirmButton = { Button({ scope.launch { try { Locator.repo.orgSetDriverTowns(d.id, sel.toList()); onSaved() } catch (e: ApiException) { err = e.message } } }) { Text("Guardar") } },
+        dismissButton = { TextButton(onDismiss) { Text("Cancelar") } })
 }

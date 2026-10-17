@@ -123,7 +123,7 @@ private fun DriverPending(vm: AppViewModel, onApply: () -> Unit, onAccepted: () 
                 colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Column(Modifier.padding(16.dp)) { DriverApplicationSection(vm) }
             }
-            if (ds?.townIds?.isEmpty() == true) Text("Elige tus pueblos en Ajustes para recibir pedidos.", Modifier.padding(top = 10.dp), color = MaterialTheme.colorScheme.error)
+            if (ds?.approved == true && ds?.townIds?.isEmpty() == true) Text("Tu entidad aún no te ha asignado pueblos: cuando lo haga empezarás a recibir pedidos.", Modifier.padding(top = 10.dp), color = MaterialTheme.colorScheme.error)
         }
         item { ErrorText(err) }
         val list = orders
@@ -347,13 +347,9 @@ private fun DriverSettingsPanel(vm: AppViewModel) {
             AppSwitch(false, null, enabled = false)
         }
         SectionTitle("Pueblos donde repartes")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            towns.forEach { t ->
-                val sel = t.id in s.townIds
-                FilterChip(sel, { save(s.copy(townIds = if (sel) s.townIds - t.id else s.townIds + t.id)) }, { Text(t.name) },
-                    leadingIcon = if (sel) { { Icon(Icons.Filled.Check, null) } } else null)
-            }
-        }
+        Text(towns.filter { it.id in s.townIds }.joinToString(", ") { it.name }.ifBlank { "Aún no tienes pueblos asignados." }, style = MaterialTheme.typography.bodyLarge)
+        Text("Los asigna tu entidad. Si quieres cambiarlos, habla con su responsable.", style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         ErrorText(err)
     }
 }
@@ -494,14 +490,13 @@ fun DriverApplicationSection(vm: AppViewModel) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf("Coche", "Furgoneta", "Moto", "Bicicleta", "A pie").forEach { v -> FilterChip(vehicle == v, { vehicle = v }, { Text(v) }) }
     }
-    Text("Pueblos donde puedes repartir", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp))
-    Text("Solo de un mismo servicio: al elegir el primero, los de otras entidades se desactivan.", style = MaterialTheme.typography.bodySmall,
+    Text("¿En qué pueblo vives?", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp))
+    Text("Tu candidatura irá al servicio de ese pueblo; la entidad decidirá en qué pueblos repartes.", style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant)
-    val chosenOrg = towns.firstOrNull { it.id in sel }?.orgId
+    LaunchedEffect(towns) { if (sel.isEmpty()) vm.profile.value?.townId?.let { h -> if (towns.any { it.id == h }) sel.add(h) } }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         towns.forEach { t -> val on = t.id in sel
-            FilterChip(on, { if (on) sel.remove(t.id) else sel.add(t.id) }, { Text(t.name) }, leadingIcon = if (on) { { Icon(Icons.Filled.Check, null) } } else null,
-                enabled = on || chosenOrg == null || t.orgId == chosenOrg) }
+            FilterChip(on, { sel.clear(); sel.add(t.id) }, { Text(t.name) }, leadingIcon = if (on) { { Icon(Icons.Filled.Check, null) } } else null) }
     }
     OutlinedTextField(availability, { availability = it }, Modifier.fillMaxWidth().padding(top = 10.dp), label = { Text("Disponibilidad (días y horas)") },
         placeholder = { Text("Ej.: lunes a viernes por la mañana") }, shape = MaterialTheme.shapes.medium)

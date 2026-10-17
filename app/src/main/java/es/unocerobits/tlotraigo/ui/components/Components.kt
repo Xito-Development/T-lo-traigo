@@ -1,5 +1,7 @@
 package es.unocerobits.tlotraigo.ui.components
 
+import androidx.compose.ui.semantics.semantics
+
 import androidx.compose.ui.graphics.graphicsLayer
 
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -282,4 +284,23 @@ tailrec fun Context.findActivity(): android.app.Activity? = when (this) {
     is android.app.Activity -> this
     is android.content.ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+/** Contraseña válida para cuentas nuevas: 8 caracteres o más, con letras y números. */
+fun passwordOk(p: String) = p.length >= 8 && p.any { it.isLetter() } && p.any { it.isDigit() }
+
+/** Lista de comprobación de la contraseña que se va marcando mientras se escribe. */
+@Composable
+fun PasswordChecklist(pass: String, repeat: String? = null) {
+    val items = listOfNotNull("Al menos 8 caracteres" to (pass.length >= 8), "Alguna letra" to pass.any { it.isLetter() }, "Algún número" to pass.any { it.isDigit() },
+        repeat?.let { "Las dos contraseñas coinciden" to (it.isNotEmpty() && it == pass) })
+    Column(Modifier.padding(top = 6.dp).semantics(mergeDescendants = true) {}) {
+        items.forEach { (t, ok) ->
+            val c by androidx.compose.animation.animateColorAsState(if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, label = "chk")
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 1.dp)) {
+                Icon(if (ok) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, null, Modifier.size(18.dp), tint = c)
+                Spacer(Modifier.width(6.dp)); Text((if (ok) "✓ " else "") + t, style = MaterialTheme.typography.bodySmall, color = c)
+            }
+        }
+    }
 }

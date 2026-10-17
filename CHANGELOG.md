@@ -2,6 +2,18 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.6.16] - 2026-10-17
+### Añadido
+- Saludos que cambian según la hora, el día y la época del año, y tu papel en la app (cliente, repartidor…) debajo del saludo.
+- Al crear la cuenta: comprobación en directo del correo, el teléfono y la contraseña (8 caracteres con letras y números), repetir la contraseña y consejos.
+### Cambiado
+- Los pueblos de cada repartidor los asigna su entidad; en la candidatura el repartidor solo indica dónde vive.
+- Buscador más accesible (etiqueta para lectores de pantalla y tecla «Buscar»).
+### Corregido
+- Bienvenida: faltaba la letra «Pequeña».
+- El botón del dictado se deformaba al hablar.
+- Los formularios de la entidad (verificación y ajustes) se borraban solos cada 30 segundos mientras escribías.
+
 ## [0.6.15] - 2026-10-17
 ### Corregido
 - Mejoras de seguridad y estabilidad.

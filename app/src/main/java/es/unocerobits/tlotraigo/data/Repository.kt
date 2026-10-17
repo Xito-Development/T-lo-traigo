@@ -119,7 +119,6 @@ class Repository(val api: SupabaseApi) {
     suspend fun saveDriverSettings(s: DriverSettings) {
         val body = buildJsonObject {
             put("available", s.available); put("accepts_cash", s.cash); put("accepts_bizum", s.bizum); put("accepts_card", s.card)
-            putJsonArray("town_ids") { s.townIds.forEach { add(it) } }
             put("bizum_phone", s.bizumPhone?.filter { it.isDigit() || it == '+' }?.ifBlank { null })
         }
         api.rest("PATCH", "driver_settings?driver_id=eq.${api.uid}", body.toString())
@@ -371,6 +370,10 @@ class Repository(val api: SupabaseApi) {
         "orders?driver_id=eq.${api.uid}&status=eq.entregado&updated_at=gte.$from&select=payment_method,payment_status,final_total,total,ticket_total,free_service,paid_by,bizum_to")).jsonArray
 
     suspend fun orgApplications(orgId: Long): JsonArray = api.json.parseToJsonElement(api.rpc("org_applications", buildJsonObject { put("p_org", orgId) })).jsonArray
+
+    suspend fun orgSetDriverTowns(driver: String, towns: List<Long>) {
+        api.rpc("org_set_driver_towns", buildJsonObject { put("p_driver", driver); putJsonArray("p_towns") { towns.forEach { add(it) } } })
+    }
 
     // --- Listas guardadas
     suspend fun lists(): List<ShoppingList> = parse(api.rest("GET", "shopping_lists?select=*&order=updated_at.desc"))

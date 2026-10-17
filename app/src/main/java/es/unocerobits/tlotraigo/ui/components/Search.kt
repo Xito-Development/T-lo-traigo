@@ -1,5 +1,9 @@
 package es.unocerobits.tlotraigo.ui.components
 
+import androidx.compose.ui.semantics.contentDescription
+
+import androidx.compose.ui.semantics.semantics
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
@@ -29,12 +33,15 @@ fun ExpandableSearch(query: String, onQuery: (String) -> Unit, placeholder: Stri
         AnimatedVisibility(!open, Modifier.weight(1f), enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally()) { Box(Modifier.fillMaxWidth()) { title() } }
         AnimatedVisibility(open, Modifier.weight(1f), enter = fadeIn(tween(250)) + expandHorizontally(Motion.enter(380), expandFrom = Alignment.End),
             exit = fadeOut(tween(150)) + shrinkHorizontally(Motion.enter(300), shrinkTowards = Alignment.End)) {
-            OutlinedTextField(query, onQuery, Modifier.fillMaxWidth().focusRequester(focus), placeholder = { Text(placeholder) }, singleLine = true,
-                shape = CircleShape, leadingIcon = { Icon(Icons.Filled.Search, null) },
-                trailingIcon = { IconButton({ onQuery(""); open = false }) { Icon(Icons.Filled.Close, "Cerrar búsqueda") } })
+            val kb = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+            OutlinedTextField(query, onQuery, Modifier.fillMaxWidth().focusRequester(focus).semantics { contentDescription = "Buscar. $placeholder" }, label = { Text("Buscar") },
+                placeholder = { Text(placeholder) }, singleLine = true, shape = CircleShape, leadingIcon = { Icon(Icons.Filled.Search, null) },
+                keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { kb?.hide() }),
+                trailingIcon = { IconButton({ onQuery(""); open = false }, Modifier.size(48.dp)) { Icon(Icons.Filled.Close, if (query.isEmpty()) "Cerrar búsqueda" else "Borrar búsqueda") } })
             LaunchedEffect(Unit) { delay(120); runCatching { focus.requestFocus() } }
         }
-        if (!open) FilledTonalIconButton({ open = true }, Modifier.size(48.dp)) { Icon(Icons.Filled.Search, "Buscar") }
+        if (!open) FilledTonalIconButton({ open = true }, Modifier.size(52.dp).semantics { contentDescription = "Abrir el buscador" }) { Icon(Icons.Filled.Search, null, Modifier.size(26.dp)) }
     }
 }
 

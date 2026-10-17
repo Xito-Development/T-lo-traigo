@@ -204,7 +204,8 @@ data class OrgReport(val org: String = "", val month: String = "", val total: In
     val cash: Double = 0.0, val bizum: Double = 0.0, val pending: Double = 0.0,
     @SerialName("by_town") val byTown: List<ReportCount> = emptyList(), @SerialName("by_driver") val byDriver: List<ReportCount> = emptyList(), val rows: List<ReportRow> = emptyList())
 @Serializable
-data class OrgDriver(val id: String, val name: String = "", val phone: String? = null, val approved: Boolean = false, val available: Boolean = false)
+data class OrgDriver(val id: String, val name: String = "", val phone: String? = null, val approved: Boolean = false, val available: Boolean = false,
+    @SerialName("town_ids") val townIds: List<Long> = emptyList())
 @Serializable
 data class OrgPerson(val id: String, val name: String = "", val phone: String? = null)
 @Serializable

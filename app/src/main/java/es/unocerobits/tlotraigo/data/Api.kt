@@ -221,7 +221,10 @@ class SupabaseApi(context: Context, private val baseUrl: String, private val key
             msg.contains("Invalid login", true) -> "Correo o contraseña incorrectos."
             msg.contains("Email not confirmed", true) -> "Confirma tu correo antes de entrar (revisa tu bandeja)."
             msg.contains("already registered", true) -> "Ese correo ya tiene cuenta. Prueba a entrar."
-            msg.contains("Password should be", true) -> "La contraseña debe tener al menos 6 caracteres."
+            msg.contains("Password should", true) || msg.contains("weak", true) && msg.contains("password", true) ->
+                "La contraseña es demasiado débil: usa al menos 8 caracteres, con letras y números."
+            msg.contains("valid email", true) || msg.contains("invalid format", true) -> "Ese correo no parece válido. Revísalo (ej.: nombre@gmail.com)."
+            msg.contains("signups not allowed", true) -> "Ahora mismo no se pueden crear cuentas nuevas. Inténtalo más tarde."
             msg.contains("JWT", true) -> "Tu sesión ha caducado. Vuelve a entrar."
             msg.contains("expired", true) || msg.contains("invalid", true) && msg.contains("token", true) ->
                 "El código no es correcto o ha caducado. Pide uno nuevo."

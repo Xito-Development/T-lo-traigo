@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
@@ -95,7 +96,7 @@ fun DictationDialog(prompt: String, onDone: (String) -> Unit, onDismiss: () -> U
                             drawCircle(primary.copy(alpha = (1f - p) * (0.18f + 0.35f * smooth)), r * (0.42f + 0.55f * p * (0.6f + smooth)), style = androidx.compose.ui.graphics.drawscope.Stroke(3.dp.toPx())) }
                         drawCircle(primary.copy(alpha = 0.12f), r * (0.5f + 0.25f * smooth))
                     }
-                    FilledIconButton({ if (listening) recognizer?.stopListening() else start() }, Modifier.size((84 + 16 * smooth).dp),
+                    FilledIconButton({ if (listening) recognizer?.stopListening() else start() }, Modifier.size(92.dp).graphicsLayer { scaleX = 1f + 0.12f * smooth; scaleY = 1f + 0.12f * smooth },
                         colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (listening) primary else accent,
                             contentColor = if (listening) MaterialTheme.colorScheme.onPrimary else androidx.compose.ui.graphics.Color(0xFF1B2428))) {
                         Icon(if (listening) Icons.Filled.GraphicEq else Icons.Filled.Mic, if (listening) "Parar" else "Hablar", Modifier.size(40.dp))

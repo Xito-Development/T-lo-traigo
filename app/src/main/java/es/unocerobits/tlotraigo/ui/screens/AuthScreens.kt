@@ -63,10 +63,10 @@ fun SplashScreen(vm: AppViewModel, onAnimationDone: () -> Unit = {}) {
 }
 
 @Composable
-private fun PasswordField(value: String, onChange: (String) -> Unit) {
+private fun PasswordField(value: String, label: String = "Contraseña", onChange: (String) -> Unit) {
     var show by remember { mutableStateOf(false) }
     OutlinedTextField(
-        value, onChange, Modifier.fillMaxWidth(), label = { Text("Contraseña") }, singleLine = true,
+        value, onChange, Modifier.fillMaxWidth(), label = { Text(label) }, singleLine = true,
         leadingIcon = { Icon(Icons.Filled.Lock, null) },
         trailingIcon = { IconButton({ show = !show }) { Icon(if (show) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, if (show) "Ocultar" else "Mostrar") } },
         visualTransformation = if (show) VisualTransformation.None else PasswordVisualTransformation(),
@@ -142,9 +142,12 @@ fun RegisterScreen(vm: AppViewModel, onBack: () -> Unit, onVerify: (email: Strin
     var phone by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
+    var pass2 by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var err by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val emailOk = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$").matches(email.trim())
+    val phoneDigits = phone.filter(Char::isDigit)
     Scaffold(topBar = {
         TopAppBar({ Text("Crear cuenta") }, navigationIcon = { IconButton(onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } })
     }) { pad ->
@@ -159,14 +162,22 @@ fun RegisterScreen(vm: AppViewModel, onBack: () -> Unit, onVerify: (email: Strin
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(phone, { phone = it.filter { c -> c.isDigit() || c == '+' || c == ' ' } }, Modifier.fillMaxWidth(), label = { Text("Teléfono") },
                 singleLine = true, leadingIcon = { Icon(Icons.Filled.Phone, null) }, textStyle = MaterialTheme.typography.bodyLarge,
-                shape = MaterialTheme.shapes.medium, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
+                shape = MaterialTheme.shapes.medium, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                isError = phoneDigits.isNotEmpty() && phoneDigits.length < 9,
+                supportingText = { Text(if (phoneDigits.isNotEmpty() && phoneDigits.length < 9) "Faltan cifras: son 9" else "Para que el repartidor pueda llamarte") })
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(email, { email = it }, Modifier.fillMaxWidth(), label = { Text("Correo electrónico") }, singleLine = true,
                 leadingIcon = { Icon(Icons.Filled.Email, null) }, textStyle = MaterialTheme.typography.bodyLarge, shape = MaterialTheme.shapes.medium,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-            Spacer(Modifier.height(12.dp))
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                isError = email.isNotBlank() && !emailOk,
+                supportingText = { Text(if (email.isNotBlank() && !emailOk) "Revisa el correo (ej.: nombre@gmail.com)" else "Te enviaremos un código para confirmar que es tuyo") })
+            Spacer(Modifier.height(8.dp))
             PasswordField(pass) { pass = it }
-            Text("Mínimo 6 caracteres. Te enviaremos un código a tu correo para confirmar que es tuyo.", Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            PasswordField(pass2, label = "Repite la contraseña") { pass2 = it }
+            PasswordChecklist(pass, pass2)
+            Text("Consejo: una frase fácil de recordar con un número, como «Mipueblo2026».", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             ErrorText(err)
             Spacer(Modifier.height(16.dp))
             BigButton("Crear cuenta", {
@@ -178,7 +189,10 @@ fun RegisterScreen(vm: AppViewModel, onBack: () -> Unit, onVerify: (email: Strin
                     } catch (e: ApiException) { err = e.message }
                     busy = false
                 }
-            }, enabled = name.isNotBlank() && email.contains('@') && pass.length >= 6, loading = busy, icon = Icons.Filled.Check)
+            }, enabled = name.isNotBlank() && emailOk && passwordOk(pass) && pass == pass2, loading = busy, icon = Icons.Filled.Check)
+            if (!(name.isNotBlank() && emailOk && passwordOk(pass) && pass == pass2)) Text(listOfNotNull(if (name.isBlank()) "tu nombre" else null, if (!emailOk) "un correo válido" else null,
+                if (!passwordOk(pass)) "una contraseña segura" else null, if (passwordOk(pass) && pass != pass2) "repetir la contraseña igual" else null).let { "Falta: " + it.joinToString(", ") },
+                Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(32.dp))
         }
     }
@@ -363,6 +377,7 @@ fun VerifyScreen(vm: AppViewModel, email: String, mode: String, onBack: () -> Un
                         Text("Elige tu nueva contraseña", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                         Spacer(Modifier.height(16.dp))
                         PasswordField(newPass) { newPass = it }
+                        PasswordChecklist(newPass)
                         ErrorText(err)
                         Spacer(Modifier.height(16.dp))
                         BigButton("Guardar contraseña", {
@@ -371,7 +386,7 @@ fun VerifyScreen(vm: AppViewModel, email: String, mode: String, onBack: () -> Un
                                 try { Locator.api.updatePassword(newPass); vm.start() } catch (e: ApiException) { err = e.message }
                                 busy = false
                             }
-                        }, enabled = newPass.length >= 6, loading = busy, icon = Icons.Filled.Save)
+                        }, enabled = passwordOk(newPass), loading = busy, icon = Icons.Filled.Save)
                     }
                 }
             }

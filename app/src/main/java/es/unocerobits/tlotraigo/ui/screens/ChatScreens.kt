@@ -217,8 +217,7 @@ fun VoiceListCard(needs: List<Need>, onAdd: (List<Triple<Need, Int, String>>) ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                 OutlinedTextField(text, { text = it; drafts.clear() }, Modifier.weight(1f), placeholder = { Text("Tu lista…") }, minLines = 2, shape = MaterialTheme.shapes.medium)
                 Spacer(Modifier.width(8.dp))
-                val pulse by rememberInfiniteTransition(label = "mic").animateFloat(1f, 1.08f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "p")
-                FilledIconButton({ dictating = true }, Modifier.size(56.dp).graphicsLayer { scaleX = pulse; scaleY = pulse }) { Icon(Icons.Filled.Mic, "Dictar por voz") }
+                FilledIconButton({ dictating = true }, Modifier.size(56.dp)) { Icon(Icons.Filled.Mic, "Dictar la lista por voz") }
             }
             if (text.isNotBlank() && drafts.isEmpty()) TextButton(::review) { Icon(Icons.Filled.Checklist, null); Spacer(Modifier.width(6.dp)); Text("Revisar la lista") }
             ErrorText(err)

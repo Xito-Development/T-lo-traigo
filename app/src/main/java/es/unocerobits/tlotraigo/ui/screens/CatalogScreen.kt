@@ -33,9 +33,24 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-    in 6..13 -> "Buenos días"; in 14..20 -> "Buenas tardes"; else -> "Buenas noches"
+/** Saludo que cambia según la hora, el día de la semana y la época del año (uno distinto cada día). */
+private fun greeting(): String {
+    val c = Calendar.getInstance(); val h = c.get(Calendar.HOUR_OF_DAY); val dow = c.get(Calendar.DAY_OF_WEEK); val m = c.get(Calendar.MONTH) + 1; val d = c.get(Calendar.DAY_OF_MONTH)
+    val base = when (h) { in 6..13 -> "Buenos días"; in 14..20 -> "Buenas tardes"; else -> "Buenas noches" }
+    val special = when {
+        m == 12 && d in 24..25 -> "¡Feliz Navidad"; m == 1 && d == 1 -> "¡Feliz Año Nuevo"; m == 12 && d == 31 -> "¡Feliz Nochevieja"
+        m == 1 && d == 6 -> "¡Felices Reyes"; else -> null }
+    if (special != null) return special
+    val extras = buildList {
+        add(base)
+        when (h) { in 6..9 -> add("¡Arriba, que hay que hacer la compra"); in 12..14 -> add("¿Qué hay de comer hoy"); in 20..23 -> add("¿Preparamos la compra de mañana") }
+        when (dow) { Calendar.MONDAY -> add("¡Buen comienzo de semana"); Calendar.FRIDAY -> add("¡Feliz viernes"); Calendar.SATURDAY, Calendar.SUNDAY -> add("¡Feliz fin de semana") }
+        when (m) { 12, 1, 2 -> add("Abrígate bien"); in 6..8 -> add("Que no te pille el calor"); in 9..10 -> add("¡Qué buen otoño") }
+    }
+    return extras[(c.get(Calendar.DAY_OF_YEAR) + h / 6) % extras.size]
 }
+private fun roleLabel(p: Profile?) = when { p == null -> ""; p.isSuper -> "Superadministrador"; p.isGestor -> "Administrador de entidad"
+    p.isAdmin -> "Administrador"; p.isDriver -> "Repartidor"; else -> "Cliente" }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -69,8 +84,11 @@ fun CatalogScreen(vm: AppViewModel, onOpenCart: () -> Unit, onNeeds: () -> Unit 
             Column(Modifier.padding(horizontal = 20.dp).padding(top = 12.dp)) {
                 ExpandableSearch(query, { query = it }, "Buscar: leche, pan, aceite…") {
                     Column {
-                        Text("${greeting()}${profile?.firstName?.let { if (it.isNotBlank()) ", $it" else "" } ?: ""}",
-                            style = MaterialTheme.typography.headlineMedium, maxLines = 1)
+                        val g = remember { greeting() }
+                        val nm = profile?.firstName?.takeIf { it.isNotBlank() }
+                        Text(if (g.startsWith("¡") || g.startsWith("¿")) "$g${nm?.let { ", $it" } ?: ""}${if (g.startsWith("¡")) "!" else "?"}" else "$g${nm?.let { ", $it" } ?: ""}",
+                            style = MaterialTheme.typography.headlineSmall, maxLines = 2)
+                        roleLabel(profile).takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary) }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.secondary)
                             Spacer(Modifier.width(4.dp))

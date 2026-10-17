@@ -82,8 +82,9 @@ fun OnboardingWizard(vm: AppViewModel) {
                         Text("Podrás cambiarlo cuando quieras en Ajustes.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("Tamaño de letra", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf(1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme").forEach { (v, l) ->
-                                FilterChip(kotlin.math.abs(s.textScale - v) < .01f, { vm.updateSettings { it.copy(textScale = v) } }, { Text(l) })
+                            listOf(0.85f to "Pequeña", 1f to "Normal", 1.15f to "Grande", 1.3f to "Muy grande", 1.5f to "Enorme").forEach { (v, l) ->
+                                val on = kotlin.math.abs(s.textScale - v) < .01f
+                                FilterChip(on, { vm.updateSettings { it.copy(textScale = v) } }, { Text(l, maxLines = 1) }, leadingIcon = if (on) { { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) } } else null)
                             }
                         }
                         ToggleRow("Modo fácil", "Botones y letras más grandes", s.senior, Icons.Filled.Elderly) { v -> vm.updateSettings { it.copy(senior = v) } }

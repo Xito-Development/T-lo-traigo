@@ -100,7 +100,7 @@ fun AccountScreen(vm: AppViewModel, onBack: () -> Unit) {
                 ErrorText(err)
                 Button({ scope.launch { busy = true; err = null
                     try { Locator.api.changePassword(cur, nw); cur = ""; nw = ""; rep = ""; celebrate(Celebration("Contraseña cambiada", "Úsala la próxima vez que entres", "🔒")) }
-                    catch (e: ApiException) { err = e.message }; busy = false } }, enabled = !busy && cur.isNotEmpty() && nw.length >= 8 && nw == rep && nw != cur) { Text("Cambiar contraseña") }
+                    catch (e: ApiException) { err = e.message }; busy = false } }, enabled = !busy && cur.isNotEmpty() && passwordOk(nw) && nw == rep && nw != cur) { Text("Cambiar contraseña") }
             }
 
             // Passkeys: entrar con la huella, la cara o el PIN
