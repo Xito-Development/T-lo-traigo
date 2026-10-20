@@ -2,6 +2,16 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.2] - 2026-10-20
+### Cambiado
+- Textos de la app sin referencias a una provincia concreta; en la dirección, la provincia solo aparece si la escribes.
+- Las reclamaciones remiten a la hoja oficial de consumo de tu comunidad autónoma.
+### Corregido
+- Administración (superadministrador): las secciones (Entidades, Productos, Lista fácil…) se veían vacías.
+- Inicio de sesión y registro: los campos de usuario y contraseña ya se pueden autocompletar con el gestor de contraseñas.
+- El registro ya no rechaza códigos postales de otras provincias (sigue comprobando que coincidan con el pueblo elegido).
+- La búsqueda de la casa en el mapa ya no da por hecho una provincia.
+
 ## [0.0.1] - 2026-10-20
 Primera versión pública de T lo traigo.
 ### Añadido
