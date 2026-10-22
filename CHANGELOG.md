@@ -2,15 +2,27 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
-## [0.0.2] - 2026-10-20
+## [0.0.3] - 2026-10-23
+### Añadido
+- Botón grande «Lista fácil» en la portada y el catálogo completo debajo.
+- Dictado que entiende mejor a las personas mayores (muletillas, «media docena», «un par», diminutivos) y escucha continua hasta «ya está».
+- Pantalla de permisos explicada según el rol, también desde Ajustes.
+- Repartidor: «Llamar al mayor» y «Llamar al familiar», y «Pedir entregar ahora» fuera de horario (lo aprueba el cliente).
+- Tarifas propias por pueblo y máximo de pedidos a la vez por repartidor, editables por la entidad.
+- Actualizaciones al momento (tiempo real) y deslizar hacia abajo para refrescar en toda la app.
+- Emoji propio para cada artículo de la Lista fácil.
+- Aviso de actualización obligatoria cuando la versión es demasiado antigua.
 ### Cambiado
-- Textos de la app sin referencias a una provincia concreta; en la dirección, la provincia solo aparece si la escribes.
-- Las reclamaciones remiten a la hoja oficial de consumo de tu comunidad autónoma.
+- Sugerencias de dirección en toda España, con prioridad a lo cercano y aviso si no hay servicio en la zona.
+- Solo el superadministrador añade o quita pueblos de una entidad; borrar un pueblo con pedidos lo oculta.
+- Firmas y tickets en almacenamiento privado, con enlaces temporales de 60 segundos.
 ### Corregido
-- Administración (superadministrador): las secciones (Entidades, Productos, Lista fácil…) se veían vacías.
-- Inicio de sesión y registro: los campos de usuario y contraseña ya se pueden autocompletar con el gestor de contraseñas.
-- El registro ya no rechaza códigos postales de otras provincias (sigue comprobando que coincidan con el pueblo elegido).
-- La búsqueda de la casa en el mapa ya no da por hecho una provincia.
+- Ajustes: los botones ya no se solapan con letra grande.
+- Resumen de la entidad: ya se puede desplazar.
+- La lista del repartidor conserva lo marcado al salir.
+- Los errores se muestran con frases sencillas.
+- Los correos automáticos dejaban de enviarse por un tiempo de espera demasiado corto.
+- El repartidor con un pedido en curso necesita la ubicación y el GPS activados.
 
 ## [0.0.1] - 2026-10-20
 Primera versión pública de T lo traigo.
