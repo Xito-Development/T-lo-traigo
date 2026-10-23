@@ -2,7 +2,7 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
-## [0.0.3] - 2026-10-23
+## [0.0.4] - 2026-10-23
 ### Añadido
 - Botón grande «Lista fácil» en la portada y el catálogo completo debajo.
 - Dictado que entiende mejor a las personas mayores (muletillas, «media docena», «un par», diminutivos) y escucha continua hasta «ya está».
@@ -23,6 +23,15 @@ Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepacha
 - Los errores se muestran con frases sencillas.
 - Los correos automáticos dejaban de enviarse por un tiempo de espera demasiado corto.
 - El repartidor con un pedido en curso necesita la ubicación y el GPS activados.
+### Añadido (tanda 2)
+- Portada nueva: dirección de entrega, Mis listas, repetir la última compra y botón grande e ilustrado de la Lista fácil.
+- Lista fácil más cómoda: categorías con dibujo, iconos grandes, + y − grandes, lo más pedido primero, buscador y «Añadir todo lo de siempre».
+- Buscador de la portada que encuentra artículos, ajustes y pedidos anteriores.
+- Estados vacíos ilustrados y animados (respetan «reducir animaciones»).
+- Superadministrador: suspender o reactivar entidades con motivo, nombrar o quitar superadministradores y borrar cuentas desde el panel.
+### Cambiado (tanda 2)
+- Los permisos solo se piden si faltan, y cuando hacen falta.
+- Panel de Android: sin solapes con las barras del sistema y con deslizar para refrescar.
 
 ## [0.0.1] - 2026-10-20
 Primera versión pública de T lo traigo.
