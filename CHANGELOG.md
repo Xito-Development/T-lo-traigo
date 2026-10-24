@@ -2,7 +2,7 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
-## [0.0.4] - 2026-10-23
+## [0.0.5] - 2026-10-24
 ### Añadido
 - Botón grande «Lista fácil» en la portada y el catálogo completo debajo.
 - Dictado que entiende mejor a las personas mayores (muletillas, «media docena», «un par», diminutivos) y escucha continua hasta «ya está».
@@ -17,6 +17,8 @@ Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepacha
 - Solo el superadministrador añade o quita pueblos de una entidad; borrar un pueblo con pedidos lo oculta.
 - Firmas y tickets en almacenamiento privado, con enlaces temporales de 60 segundos.
 ### Corregido
+- La Lista fácil se cerraba al dictar o escribir la lista.
+- Entidades y repartidores ya no pasan por el registro de dirección ni ven el tutorial al empezar.
 - Ajustes: los botones ya no se solapan con letra grande.
 - Resumen de la entidad: ya se puede desplazar.
 - La lista del repartidor conserva lo marcado al salir.
