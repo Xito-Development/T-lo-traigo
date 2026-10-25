@@ -2,15 +2,27 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.8] - 2026-10-25
+
+### Añadido
+- Fondo animado a elegir: círculos, burbujas, hojas, estrellas u olas; con negro puro (OLED) los efectos lucen más.
+
+### Cambiado
+- «Te lo llevamos a…» abre directamente tu dirección en Ajustes.
+- Actualizar es obligatorio para seguir usando la app (en Google Play, actualización inmediata).
+- Los avisos de la portada salen de uno en uno y por orden (actualización, permisos, tutorial, novedades).
+- Portada más sencilla y con menos desplazamiento: la Lista fácil arriba y un dibujo nuevo para su botón.
+- Ajustes ordenados: tus datos y dirección primero y «Colores, tema y letra» plegado.
+- El negro puro solo se ofrece con el tema oscuro.
+
+### Corregido
+- El fondo animado ya no se dibuja encima de menús y tarjetas.
+
 ## [0.0.7] - 2026-10-25
 
 ### Cambiado
 - Lista fácil: nueva revisión de la lista escrita o dictada, con una tarjeta grande por artículo (dibujo, nombre, + y − y «Quitar»), «Dictar más» y «Cambiar lo escrito».
 - Cabeceras ilustradas en la Lista fácil y en Mis pedidos, y confirmaciones con dibujo (borrar, cancelar, vaciar la cesta, pagar…).
-
-### Interno
-- Programa de Windows: el .exe (>50 MB) no cabe en el almacén de Supabase (curl 22 = HTTP 413) y se saltaba la Release; ya no se sube allí. La función «panel» lo sirve desde la Release privada «desktop-vX.Y.Z» (secretos de Supabase GH_PANEL_TOKEN y GH_PRIVATE_REPO).
-- Función «panel» desplegada (v2, verify_jwt desactivado como antes).
 
 ## [0.0.6] - 2026-10-25
 ### Añadido
