@@ -2,7 +2,7 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
-## [0.0.5] - 2026-10-24
+## [0.0.6] - 2026-10-25
 ### Añadido
 - Botón grande «Lista fácil» en la portada y el catálogo completo debajo.
 - Dictado que entiende mejor a las personas mayores (muletillas, «media docena», «un par», diminutivos) y escucha continua hasta «ya está».
@@ -31,6 +31,12 @@ Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepacha
 - Buscador de la portada que encuentra artículos, ajustes y pedidos anteriores.
 - Estados vacíos ilustrados y animados (respetan «reducir animaciones»).
 - Superadministrador: suspender o reactivar entidades con motivo, nombrar o quitar superadministradores y borrar cuentas desde el panel.
+### Cambiado (tanda 3)
+- Temas: colores de tu fondo de pantalla (Material You), colores vivos, negro puro en modo oscuro, cinco paletas nuevas y animaciones de fondo opcionales.
+- Pantalla de permisos más clara, con dibujo y progreso.
+- Deslizar para refrescar con los colores del tema y vibración.
+- Panel de Android: barra inferior fija, menú «Más» con título que se cierra con atrás y refresco que respeta el desplazamiento.
+- El modo familia solo aparece para clientes.
 ### Cambiado (tanda 2)
 - Los permisos solo se piden si faltan, y cuando hacen falta.
 - Panel de Android: sin solapes con las barras del sistema y con deslizar para refrescar.
