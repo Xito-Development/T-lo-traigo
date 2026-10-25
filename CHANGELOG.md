@@ -2,6 +2,16 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.7] - 2026-10-25
+
+### Cambiado
+- Lista fácil: nueva revisión de la lista escrita o dictada, con una tarjeta grande por artículo (dibujo, nombre, + y − y «Quitar»), «Dictar más» y «Cambiar lo escrito».
+- Cabeceras ilustradas en la Lista fácil y en Mis pedidos, y confirmaciones con dibujo (borrar, cancelar, vaciar la cesta, pagar…).
+
+### Interno
+- Programa de Windows: el .exe (>50 MB) no cabe en el almacén de Supabase (curl 22 = HTTP 413) y se saltaba la Release; ya no se sube allí. La función «panel» lo sirve desde la Release privada «desktop-vX.Y.Z» (secretos de Supabase GH_PANEL_TOKEN y GH_PRIVATE_REPO).
+- Función «panel» desplegada (v2, verify_jwt desactivado como antes).
+
 ## [0.0.6] - 2026-10-25
 ### Añadido
 - Botón grande «Lista fácil» en la portada y el catálogo completo debajo.
