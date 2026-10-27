@@ -2,6 +2,13 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.9] - 2026-10-27
+
+### Cambiado
+- Fondo animado: los círculos se ven un poco más y el resto de efectos son más suaves; las figuras ya no se cruzan entre sí.
+- Buscar «Tema y colores» abre esa sección de Ajustes ya desplegada.
+- Web: títulos y descripciones correctos en todas las páginas, enlaces canónicos, vista previa al compartir, datos estructurados, mapa del sitio actualizado y páginas de uso interno fuera de los buscadores.
+
 ## [0.0.8] - 2026-10-25
 
 ### Añadido
