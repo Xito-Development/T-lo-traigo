@@ -2,6 +2,12 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.10] - 2026-10-29
+### Cambiado
+- Las filas que se pueden deslizar (por ejemplo, las secciones de Administración) avisan con la flecha unos segundos y luego se quedan quietas: menos gasto de batería.
+### Corregido
+- Con mala cobertura, la app podía quedarse varios segundos en la pantalla verde antes de mostrar la entrada.
+
 ## [0.0.9] - 2026-10-27
 
 ### Cambiado
