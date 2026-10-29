@@ -2,6 +2,13 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.11] - 2026-10-29
+### Cambiado
+- Antes de hacer un pedido, la app comprueba si hay versión nueva y obliga a actualizar (la cesta se queda guardada).
+- Las novedades del aviso de actualización se pueden deslizar cuando son largas.
+### Corregido
+- En Android, el botón del correo ya no gasta el enlace en la web antes de abrir la app (antes la app decía «enlace caducado»); sin la app instalada se verifica en la web.
+
 ## [0.0.10] - 2026-10-29
 ### Cambiado
 - Las filas que se pueden deslizar (por ejemplo, las secciones de Administración) avisan con la flecha unos segundos y luego se quedan quietas: menos gasto de batería.
