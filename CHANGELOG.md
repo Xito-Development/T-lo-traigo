@@ -2,6 +2,10 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.13] - 2026-10-30
+### Cambiado
+- Web: Google mostrará el nombre «T Lo Traigo • UNOCEROBITS» en los resultados (en lugar de la dirección).
+
 ## [0.0.12] - 2026-10-30
 ### Cambiado
 - Transiciones más suaves entre pantallas y pestañas (fundido encadenado y desplazamiento corto) y botón de cesta con rebote.
