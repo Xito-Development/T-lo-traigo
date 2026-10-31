@@ -2,6 +2,16 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.16] - 2026-10-31
+### Añadido
+- Accesos directos al mantener pulsado el icono de la app: Lista fácil, Mi cesta y Mis pedidos.
+- Web: logo de VirusTotal junto al enlace al informe de seguridad de cada versión.
+- Web: cuatro preguntas frecuentes nuevas (qué es, si hace falta saber usar el móvil, en qué pueblos funciona y cómo hacerse repartidor).
+### Corregido
+- Un doble toque rápido en «Hacer pedido» ya no puede crear dos pedidos iguales (también lo impide el servidor).
+- Web: el modo oscuro forzado del navegador ya no estropea los colores (la web trae su propio modo oscuro) y la barra del navegador toma el color del tema.
+- Web: mejor contraste de textos y botones en modo claro y oscuro en todas las páginas (revisión de accesibilidad sin fallos).
+
 ## [0.0.15] - 2026-10-30
 ### Cambiado
 - Mejoras y correcciones.
