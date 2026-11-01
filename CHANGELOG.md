@@ -2,6 +2,23 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.17] - 2026-11-01
+### Añadido
+- Verificación en dos pasos por correo para todas las cuentas: al entrar en un móvil nuevo llega un correo con un código de 6 cifras y un botón «Sí, soy yo» que abre la app; pantalla guiada paso a paso y el móvil queda recordado 30 días.
+- Entidades: pestaña «Recorridos» para ver en el mapa por dónde ha ido cada repartidor en sus entregas (últimos 30 días).
+- Entidades: en «Informe», gráfica de compras por día del mes, totales de compras, tarifas y pagos a repartidores, y ranking de repartidores.
+- Entidades: subir el logo desde el móvil (se comprime y se guarda en la base de datos) y límite de pedidos a la vez por cliente.
+- Temas y colores: vista previa en vivo del tema y paletas con animación al elegirlas.
+- Confirmar el pedido espera 2 segundos para dar tiempo a revisar el resumen.
+### Cambiado
+- El color de la entidad se muestra con un degradado suave y el logo sobre fondo blanco.
+- Lista fácil: todas las tarjetas miden lo mismo, con botón «Añadir» y borde al elegir (sin saltos ni tarjetas descuadradas).
+- Cargas más suaves: tarjetas de espera que laten y elementos que aparecen escalonados en lugar de en bloque.
+- Transiciones entre pantallas con un ligero zoom además del fundido.
+### Corregido
+- Privacidad: al descargar tus datos desde la cuenta ahora también salen tus repartos (sin datos de los clientes), tus recorridos y tus vínculos familiares; al borrar la cuenta se borran también tus recorridos.
+- Una entidad suspendida ya no se queda cargando: ve el aviso con el motivo y cómo contactar; si falla la conexión, sale «Reintentar».
+
 ## [0.0.16] - 2026-10-31
 ### Añadido
 - Accesos directos al mantener pulsado el icono de la app: Lista fácil, Mi cesta y Mis pedidos.
