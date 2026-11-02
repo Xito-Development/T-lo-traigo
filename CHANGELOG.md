@@ -2,6 +2,30 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.0.18] - 2026-11-02
+### Añadido
+- Notificación en vivo del pedido en curso (Android 16: en la barra de estado y la pantalla de bloqueo; en HyperOS 3, en la Super Isla), con su barra de progreso; desaparece al entregar.
+- Foto de perfil (en Ajustes → Mis datos, con recorte redondo): el cliente ve la del repartidor en el seguimiento y en el mapa.
+- Logo de la entidad con recorte y zoom antes de guardarlo; se aceptan todos los formatos de imagen (también HEIC y AVIF).
+- Entidades: pestaña «Tarifas» con tarifa propia para todos sus pueblos (sus vecinos reciben un aviso al cambiarla), elección de las tarifas adicionales que se cobran y precios propios para la Lista fácil.
+- Visor de imágenes en la app para el ticket y la firma: zoom con dos dedos, guardar en la galería y compartir la imagen (el repartidor ya no sale a la web).
+- Lista fácil: si «Leer en voz alta» está activado, al tocar un producto se dice su nombre y el precio orientativo.
+### Cambiado
+- Efecto al pulsar en los bloques principales (Lista fácil, pedidos, portada y pedidos disponibles del repartidor): se hunden un poco y vuelven con un rebote suave.
+- Repartos del repartidor: el detalle se abre y se cierra con su botón (ya no al tocar cualquier parte) y los terminados se pliegan solos a los 10 minutos.
+- Mapa del seguimiento: siempre cubierto entero, se acerca solo a medida que llega el repartidor, punto del repartidor más grande y claro, se actualiza cada 5 s y sin bocadillos encima.
+- Tiempos de más de 60 minutos se muestran como h:mm (p. ej. «1:05 h»).
+- Mis pedidos: los pedidos en curso salen desplegados con su progreso; los terminados se pliegan solos a los 10 minutos y se pueden abrir o cerrar con un botón.
+- Respuestas rápidas del chat distintas para cliente y repartidor según cómo va el pedido.
+- Cabecera de la entidad con un degradado más vistoso.
+- Seguimiento: primero «Coste estimado»; con el ticket, el estimado pasa a pequeño y destacan «Coste real del súper» y «Coste total».
+- Mis listas: cada artículo muestra su dibujo (naranjas, patatas, pan…) en lugar del icono genérico de cesta.
+- El botón de los correos intenta abrir la app al momento, sin pasar por la página.
+- Letra: nunca por debajo de un tamaño mínimo y, en pantallas pequeñas, al menos el tamaño normal; títulos sin letras apretadas.
+### Corregido
+- Tarifas: con el servicio en modo gratuito ya no se cobraba el servicio pero sí el envío; ahora es gratuito del todo. Un pueblo sin distancia o envío configurado ya no deja el total en blanco.
+- La firma ya no se sale del recuadro y la copia se puede ampliar (también la ve la entidad desde el pedido).
+
 ## [0.0.17] - 2026-11-01
 ### Añadido
 - Verificación en dos pasos por correo para todas las cuentas: al entrar en un móvil nuevo llega un correo con un código de 6 cifras y un botón «Sí, soy yo» que abre la app; pantalla guiada paso a paso y el móvil queda recordado 30 días.
