@@ -2,6 +2,25 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.0] - 2026-11-02
+### Añadido
+- Cuenta: lista de sesiones abiertas; «Cerrar sesión en los otros dispositivos» solo se puede pulsar si hay otras.
+- Avisos de versión nueva aunque la app esté cerrada (cada 6 horas, una vez por versión).
+- La entidad decide si sus vecinos pagan tarifas o el servicio es gratuito (con aviso a los vecinos al cambiarlo).
+- Mapa del seguimiento con botones para acercar, alejar y volver al encuadre automático; foto del repartidor ampliable.
+- Repartidor: en el historial puede ver la ruta recorrida de cada reparto.
+- Avisos animados al guardar (bajan desde arriba y desaparecen solos).
+### Cambiado
+- Repartidor: la tarjeta de cada reparto muestra arriba el paso en que va (Aceptado → Comprar → Llevar → Entregado), luego contacto y ruta, la compra y al final el botón del siguiente paso.
+- Administración: secciones con icono y agrupadas (gente, catálogo, actividad, facturación); el superadministrador entra directo a Entidades.
+- Más avisos animados al guardar (ajustes de la entidad y datos de facturación).
+- Notificación en vivo del pedido: se actualiza cada 5 s con pedido en curso, con icono por estado, número de productos, importe del ticket y la foto del repartidor.
+- El ticket se ve igual para cliente y repartidor (visor con zoom, guardar y compartir).
+### Corregido
+- Al girar el móvil ya no se pierden las ventanas abiertas ni se sale de la pantalla en la que estabas.
+- Passkeys («RP ID cannot be validated») y botón del correo que no abría la app: la web no tenía registrada la firma real de la app.
+- Logo de la entidad que no carga: se muestra un icono en lugar de un recuadro blanco.
+
 ## [0.0.18] - 2026-11-02
 ### Añadido
 - Notificación en vivo del pedido en curso (Android 16: en la barra de estado y la pantalla de bloqueo; en HyperOS 3, en la Super Isla), con su barra de progreso; desaparece al entregar.
