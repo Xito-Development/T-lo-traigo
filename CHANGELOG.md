@@ -2,6 +2,10 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.1] - 2026-11-02
+### Cambiado
+- Mejoras y correcciones.
+
 ## [0.1.0] - 2026-11-02
 ### Añadido
 - Cuenta: lista de sesiones abiertas; «Cerrar sesión en los otros dispositivos» solo se puede pulsar si hay otras.
