@@ -2,6 +2,16 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.2] - 2026-11-02
+### Añadido
+- Al guardar ajustes o datos aparece un aviso durante 5 segundos y, debajo del botón, la fecha y hora del último guardado.
+- Pedidos: tarjeta clara con la forma de pago, el ticket guardado (ver, ampliar, guardar) y el desglose hasta el total; el repartidor ve destacado su margen.
+- Estadísticas: el superadministrador puede limpiar los errores y reiniciar las estadísticas.
+### Cambiado
+- Entidades (superadministrador): resumen arriba, buscador, filtros (activas, suspendidas, por verificar…) y una tarjeta por entidad con su color, estado y menú de acciones; mantenimiento plegado al final.
+- Ajustes de la entidad: cada apartado es plegable; solo «Pedidos» empieza abierto.
+- Sesiones abiertas: solo se muestran las activas.
+
 ## [0.1.1] - 2026-11-02
 ### Cambiado
 - Mejoras y correcciones.
