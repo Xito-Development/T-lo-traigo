@@ -2,6 +2,17 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.3] - 2026-11-03
+### Cambiado
+- Avisos de la entidad (tarifas, verificación…): ahora van dentro de la tarjeta de la entidad, pequeños y con icono, duran 3 días como mucho y se cierran con la ✕.
+- Los avisos emergentes («Guardado…») duran 4 segundos, entran con un rebote y llevan un icono; se pueden cerrar tocándolos.
+- El logo de la entidad llena su recuadro (sin marco blanco) y aparece con un fundido.
+### Corregido
+- No se podía guardar el logo subido desde el móvil («algún valor está fuera de los límites»).
+- Los avisos emergentes se quedaban fijos en pantalla.
+- Recuadros negros en las listas con el modo oscuro (usuarios, repartidores, pueblos…).
+- «Sesiones abiertas» mostraba sesiones ya cerradas: al cerrar sesión ahora también se cierra en el servidor y solo salen las activas.
+
 ## [0.1.2] - 2026-11-02
 ### Añadido
 - Al guardar ajustes o datos aparece un aviso durante 5 segundos y, debajo del botón, la fecha y hora del último guardado.
