@@ -2,6 +2,13 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.4] - 2026-11-04
+### Cambiado
+- Al elegir una pestaña de la barra inferior, el icono da un pequeño salto.
+### Corregido
+- Administración: el logo de cada entidad llena su recuadro (sin marco blanco).
+- La app podía cerrarse en móviles con Android 5 al mostrar la notificación en vivo del pedido.
+
 ## [0.1.3] - 2026-11-03
 ### Cambiado
 - Avisos de la entidad (tarifas, verificación…): ahora van dentro de la tarjeta de la entidad, pequeños y con icono, duran 3 días como mucho y se cierran con la ✕.
