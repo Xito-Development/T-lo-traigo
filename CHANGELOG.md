@@ -2,6 +2,24 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.5] - 2026-11-07
+### Añadido
+- Asistente de ayuda dentro de la app (Ajustes → Ayuda): responde al momento según seas cliente, repartidor, entidad o administración, entiende preguntas escritas a tu manera y, si no sabe la respuesta, te deja escribir a soporte (te contestamos por correo). Es gratuito y tus preguntas no salen de T lo traigo.
+- Entidades: en «Repartidores» deciden lo que gana cada repartidor (porcentaje del servicio y envío, gastos por kilómetro o importe fijo) con un ejemplo claro de lo que paga el vecino, lo que gana el repartidor y lo que le queda a la entidad.
+- Web: Google Analytics (mediante Google Tag Manager) solo si aceptas las cookies, con el modo de consentimiento de Google; política de cookies y de privacidad actualizadas.
+### Cambiado
+- Notificación en vivo del pedido: se sigue actualizando cada 5 s aunque cierres la app y usa el color de tu tema (también en la Super Isla de HyperOS).
+- Mapa del seguimiento: se mueve y se acerca con dos dedos, y el fondo toma el color de la app.
+- Botones principales más visibles: más altos, con sombra, esquinas redondeadas y el icono en su círculo; los del repartidor, rellenos.
+- Avisos emergentes más bonitos: el icono entra con un salto, una barra muestra el tiempo que les queda y se pueden quitar deslizando hacia arriba.
+- Web: nueva imagen para Google y redes con el logo real, y el nombre «T Lo Traigo» en buscadores.
+### Corregido
+- Lista fácil: el precio no cambiaba con el formato (p. ej. «Pack de 6» costaba lo mismo que un brick); ahora se calcula según el formato, también en el servidor.
+- Ayuda más a mano: botón «?» en la portada, en «Mis repartos», en el panel de la entidad y en Administración.
+- El asistente entiende mucho mejor: preguntas sin tildes o con faltas, palabras parecidas («anular», «encargo», «clave», «mi hijo»…), saludos y agradecimientos; si duda, te propone las respuestas más probables y tiene muchas más respuestas (cambiar un pedido, pedir para otro día, productos agotados, propinas, avisos, contraseña, huella…).
+- Temas de color renovados: nuevos Cereza, Miel y Grafito; retocados Mar, Lavanda y Rosa; quitados Girasol, Melocotón y Pizarra (quien los usaba pasa a Montaña).
+- El aviso de que una fila se puede deslizar es ahora una flecha en un círculo pequeño, sin el fondo que tapaba el contenido; también avisa a la izquierda y aparece y desaparece con un fundido.
+
 ## [0.1.4] - 2026-11-04
 ### Cambiado
 - Al elegir una pestaña de la barra inferior, el icono da un pequeño salto.
