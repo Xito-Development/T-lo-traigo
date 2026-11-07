@@ -2,6 +2,18 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.6] - 2026-11-07
+### Añadido
+- El asistente de ayuda ahora usa inteligencia artificial (gratuita) cuando su guía no tiene la respuesta: entiende cualquier forma de preguntar y responde según tu rol, con un «escribiendo…» mientras piensa. Si no hay conexión o se agota el cupo del día, sigue respondiendo como antes.
+### Cambiado
+- Asistente de ayuda renovado: con su propia foto, fondo opaco (antes se veía transparente), burbujas de chat, botones que te llevan al sitio que explica (Lista fácil, Mis pedidos, Ajustes…) y más ayuda para cada rol. El superadministrador puede desactivarlo para todos.
+- Temas de color más distintos entre sí y más vistosos.
+- Al desplazarte, lo que se sale de la pantalla se desvanece en vez de cortarse en seco (arriba, abajo y en las filas que se deslizan).
+- Web: iconos sin aro blanco en Google, la animación de la portada con el logo real y nombre del sitio «T Lo Traigo · UNOCEROBITS»; información más clara para buscadores con IA.
+### Corregido
+- Ajustes: el botón del asistente chocaba con el siguiente.
+- Texto de los botones grandes a su tamaño (con letra grande se salía).
+
 ## [0.1.5] - 2026-11-07
 ### Añadido
 - Asistente de ayuda dentro de la app (Ajustes → Ayuda): responde al momento según seas cliente, repartidor, entidad o administración, entiende preguntas escritas a tu manera y, si no sabe la respuesta, te deja escribir a soporte (te contestamos por correo). Es gratuito y tus preguntas no salen de T lo traigo.
