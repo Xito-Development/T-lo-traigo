@@ -2,6 +2,10 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.11] - 2026-11-08
+### Corregido
+- Parpadeo al cambiar de pantalla (parecía que la página se recargaba): ahora es un fundido suave, y las tarjetas de «cargando» solo aparecen si la carga tarda.
+
 ## [0.1.10] - 2026-11-08
 ### Cambiado
 - Las versiones nuevas ya no se descargan solas en segundo plano: llega un aviso y, al tocarlo, la app se actualiza con la persona delante.
