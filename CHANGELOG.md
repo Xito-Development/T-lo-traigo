@@ -2,6 +2,14 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.7] - 2026-11-08
+### Añadido
+- Administración: el superadministrador puede «simular» el rol de cliente, repartidor o entidad de una entidad concreta para probar la app como esa persona, y volver desde Ajustes. Mientras simula, sus pedidos son de prueba.
+### Cambiado
+- Las actualizaciones automáticas solo se descargan con wifi y batería suficiente (para no gastar datos del móvil).
+- Transiciones entre pantallas más limpias: la pantalla que sale desaparece antes de que entre la nueva (sin verse las dos a la vez ni efecto borroso).
+- Nueva foto del asistente de ayuda, más fácil de reconocer: un bocadillo con una interrogación.
+
 ## [0.1.6] - 2026-11-07
 ### Añadido
 - El asistente de ayuda ahora usa inteligencia artificial (gratuita) cuando su guía no tiene la respuesta: entiende cualquier forma de preguntar y responde según tu rol, con un «escribiendo…» mientras piensa. Si no hay conexión o se agota el cupo del día, sigue respondiendo como antes.
