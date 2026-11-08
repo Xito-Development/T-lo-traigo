@@ -2,6 +2,14 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.8] - 2026-11-08
+### Cambiado
+- Ajustes reordenado por temas: mis datos, pantalla y accesibilidad, avisos y privacidad, ayuda, cuenta y seguridad y, al final, lo de superadministrador y las herramientas de prueba.
+- El botón de ayuda tiene ahora el mismo estilo que la lupa del buscador (un bocadillo con interrogación).
+### Corregido
+- Parpadeo al cambiar de pantalla: la nueva aparece mientras se va la anterior, sin un instante vacío.
+- Error al simular un rol («column role is of type user_role…»).
+
 ## [0.1.7] - 2026-11-08
 ### Añadido
 - Administración: el superadministrador puede «simular» el rol de cliente, repartidor o entidad de una entidad concreta para probar la app como esa persona, y volver desde Ajustes. Mientras simula, sus pedidos son de prueba.
