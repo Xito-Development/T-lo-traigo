@@ -2,6 +2,19 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.9] - 2026-11-08
+
+### Añadido
+- Buscador: si no encuentra lo que buscas, puedes preguntárselo al asistente con un toque.
+- El asistente con IA puede consultar tus últimos pedidos o repartos y tus ajustes para responderte (sin tu nombre, dirección, teléfono ni correo) y sus respuestas traen un botón que te lleva al sitio que menciona.
+
+### Cambiado
+- El asistente solo responde con su guía cuando la pregunta está clarísima; si hay duda, contesta la IA, y solo sobre lo que corresponde a tu rol.
+
+### Corregido
+- Ajustes: el botón del panel de pruebas y «Cerrar sesión» quedaban pegados.
+- Web: el logo de la animación de la portada se veía con un recuadro de fondo; y la web ya no se recolorea con el modo oscuro forzado de Chrome ni con extensiones como Dark Reader.
+
 ## [0.1.8] - 2026-11-08
 ### Cambiado
 - Ajustes reordenado por temas: mis datos, pantalla y accesibilidad, avisos y privacidad, ayuda, cuenta y seguridad y, al final, lo de superadministrador y las herramientas de prueba.
