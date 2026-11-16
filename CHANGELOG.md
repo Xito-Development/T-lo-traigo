@@ -2,6 +2,21 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.12] - 2026-11-15
+### Añadido
+- Ajustes de la entidad: vista previa en directo de cómo ven los vecinos vuestra cabecera (color, logo, nombre, horario y mensaje).
+- Ajustes de la entidad: color propio con código #RRGGBB (por ejemplo, el del escudo) y cuatro colores nuevos.
+- Ajustes de la entidad: atajos para los días de reparto («Lunes a viernes», «Lunes a sábado», «Todos los días»).
+- Ajustes de la entidad: barra de «Cambios sin guardar» con Guardar y Descartar, y aviso de lo que falta antes de guardar.
+### Cambiado
+- Ajustes de la entidad reordenados en secciones claras (Datos, Imagen, Pedidos, Horario, Cobros, Repartidores) con un resumen visible aunque estén plegadas.
+- Las pestañas del panel de la entidad crecen con el tamaño de letra elegido: el texto ya no se corta con letra grande.
+- Web: nueva animación de «Así funciona» y marca UNOCEROBITS con su tipografía (Raleway fina).
+- Web: el ticket de ejemplo muestra el desglose de la tarifa y su subtotal antes del total.
+### Corregido
+- La sección «Repartidores» salía dos veces en los ajustes de la entidad.
+- Se podía guardar un horario con la hora de cierre anterior a la de apertura.
+
 ## [0.1.11] - 2026-11-08
 ### Corregido
 - Parpadeo al cambiar de pantalla (parecía que la página se recargaba): ahora es un fundido suave, y las tarjetas de «cargando» solo aparecen si la carga tarda.
