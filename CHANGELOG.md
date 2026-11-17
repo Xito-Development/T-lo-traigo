@@ -2,6 +2,13 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.1.13] - 2026-11-17
+### Corregido
+- Panel de control: ya no da error al simular un rol en el móvil, y avisa de que la simulación está activa.
+- La actualización obligatoria se aplica a todas las cuentas.
+### Cambiado
+- Mejoras de seguridad en las cuentas de administración.
+
 ## [0.1.12] - 2026-11-15
 ### Añadido
 - Ajustes de la entidad: vista previa en directo de cómo ven los vecinos vuestra cabecera (color, logo, nombre, horario y mensaje).
