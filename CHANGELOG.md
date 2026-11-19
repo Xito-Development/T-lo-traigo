@@ -2,6 +2,28 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.2.0] - 2026-11-19
+### Añadido
+- Ficha de cada repartidor para su gestor: datos, pueblos, actividad, ganancias, repartos por cliente, recorridos y últimos repartos.
+- Seguimiento (pedidos en curso) e Historial (pedidos terminados) por separado.
+- Explicación de cada tarifa (botón ⓘ): qué sirve para pagar al repartidor y qué es para la entidad.
+- Suscripción del gestor visible en Gestión → Entidad (plan, cuota, renovación) con opción de cancelarla, indicando el motivo, o mantenerla.
+### Cambiado
+- Nuevo diseño: cabeceras a toda la pantalla, Resumen y gráficas con el color elegido en Ajustes, y pestañas y tarjetas más claras.
+- Ajustes reorganizado: «Ajustes de la aplicación» reúne pantalla, colores, avisos, ayuda y cuenta.
+- La lupa reúne el buscador y el asistente, e indica si el asistente con IA está disponible.
+- Panel del gestor reorganizado: Resumen, Pedidos (con informes), Gestión (repartidores, pueblos, tarifas y entidad) y Ajustes. Invitar va dentro de Repartidores.
+- Estadísticas con gráficas y nombres de pantalla claros.
+- Animación de inicio y pie de Ajustes más legibles.
+- Las gráficas usan el mismo color que los botones.
+- En la ficha del repartidor: «Desactivar repartidor» y pestaña «Pedidos».
+### Corregido
+- Cierre inesperado al cambiar de pestaña en el panel de administración.
+- Las tarifas propias de cada pueblo no se veían al editarlas ni en la lista.
+- «Colores vivos» apagaba los colores en el tema oscuro.
+- El aviso de «Ver como» seguía visible al volver.
+- Los informes de un gestor cambiaban al pasar un pueblo a otra entidad.
+
 ## [0.1.14] - 2026-11-18
 ### Cambiado
 - Mejoras y correcciones.
