@@ -2,6 +2,45 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.2.1] - 2026-11-19
+### Añadido
+- Repartidor: pestaña «Ganancias» con tus repartos y ganancias, ganancias por semana, estimación de gastos (combustible y otros), ingresos frente a gastos por mes, beneficio final del mes y kilómetros por mes.
+- Repartidor: datos personales y fiscales (nombre, DNI/NIE/NIF, dirección fiscal y si eres autónomo o por cuenta ajena) para que tu gestor pueda pagarte; se piden al darte de alta y están en Ajustes → Mis datos.
+- Repartidor: opiniones de los clientes en la cabecera del Historial.
+- Gestor: ficha de cada repartidor con sus datos, alta, beneficios, forma de cobro, pueblos asignados (con acceso a cada pueblo), rendimiento (entregas, cancelaciones y km por mes), actividad y ganancias.
+- Gestor: tarifa propia por repartidor (si no tiene, se usa la general de la entidad).
+- Gestor: «Repartidores activos» en el Resumen, con acceso a Repartidores.
+- Gestor: «Ejemplo de tarifa» y «Tarifas personalizadas» (pueblos con tarifas propias) en Tarifas.
+- Gestor: con la entidad verificada, los datos fiscales se cambian con una solicitud que autoriza el equipo de T lo traigo.
+- Pedidos: botón «Contacta» para avisar al equipo de soporte de cualquier incidencia con el pedido.
+- Superadministrador: ficha de cada usuario y repartidor (toca en Gestores → Usuarios o Repartidores).
+- Superadministrador: cabecera y menú inferior con o sin curvatura y con o sin sombra, para todos los usuarios.
+### Cambiado
+- Buscador: encuentra productos, pedidos, ajustes y respuestas de la guía de ayuda sin IA; el asistente con IA solo aparece cuando está activado.
+- «Buscar en la ayuda» con los colores del tema y el icono de la lupa.
+- Ajustes: «Cuenta y seguridad» y «Acerca de, créditos y privacidad» salen al menú principal; «Tengo el código de invitación del gestor» va antes de Familia; se quita el pie con la versión y las firmas.
+- Familia: dos botones, «Hago la compra» (vincular con el código de un familiar) y «Me hacen la compra» (mi código para familiares).
+- Comprar: el bloque del servicio del gestor muestra el importe del servicio.
+- Pedido: el chat va junto a la llamada del repartidor, vuelve «Ver el recorrido» y el chat queda solo para leer al cerrar el pedido.
+- Gestor: se quita «Cómo se paga al repartidor» de Repartidores; «Tarifas personalizadas» incluye a los repartidores con tarifa propia.
+- Informes, facturas y justificantes en PDF con cabecera de T lo traigo, datos del gestor, cifras, gráficas de barras, tablas y pie con numeración y logos.
+- Repartidor: los pedidos nuevos están en el Resumen, bajo «Estás disponible»; la pestaña Resumen avisa y cambia de color cuando llega uno.
+- Repartidor: «Servicio gratuito de tu gestor» pasa a Ajustes.
+- Repartidor: «Tus repartos y ganancias» al final del Resumen (lleva a Ganancias) y datos fiscales en Mis datos y dirección.
+- Repartidor: en los repartos, «Pagado» en verde (rojo si falta cobrar) y el margen en verde si ganas o rojo si no; el icono de entrega explica si es «lo antes posible» o su fecha, y la ruta recorrida se abre desde su icono.
+- Superadministrador: el Resumen de cada gestor tiene el mismo diseño que los demás y cada bloque lleva a su pestaña.
+- Gestor: en Repartidores, una barra de color indica la disponibilidad; «Invitar al gestor» pasa a llamarse «Enviar invitaciones» y ahí está también el pago general a repartidores.
+- Pedidos: el detalle se ordena en bloques: datos del pedido, proceso, lista y pago, justificante, repartidor y chat, valoración y, al final, reclamaciones, repetir y contacta.
+- Gráficas más claras en tema oscuro.
+- Avisos emergentes con los colores del tema.
+- Pestañas superiores separadas del contenido y sin rectángulo al pulsarlas.
+- Firma con sombra más marcada en tema claro; «UNOCEROBITS» y «Xito Development» abren sus webs.
+### Corregido
+- Al aplicar la tarifa general, los pueblos ya no aparecen como «Tarifas personalizadas» y los que tienen tarifas propias las conservan.
+- El interruptor de curvatura y sombra (superadministrador) ya se guarda.
+- «Mis consultas» y otras pantallas a pantalla completa ya no se ven transparentes.
+- Privacidad: los vecinos y repartidores ya no pueden ver los datos privados de su entidad (CIF, DNI y nombre del representante, domicilio fiscal ni datos de facturación).
+
 ## [0.2.0] - 2026-11-19
 ### Añadido
 - Ficha de cada repartidor para su gestor: datos, pueblos, actividad, ganancias, repartos por cliente, recorridos y últimos repartos.
