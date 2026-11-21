@@ -2,6 +2,15 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.2.3] - 2026-11-21
+### Cambiado
+- Ayuda: «Escribir a soporte» pasa a un botón ✉️ en la cabecera; «Hablar con una persona» lleva directamente a escribir a soporte.
+- Cliente: el bloque del gestor en Comprar tiene el aspecto de «Así te ven tus vecinos», con botón de llamada.
+- Lista fácil: todos los bloques miden lo mismo.
+### Corregido
+- Visor de fotos y firmas: los botones Guardar y Compartir ya no quedan bajo la barra de navegación.
+- Aviso de versión nueva: llega también con datos móviles (antes solo con wifi), reintenta si no hay conexión y se recuerda cada 3 días hasta actualizar.
+
 ## [0.2.2] - 2026-11-21
 ### Añadido
 - Animación de carga entre pantallas y transiciones suaves; datos en caché para abrir más rápido.
