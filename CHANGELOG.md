@@ -2,6 +2,30 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.2.2] - 2026-11-21
+### Añadido
+- Animación de carga entre pantallas y transiciones suaves; datos en caché para abrir más rápido.
+- Aviso para guardar o descartar al salir de un formulario con cambios.
+- Gestor: en cada pueblo, «Tarifa general» (por defecto) o «Tarifa propia».
+- Cliente: bloque animado con el pedido en curso bajo la Lista fácil (lleva al seguimiento).
+- Repartidor: aviso emergente al llegar un pedido nuevo (varios, uno a uno) y la cabecera cambia de color; bloque de repartos en curso e insignias en Resumen y Repartos.
+- Panel de control: «Buscar versiones nuevas» en Ajustes; la actualización se descarga dentro de la app con progreso.
+### Cambiado
+- Todas las pantallas a pantalla completa y barra de estado con el color adecuado en cada tema; el teclado se oculta al tocar fuera.
+- Textos largos se desplazan en vez de cortarse.
+- Superadmin: los bloques de Gestores, Repartidores y Usuarios filtran la lista; orden de pestañas Gestores · Repartidores · Usuarios.
+- Gestor: datos fiscales plegados por defecto mostrando si está verificado y solo la forma jurídica elegida.
+- Repartidor: Mis repartos destaca cuánto cobrar y cuándo entregar; «Fuera de horario» es un botón.
+- Abre Google Authenticator (no Samsung Pass) para los códigos de seguridad.
+- Panel de control: aviso de versión nueva compacto.
+### Corregido
+- Guardar la tarifa general ya no convierte los pueblos en «tarifa propia».
+- Pantalla intermedia «Mi gestor» al cambiar entre Pedidos y Gestión.
+- Superadmin: al salir de la simulación de gestor ya no queda en «Sin gestor asignado».
+- Cesta: el desplazamiento ya no salta entre el paso 1 y el 2.
+- Mapa de la ruta: encuadre y zoom estables (no se mueve al actualizar la posición tras tocarlo).
+- Botones de Seguimiento y de Familia equilibrados y sin solaparse.
+
 ## [0.2.1] - 2026-11-19
 ### Añadido
 - Repartidor: pestaña «Ganancias» con tus repartos y ganancias, ganancias por semana, estimación de gastos (combustible y otros), ingresos frente a gastos por mes, beneficio final del mes y kilómetros por mes.
