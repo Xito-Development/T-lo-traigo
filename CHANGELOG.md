@@ -2,6 +2,27 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.2.4] - 2026-11-22
+### Añadido
+- Superadmin: interruptor del asistente con IA también en la app (Más → Accesos).
+### Cambiado
+- Asistente: guía y respuestas con IA actualizadas a la versión actual (tarifa general o propia, avisos de pedido nuevo, Mis repartos, datos fiscales, filtros del superadmin, código de seguridad…).
+- Accesos directos del icono (mantener pulsado) según el rol: el cliente ve Lista fácil, cesta y pedidos; repartidor, gestor y equipo ven los suyos.
+- Ayuda: el botón de soporte vuelve a ser la operadora; se quita el aviso «Asistente con IA disponible» del buscador.
+- Técnico: «Pedir autorización» lista sus gestores y permite elegir a la persona por nombre.
+- Cliente: si el servicio de su pueblo está suspendido se le avisa en Comprar.
+- Gestor con permiso temporal para pedir: la pestaña Comprar aparece en su barra inferior.
+- Panel: errores legibles como aviso, «Anular» oculto en pedidos entregados o cancelados y datos al día al volver al panel.
+### Corregido
+- Seguridad: los botones del asistente («Ir a la portada», Lista fácil, cesta) solo llevan a pantallas del rol de quien pregunta; ya no abren Comprar a gestores, técnicos ni superadministradores.
+- El buscador solo muestra productos y Lista fácil a los clientes.
+- Una cuenta bloqueada deja de funcionar al momento (antes seguía hasta caducar su sesión).
+- Repartidor bloqueado: deja de recibir pedidos al momento y ve el motivo.
+- Al cerrar sesión se quitan las notificaciones, los avisos en segundo plano y el tema de la cuenta anterior.
+- Ayuda a pantalla completa en todos los móviles (en algunos se veía la barra inferior de la app).
+- Gestor → Entidad: el texto del bloque de datos fiscales plegado ya no queda cortado por la curvatura.
+- Informes económicos del gestor: cada pedido cuenta en el gestor que lo atendió, también si el pueblo cambia de gestor.
+
 ## [0.2.3] - 2026-11-21
 ### Cambiado
 - Ayuda: «Escribir a soporte» pasa a un botón ✉️ en la cabecera; «Hablar con una persona» lleva directamente a escribir a soporte.
