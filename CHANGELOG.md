@@ -2,6 +2,14 @@
 
 Todas las versiones de T lo traigo. Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/), versiones [semánticas](https://semver.org/lang/es/).
 
+## [0.2.5] - 2026-11-25
+### Cambiado
+- Repartidores: ya no hace falta permitir la ubicación «siempre»; basta con «mientras se usa la app» (solo se usa durante el reparto).
+- Teléfono de ayuda actualizado.
+- Privacidad: se aclara que el servicio es solo para mayores de edad.
+### Corregido
+- Las actualizaciones descargadas desde la app comprueban su integridad (SHA-256) antes de instalarse.
+
 ## [0.2.4] - 2026-11-22
 ### Añadido
 - Superadmin: interruptor del asistente con IA también en la app (Más → Accesos).
